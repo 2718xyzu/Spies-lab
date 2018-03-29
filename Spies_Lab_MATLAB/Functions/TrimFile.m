@@ -1,12 +1,9 @@
-
 blank = questdlg('Select the folder which contains all traces to cut',...
     'Select folder','Ok','Ok');
 
 path = uigetdir;   
 
-if ismac
-    slash = '/';
-elseif ispc
+if ispc
     slash = '\';
 else
     slash = '/';
@@ -47,9 +44,4 @@ for i = 1:numel(dir3)
     fwrite(B,binaryDataCut,'uint8');
     fclose(B);
     fclose(A);
-%     csvData = csvread([path slash name]);
-%     tempData2 = tempData(301:2101,:);
-%     tempData3 = cell2mat(tempData2);
-%     csvwrite([path2 slash name],csvData);
- 
 end

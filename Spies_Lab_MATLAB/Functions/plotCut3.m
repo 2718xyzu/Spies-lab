@@ -1,6 +1,3 @@
-%Joseph Tibbs
-%Last updated: 6/19
-
 function plotCut3(matrixID,matrixIA,frames,timeUnit)
     saveMode = '2'
     QuB = 1;
@@ -34,24 +31,7 @@ function plotCut3(matrixID,matrixIA,frames,timeUnit)
     timeSeries = 0:timeUnit:timeUnit*(frames-1);
     cutCount = zeros(size(matrixID,1),1);
     while i <= size(matrixID,1) && goOn ~= 6
-        %figure(3);
-%         figure('OuterPosition',[100,100,1000,700]);
-%         subplot(2,1,1);
-%         axis([0 frames*timeUnit 0 150]);
-%         plot(timeSeries,smoothTrace(matrixID(i,:)),'g');
-%         hold on;
-%         plot(timeSeries,smoothTrace(matrixIA(i,:)),'r');
-%         title(['\fontsize{20} Trace ' num2str(i)]);
-%         axis([0 frames*timeUnit 0 inf]);
-% %         hold off;
-%         subplot(2,1,2);
-%         plot(timeSeries,smoothTrace(getFret(matrixID(i,:),matrixIA(i,:))),'b');
-%         axis([0 frames*timeUnit 0 1]);
-% %         title(['Trace ' num2str(i)]);
         goOn=1;
-%         goOn = input(['Press Enter to go to the next trace; Press 1 to save entire trace. \n' ...
-%         'Press 3 to save part of a trace; Press 5 to go to a particular trace; Press 0 to go back \n'...
-%         'Press 6 or ctrl+C to exit']);
         if isempty(goOn)
             goOn = 10;
         end
@@ -73,7 +53,6 @@ function plotCut3(matrixID,matrixIA,frames,timeUnit)
                     cutCount(i,1) = cutCount(i,1) + 1;
                 end
             case 3
-%                 [x,~] = ginput(2);
                 x = x./timeUnit;
                 x = round(x);
                 traceD = matrixID(i,x(1):x(2));
@@ -105,7 +84,5 @@ function plotCut3(matrixID,matrixIA,frames,timeUnit)
                 i = i-2;
         end
           i = i+1;
-%         figure(3);
-%         close 3;
     end
 end
