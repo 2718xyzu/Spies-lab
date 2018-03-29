@@ -1,49 +1,39 @@
 function intensity = opentraces()
 
-clear intensity
+    clear intensity
 
-blank = questdlg('Select the folder which contains all traces to extract',...
-    'Select folder','Ok','Ok');
+    blank = questdlg('Select the folder which contains all traces to extract',...
+        'Select folder','Ok','Ok');
 
-path = uigetdir;
+    path = uigetdir;
 
-if ismac
-    slash = '/';
-elseif ispc
-    slash = '\';
-else
-    slash = '/';
-end
+    if ispc
+        slash = '\';
+    else
+        slash = '/';
+    end
 
-format = questdlg('Which format are the traces in?','Select format','.csv','.txt','.dat','.dat');
+    format = questdlg('Which format are the traces in?','Select format','.csv','.txt','.dat','.dat');
 
-if format(2) == 'c'
-    dir2 = dir([path slash '*.csv']);
-    clear dir3;
-    dir3 = { dir2.name };    
-    A = importdata([ path slash dir3{1}]);
-    meanA = mean(A.data);
-elseif format(2) == 't'
-    dir2 = dir([path slash '*.txt']);
-    clear dir3;
-    dir3 = { dir2.name };
-    A = importdata([ path slash dir3{1}]);
-    meanA = mean(A);
-else
-    dir2 = dir([path slash '*.dat']);
-    clear dir3;
-    dir3 = { dir2.name };
-    A = importdata([ path slash dir3{1}]);
-    meanA = mean(A);
-    
-end
-
-    
-    % blank = questdlg('Select or make the folder which the program will save traces to',...
-    %     'Select save folder','Ok','Ok');
-    % path2 = uigetdir;
-    % dbstop in change3toEbFRET if naninf
-
+    if format(2) == 'c'
+        dir2 = dir([path slash '*.csv']);
+        clear dir3;
+        dir3 = { dir2.name };
+        A = importdata([ path slash dir3{1}]);
+        meanA = mean(A.data);
+    elseif format(2) == 't'
+        dir2 = dir([path slash '*.txt']);
+        clear dir3;
+        dir3 = { dir2.name };
+        A = importdata([ path slash dir3{1}]);
+        meanA = mean(A);
+    else
+        dir2 = dir([path slash '*.dat']);
+        clear dir3;
+        dir3 = { dir2.name };
+        A = importdata([ path slash dir3{1}]);
+        meanA = mean(A);
+    end
     column = inputdlg(['Which column of the data would you like extracted?  If you want each column extracted, type "all".' ...
         ' If it helps, the mean of each column is, in order: ' mat2str(meanA,5) ]);
     if ~isnan(str2double(column{1}))
@@ -66,7 +56,4 @@ end
             end
         end
     end
-    
 end
-
-
