@@ -1,16 +1,11 @@
 function [dataCy3,dataCy5] = bulkOpen()
-% fprintf(['Please place all traces into folders, one folder for each color. \n  Every trace must have ' ...
-%     'a number in it which is unique to that molecule, \n and all traces of different colors from ' ...
-%     'that single molecule must share the same number. \n I.e., a folder containing trace16Cy3 and ' ...
-%     'trace23Cy3, and a second folder containing tr16Cy5 and 23cytrace is fine. \n The program ' ...
-%     'will match the numbers 16 and 23 to their respective files \n']);
 numCol = str2double(strjoin(inputdlg('How many colors are being analyzed?')));
 directories = cell(1,numCol);
 % directories(1) = {input(['Please paste the path of the folder with the first color of traces.  The folder'...
 %     ' itself must be in the path. \n  Please end the path with a slash. \n'],'s')};
-% 
-% 
-% 
+%
+%
+%
 % color = 1;
 % dir2 = dir(strjoin(directories(1)));
 % dir3(color,1:numel({dir2.name})) = { dir2.name };
@@ -36,7 +31,7 @@ directories = cell(1,numCol);
 %     nums(color, i) = max(1);
 %     end
 % end
-% 
+%
 % u=unique(nums(color,:));
 % n=histc(nums(color,:),u);
 % if sum(n) == length(nums);
@@ -134,8 +129,8 @@ for j = 1:numCol
 %     end
 %     end
 % end
-% 
-%     transM(1,:) = sum(binM); 
+%
+%     transM(1,:) = sum(binM);
 %     transM(2,1:end-2) = flag*(diff(transM(1,2:end)==0)<0);
 %     transM(3,2:end) = flag*(diff(transM(1,:)~=0)<0);
 %     transM(1,1:end-1) = diff(transM(1,:));
