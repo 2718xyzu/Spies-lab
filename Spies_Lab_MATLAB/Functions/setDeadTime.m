@@ -1,7 +1,4 @@
 function modifiedStruct = setDeadTime(struct, deadTime)
-%     deadTime = questdlg('What dead',{'0 (no action)','1 frame','2 frames','3 frames'});
-% 
-%     deadTime = str2double(deadTime(1));
     for i = 1:size(struct,2)
         if isstruct(struct)
         states = struct.states(i,:);
