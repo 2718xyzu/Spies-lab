@@ -3,6 +3,11 @@ clear nonZeros;
 clear timeData;
 clear names;
 inputMethod = 'ebFRET';
+
+loading = 1;
+i = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
+     'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
+
 initialSettings = inputdlg({['Which input method would you like to use?'...
     '  Type ebFRET or QuB'], 'How many channels (colors) are you analyzing?',...
     'How many states does your model have?'}, 'Settings',3,{'ebFRET','1','4'});
@@ -10,10 +15,14 @@ inputMethod = initialSettings{1};
 channels = round(str2double(initialSettings{2})); %i.e. a channel for cy3 and one for cy5
 states = round(str2double(initialSettings{3}));
 stateList = double(repmat(states,channels)); %i.e. [2 2] for two states in each of two channels
-slash = '/';
-loading = 1;
-i = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
-     'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
+
+if ismac
+    slash = '/';
+elseif ispc
+    slash = '\';
+else
+    slash = '/';
+end
 
 if i(1) == 'S'
     uiopen; %open savePackage and unload data
@@ -24,6 +33,8 @@ if i(1) == 'S'
                 eval([fields{i} ' = savePackage.' fields{i} ';' ]);
             end
 
+        else
+            error('Not a valid SavePackage; variable name in workspace must be savePackage');
         end
 end
 
@@ -55,7 +66,7 @@ if inputMethod(1) == 'q' || inputMethod(1) == 'Q' %Determine the method of analy
 
         end
 
-else %ebFRET ordered traces
+elseif inputMethod(1) == 'e' || inputMethod(1) == 'E' %ebFRET ordered traces
          timeInterval = .1; %time unit used in ebFRET
          [file, path, ~] = uigetfile;
          smdImport = load([path slash file]);
@@ -65,6 +76,8 @@ else %ebFRET ordered traces
             matrix(1:length(import),i) = smdImport.data(i).values(:,4);
          end
          matrix(matrix==0) = 1;
+else
+    error('Not a valid input method.  String must be either qub or ebfret.');
 end
 
 stateDwellSummary = dwellSummary(matrix,timeInterval);
