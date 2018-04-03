@@ -40,7 +40,7 @@ else
         record = zeros(1);
 
         k=1;
-        for i = 1:size(data,4);
+        for i = 1:size(data,4)
             clear binM;
             clear transM;
             for j = 1:channels
@@ -76,7 +76,7 @@ else
     eFlag = .05; %to flag the end of each event
     powerAddition = [0 cumsum(stateList)];
 
-    while i <= size(matrix,2);
+    while i <= size(matrix,2)
         clear transM; %transM will hold, in three columns, the states and event flags
         clear state;
         for j = 1:channels
@@ -110,25 +110,24 @@ else
         dataPoints = length(timeDataTemp);
         timeData(1:dataPoints,(i-1)/channels) = timeDataTemp; %combine into large arrays
         nonZeros(1:dataPoints,(i-1)/channels) = nonZerosTemp;
-        end
-        nonZeros(nonZeros == bFlag+eFlag) = bFlag; %consolidate event markers
-        nonZeros(end+1,:) = 0;
-        timeData(end+1,:) = 0;
-        letters = mat2str(nonZeros'); %create text array from the nonZero matrix
-        letters = regexprep(letters,'0\.05','_');
-        letters = regexprep(letters,'0\.15','_');
-        letters = regexprep(letters,'[ ;]','  ');
-        letters = regexprep(letters,' 0 ',' , ');
-        letters = letters(2:end-1);
-
-        output = defaultAnalyze2(savePackage); %analyze the structure to produce output
-        stateDwellSummary.eventTimes = output(1).timeLengths;
-
-        [~,index] = sortrows([output.count].');
-        output = output(index(end:-1:1));
-        %Sort events by most common
-        savePackage = jsonencode(table(channels, letters, timeData, nonZeros, stateDwellSummary, output))
-        %save the output, and save the savePackage to computer
-        uisave('savePackage.json');
     end
+    nonZeros(nonZeros == bFlag+eFlag) = bFlag; %consolidate event markers
+    nonZeros(end+1,:) = 0;
+    timeData(end+1,:) = 0;
+    letters = mat2str(nonZeros'); %create text array from the nonZero matrix
+    letters = regexprep(letters,'0\.05','_');
+    letters = regexprep(letters,'0\.15','_');
+    letters = regexprep(letters,'[ ;]','  ');
+    letters = regexprep(letters,' 0 ',' , ');
+    letters = letters(2:end-1);
+
+    output = defaultAnalyze2(savePackage); %analyze the structure to produce output
+    stateDwellSummary.eventTimes = output(1).timeLengths;
+
+    [~,index] = sortrows([output.count].');
+    output = output(index(end:-1:1));
+    %Sort events by most common
+    savePackage = jsonencode(table(channels, letters, timeData, nonZeros, stateDwellSummary, output))
+    %save the output, and save the savePackage to computer
+    uisave('savePackage.json');
 end
