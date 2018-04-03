@@ -24,22 +24,25 @@ function [data,names] = findPairs(numCol)
     end
     u = unique(suffixes);
 
-    %if not all files have all pairs in set 
-    output = questdlg(['There are files without matching pairs.  Would you '...
+    %if not all files have all pairs in set
+    missingPair = questdlg(['There are files without matching pairs.  Would you '...
         'like to assume that corresponding files had no events, and remained '...
         'constant in the lowest state (state 1), constant in a user-defined state '...
         'or to ignore and throw out files without matching pairs?'],'Unpaired File Treatment',...
         'Fill with constant state-1 trajectory','Fill with constant trajectory in other state',...
         'Ignore non-matching files','Fill with constant state-1 trajectory');
-    if output(end) == 'e'
+
+    if contains(missingPair, 'constant trajectory')
         constantState = inputdlg(['What state number should the missing trajectories be in?'...
             '  Type a number, where 1 is the lowest state']);
         constateState = str2double(constantState{1})-1;
-    elseif output(end) == 's'
+
+    elseif contains(missingPair, 'Ignore')
         ignore = 1;
+
     else
         ignore = 0;
-        constantState = 0;   
+        constantState = 0;
     end
 
     if length(u) < 20
@@ -57,7 +60,7 @@ function [data,names] = findPairs(numCol)
         matches = allmatches(:,k);
         pairs = zeros(1,numCol);
         pairFriends = zeros(1,numCol);
-            
+
         for i = 1:numel(matches)
             if ~isempty(matches{i}) && isnumeric(matches{i})
                 column = letters(strcmp(u,suffixes{i}));
