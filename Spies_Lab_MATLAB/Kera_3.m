@@ -24,7 +24,7 @@ end
 if importData(1) == 'S'
     [filename, path] = uigetfile('*.spkg');
     if filename
-        analyze = jsondecode(char(load([path slash filename])));
+        savePackage = jsondecode(char(load([path slash filename])));
     else
         error('No file selected');
     end
@@ -121,14 +121,14 @@ else
     letters = regexprep(letters,' 0 ',' , ');
     letters = letters(2:end-1);
 
-    analyze.channels = channels;
-    analyze.letters = letters;
-    analyze.timeData = timeData;
-    analyze.nonZeros = nonZeros;
+    savePackage.channels = channels;
+    savePackage.letters = letters;
+    savePackage.timeData = timeData;
+    savePackage.nonZeros = nonZeros;
     if exist('names','var')
-        analyze.names = names;
+        savePackage.names = names;
     end
-    output = defaultAnalyze2(analyze); %analyze the structure to produce output
+    output = defaultAnalyze2(savePackage); %analyze the structure to produce output
     stateDwellSummary.eventTimes = output(1).timeLengths;
 
     [~,index] = sortrows([output.count].');
