@@ -126,21 +126,9 @@ else
 
         [~,index] = sortrows([output.count].');
         output = output(index(end:-1:1));
-        clear index;
         %Sort events by most common
-        jsonNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'}
-        jsonData = {channels, letters, timeData, nonZeros, stateDwellSummary, output}
-        savePackage = jsonencode(table(jsonNames, jsonData))
+        savePackage = jsonencode(table(channels, letters, timeData, nonZeros, stateDwellSummary, output))
         %save the output, and save the savePackage to computer
         uisave('savePackage.json');
     end
-
-    msgbox(['You may view the data by opening the variables named "output" and "stateDwellSummary".  '...
-        'Use the command line to execute further analyses; the commands '...
-        '"out = eventSearch(savePackage);" and "out = histogramData(savePackage" '...
-        'are supported']);
-    fprintf(['You may view the data by opening the variable named "output" and "stateDwellSummary". \n '...
-        'Use the command line to execute further analyses; the commands '...
-         '\n out = eventSearch(savePackage); \n  and \n out = histogramData(savePackage); \n '...
-        'are supported \n']);
 end
