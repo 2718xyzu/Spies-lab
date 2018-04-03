@@ -80,7 +80,7 @@ else
     error('Not a valid input method.  String must be either qub or ebfret.');
 end
 
-stateDwellSummary = dwellSummary(matrix,timeInterval);
+stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
 i = 1;
 insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
 baseline = sum(2.^[0 cumsum(stateList(1:end-1))]); %the number corresponding to the "default" state
