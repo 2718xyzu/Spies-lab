@@ -15,7 +15,7 @@ function modifiedStruct = setDeadTime(struct, deadTime)
             end
         end
         flagged = unique(flagged);
-        
+        %This function does not yet work
     end
     modifiedStruct = struct;
 end
