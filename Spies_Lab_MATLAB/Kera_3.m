@@ -125,19 +125,22 @@ else
     savePackage.letters = letters;
     savePackage.timeData = timeData;
     savePackage.nonZeros = nonZeros;
-    if exist('names','var')
-        savePackage.names = names;
-    end
     output = defaultAnalyze2(savePackage); %analyze the structure to produce output
     stateDwellSummary.eventTimes = output(1).timeLengths;
 
     [~,index] = sortrows([output.count].');
     output = output(index(end:-1:1));
-
-    savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-    savePackageData = {channels, letters, timeData, nonZeros, stateDwellSummary, output};
+    
+    if exist('names','var')
+        savePackageNames = {'name', 'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
+        savePackageData = {name, channels, letters, timeData, nonZeros, stateDwellSummary, output};
+    else
+        savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
+        savePackageData = {channels, letters, timeData, nonZeros, stateDwellSummary, output};
+    end
+    
     savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
     %save the output, and save the savePackage to computer
     [filename, path] = uiputfile('savePackage.spkg');
-    save([path slash filename], 'savePackage', '-ascii', 'double');
+    save([path slash filename], 'savePackage', '-ascii', '-double');
 end
