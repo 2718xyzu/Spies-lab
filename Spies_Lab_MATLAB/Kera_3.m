@@ -22,9 +22,9 @@ else
 end
 
 if importData(1) == 'S'
-    [filename, path] = uigetfile;
+    [filename, path] = uigetfile('*.spkg');
     if filename
-        savePackage = jsondecode(load([path slash filename]));
+        analyze = jsondecode(char(load([path slash filename])));
     else
         error('No file selected');
     end
@@ -68,7 +68,7 @@ else
     else
         error('Not a valid input method.  String must be either qub or ebfret.');
     end
-    stateDwellSummary = dwellSummary(matrix,timeInterval);
+    stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
     i = 1;
     insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
     baseline = sum(2.^[0 cumsum(stateList(1:end-1))]); %the number corresponding to the "default" state
@@ -121,13 +121,23 @@ else
     letters = regexprep(letters,' 0 ',' , ');
     letters = letters(2:end-1);
 
-    output = defaultAnalyze2(savePackage); %analyze the structure to produce output
+    analyze.channels = channels;
+    analyze.letters = letters;
+    analyze.timeData = timeData;
+    analyze.nonZeros = nonZeros;
+    if exist('names','var')
+        analyze.names = names;
+    end
+    output = defaultAnalyze2(analyze); %analyze the structure to produce output
     stateDwellSummary.eventTimes = output(1).timeLengths;
 
     [~,index] = sortrows([output.count].');
     output = output(index(end:-1:1));
-    %Sort events by most common
-    savePackage = jsonencode(table(channels, letters, timeData, nonZeros, stateDwellSummary, output))
+
+    savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
+    savePackageData = {channels, letters, timeData, nonZeros, stateDwellSummary, output};
+    savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
     %save the output, and save the savePackage to computer
-    uisave('savePackage.json');
+    [filename, path] = uiputfile('savePackage.spkg');
+    save([path slash filename], 'savePackage', '-ascii', 'double');
 end
