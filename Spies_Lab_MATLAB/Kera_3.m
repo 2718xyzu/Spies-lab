@@ -139,5 +139,5 @@ else
     savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
     %save the output, and save the savePackage to computer
     [filename, path] = uiputfile('savePackage.spkg');
-    save([path slash filename], 'savePackage', '-ascii', 'double');
+    save([path slash filename], 'savePackage', '-ascii', '-double');
 end
