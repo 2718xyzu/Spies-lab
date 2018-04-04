@@ -4,7 +4,7 @@ clear timeData;
 clear names;
 
 importData = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
-     'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
+    'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
 
 initialSettings = inputdlg({['Which input method would you like to use?'...
     '  Type ebFRET or QuB'], 'How many channels (colors) are you analyzing?',...
@@ -130,7 +130,7 @@ else
 
     [~,index] = sortrows([output.count].');
     output = output(index(end:-1:1));
-    
+
     if exist('names','var')
         savePackageNames = {'name', 'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
         savePackageData = {name, channels, letters, timeData, nonZeros, stateDwellSummary, output};
@@ -138,7 +138,7 @@ else
         savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
         savePackageData = {channels, letters, timeData, nonZeros, stateDwellSummary, output};
     end
-    
+
     savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
     %save the output, and save the savePackage to computer
     [filename, path] = uiputfile('savePackage.spkg');

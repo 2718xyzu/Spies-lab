@@ -1,28 +1,25 @@
 classdef keraGUI < handle
     properties
-        ui
+        guiWindow
+        elements = {}
     end
     methods
-        function ui = keraGUI()
-            ui = figure('Visible', 'off');
-            ui.MenuBar = 'none';
-            ui.ToolBar = 'none';
-            popup = uicontrol('Style', 'popup',...
-                   'String', {'parula','jet','hsv','hot','cool','gray'},...
-                   'Position', [20 340 100 50],...
-                   'Callback', @setmap);
-
-            btn = uicontrol('Style', 'pushbutton', 'String', 'Clear',...
-                'Position', [20 20 50 20],...
-                'Callback', 'cla');
-
-            sld = uicontrol('Style', 'slider',...
-                'Min',1,'Max',50,'Value',41,...
-                'Position', [400 20 120 20],...
-                'Callback', @surfzlim); 
+        function gui = keraGUI()
+            guiWindow = figure('Visible', 'off');
+            guiWindow.MenuBar = 'none';
+            guiWindow.ToolBar = 'none';
         end
-        function createButton(label, position, callback)
-            
+
+        function button = createButton(label, position, callback)
+            button = uicontrol('Style', 'pushbutton', 'String', label, 'Position', position, 'Callback', callback)
+        end
+
+        function dropdown = createDropdown(labels, position, callback)
+            dropdown = uicontrol('Style', 'popup', 'String', labels, 'Position', position, 'Callback', callback)
+        end
+
+        function slider = createSlider(minimum, maximum, position, callback)
+            slider = uicontrol('Style', slider, 'Min', minimum, 'Max', maximum, 'Value', round((minimum+maximum)/2), 'Callback', callback)
         end
     end
 end
