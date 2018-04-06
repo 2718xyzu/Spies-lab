@@ -2,6 +2,7 @@ addpath('Functions');
 clear nonZeros;
 clear timeData;
 clear names;
+clear savePackage; 
 
 importData = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
      'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
@@ -128,6 +129,8 @@ else
     if exist('names','var')
         savePackage.names = names;
     end
+    saveStructure = savePackage; %For histogram analysis (the function
+    %histogramData), we need a copy of savePackage to remain a structure.
     output = defaultAnalyze2(savePackage); %analyze the structure to produce output
     stateDwellSummary.eventTimes = output(1).timeLengths;
 
