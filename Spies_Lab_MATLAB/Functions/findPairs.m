@@ -86,7 +86,7 @@ function [data,names] = findPairs(numCol)
                     fileID = fopen([path slash name]);
                     tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                     tempData = textscan(fileID,'%f %f');
-                    tempData = cat(2,tempData{1}, tempData{2});
+                    tempData = uint16(cat(2,tempData{1}, tempData{2}));
                     fclose(fileID);
                     data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;
                     names(i0,j) = {name};
@@ -99,7 +99,7 @@ function [data,names] = findPairs(numCol)
                         fileID = fopen([path slash name]);
                         tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                         tempData = textscan(fileID,'%f %f');
-                        tempData = cat(2,tempData{1}, tempData{2});
+                        tempData = uint16(cat(2,tempData{1}, tempData{2}));
                         fclose(fileID);
                         data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;
                         names(i0,j) = {name};

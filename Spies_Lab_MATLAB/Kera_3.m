@@ -2,7 +2,7 @@ addpath('Functions');
 clear nonZeros;
 clear timeData;
 clear names;
-clear savePackage; 
+clear savePackage; %need to clear json file
 
 importData = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
      'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
@@ -14,7 +14,7 @@ initialSettings = inputdlg({['Which input method would you like to use?'...
 inputMethod = initialSettings{1};
 channels = round(str2double(initialSettings{2})); %i.e. a channel for cy3 and one for cy5
 states = round(str2double(initialSettings{3}));
-stateList = double(repmat(states,channels)); %i.e. [2 2] for two states in each of two channels
+stateList = double(repmat(states,[1 channels])); %i.e. [2 2] for two states in each of two channels
 
 if ispc
     slash = '\';
