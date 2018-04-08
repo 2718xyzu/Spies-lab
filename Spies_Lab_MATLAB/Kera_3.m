@@ -38,6 +38,10 @@ else
         timeInterval = 1E-3; %time unit used in QuB (milliseconds);
         dir3 = {0};
         [data,names] = findPairs(channels);
+        if max(data(:))>1000 %if data provided in "long" form
+            data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
+            timeInterval = timeInterval*10; %update timeInterval
+        end
         record = zeros(1);
 
         k=1;
@@ -132,7 +136,7 @@ else
     saveStructure = savePackage; %For histogram analysis (the function
     %histogramData), we need a copy of savePackage to remain a structure.
     output = defaultAnalyze2(savePackage); %analyze the structure to produce output
-    stateDwellSummary.eventTimes = output(1).timeLengths;
+    stateDwellSummary(1).eventTimes = output(1).timeLengths;
 
     [~,index] = sortrows([output.count].');
     output = output(index(end:-1:1));

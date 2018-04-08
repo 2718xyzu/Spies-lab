@@ -8,42 +8,43 @@ function out = dwellSummary(matrix,timeInterval,channels)
     end
 
     for j = 1:size(matrix,2)
-        if matrix(:,j) ~= ones(size(matrix(:,j)))
+        tempList = matrix(1:nnz(matrix(:,j)),j);
+        if sum(tempList) ~= length(tempList)
             k = mod(j-1,channels)+1;
             i = 1;
-            state = matrix(i,j);
+            state = tempList(i);
 
-            while state == 1 && i<size(matrix,1)
+            while state == 1 && i<length(tempList)
                 i = i+1;
-                state = matrix(i,j);
+                state = tempList(i);
             end
 
-            if i>1 && i~=matrix(i,j)
+            if i>1 && i~=tempList(i)
                 out(k).timeBeforeFirst(end+1) = i-1;
             end
 
             iLast = i-1;
-            while i<size(matrix,1)
-                state = matrix(i,j);
-                stateNext = matrix(i+1,j);
+            while i<length(tempList)
+                state = tempList(i);
+                stateNext = tempList(i+1);
                 if state~=stateNext
-                    length = i - iLast;
-                    out(k).dwellTimes(nnz(out(k).dwellTimes(:,state))+1,state) = length;
+                    longth = i - iLast;
+                    out(k).dwellTimes(nnz(out(k).dwellTimes(:,state))+1,state) = longth;
                     iLast = i;
                 end
                 
                 i = i+1;
             end
 
-            if matrix(end,j) == 1
-                length = i - iLast;
-                out(k).timeAfterLast(end+1) = length;
+            if tempList(end) == 1
+                longth = i - iLast;
+                out(k).timeAfterLast(end+1) = longth;
             end
         end
     end
     for k = 1:channels
         out(k).timeBeforeFirst = (out(k).timeBeforeFirst').*timeInterval;
         out(k).timeAfterLast = (out(k).timeAfterLast').*timeInterval;
-        out(k).dwellTimes = out(k).dwellTimes.*timeInterval;
+        out(k).dwellTimes(2:end,:) = out(k).dwellTimes(2:end,:).*timeInterval;
     end
 end
