@@ -3,71 +3,56 @@ clear nonZeros;
 clear timeData;
 clear names;
 
-importData = questdlg('Do you have a SavePackage to upload?  If so, you will be prompted to select it',...
-    'Input Method', 'Select SavePackage', 'Import new data files', 'Import new data files');
+gui = keraGUI();
+gui.createButton('Import Data', [0.01, 0.94, 0.075, 0.05], @import_data)
+gui.createDropdown({'ebFRET', 'QuB'}, [0.1, 0.93, 0.06, 0.05], @nothing)
+gui.createText('Channels:', [0.17, 0.93, 0.08, 0.05])
+channels = gui.createTextbox('1', [0.25, 0.96, 0.02, 0.02])
+gui.createText('States:', [0.30, 0.93, 0.08, 0.05])
+states = gui.createTextbox('4', [0.39, 0.96, 0.02, 0.02])
 
-initialSettings = inputdlg({['Which input method would you like to use?'...
-    '  Type ebFRET or QuB'], 'How many channels (colors) are you analyzing?',...
-    'How many states does your model have?'}, 'Settings',3,{'ebFRET','1','4'});
+%stateList = double(repmat(states,channels)); %i.e. [2 2] for two states in each of two channels
 
-inputMethod = initialSettings{1};
-channels = round(str2double(initialSettings{2})); %i.e. a channel for cy3 and one for cy5
-states = round(str2double(initialSettings{3}));
-stateList = double(repmat(states,channels)); %i.e. [2 2] for two states in each of two channels
+function qubAnalyze()
+    clear data;
+    clear names;
+    clear matrix; %location to store all QuB data in form parseable by the program
 
-if ispc
-    slash = '\';
-else
-    slash = '/';
+    timeInterval = 1E-3; %time unit used in QuB (milliseconds);
+    dir3 = {0};
+    [data,names] = findPairs(channels);
+    record = zeros(1);
+
+    k=1;
+    for i = 1:size(data,4)
+        clear binM;
+        clear transM;
+        for j = 1:channels
+            timeM = squeeze(data(:,:,j,i));
+            count = 1;
+            for i0 = 1:size(timeM,1)
+                binM(count:count+timeM(i0,2),j) = timeM(i0,1)+1;
+                count = count + timeM(i0,2);
+            end
+            matrix(1:size(binM,1),k) = binM(:,j);
+            k = k+1;
+        end
+    end
 end
 
-if importData(1) == 'S'
-    [filename, path] = uigetfile('*.spkg');
-    if filename
-        savePackage = jsondecode(char(load([path slash filename])));
-    else
-        error('No file selected');
+function ebfretAnalyze()
+    timeInterval = .1; %time unit used in ebFRET
+    [file, path] = uigetfile;
+    smdImport = load([path slash file]);
+    clear matrix;
+    for i = 1:size(smdImport.data,2)
+        import = smdImport.data(i).values(:,4);
+        matrix(1:length(import),i) = smdImport.data(i).values(:,4);
     end
-else
-    if lower(inputMethod(1)) == 'q' %Determine the method of analysis: QuB or ebFRET
-        clear data;
-        clear names;
-        clear matrix; %location to store all QuB data in form parseable by the program
+    matrix(matrix==0) = 1;
+end
 
-        timeInterval = 1E-3; %time unit used in QuB (milliseconds);
-        dir3 = {0};
-        [data,names] = findPairs(channels);
-        record = zeros(1);
-
-        k=1;
-        for i = 1:size(data,4)
-            clear binM;
-            clear transM;
-            for j = 1:channels
-                timeM = squeeze(data(:,:,j,i));
-                count = 1;
-                for i0 = 1:size(timeM,1)
-                    binM(count:count+timeM(i0,2),j) = timeM(i0,1)+1;
-                    count = count + timeM(i0,2);
-                end
-                matrix(1:size(binM,1),k) = binM(:,j);
-                k = k+1;
-            end
-        end
-
-    elseif lower(inputMethod(1)) == 'e' %ebFRET ordered traces
-        timeInterval = .1; %time unit used in ebFRET
-        [file, path] = uigetfile;
-        smdImport = load([path slash file]);
-        clear matrix;
-        for i = 1:size(smdImport.data,2)
-            import = smdImport.data(i).values(:,4);
-            matrix(1:length(import),i) = smdImport.data(i).values(:,4);
-        end
-        matrix(matrix==0) = 1;
-    else
-        error('Not a valid input method.  String must be either qub or ebfret.');
-    end
+function processNewData()
     stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
     i = 1;
     insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
@@ -143,4 +128,13 @@ else
     %save the output, and save the savePackage to computer
     [filename, path] = uiputfile('savePackage.spkg');
     save([path slash filename], 'savePackage', '-ascii', '-double');
+end
+
+function import_data(hObject, eventData, handles)
+    [filename, path] = uigetfile('*.spkg');
+    if filename
+        savePackage = jsondecode(char(load([path '/' filename])));
+    else
+        error('No file selected');
+    end
 end
