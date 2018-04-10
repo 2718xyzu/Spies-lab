@@ -4,14 +4,16 @@ clear timeData;
 clear names;
 
 gui = keraGUI();
-gui.createButton('Import Data', [0.01, 0.94, 0.075, 0.05], @import_data)
-gui.createDropdown({'ebFRET', 'QuB'}, [0.1, 0.93, 0.06, 0.05], @nothing)
-gui.createText('Channels:', [0.17, 0.93, 0.08, 0.05])
-channels = gui.createTextbox('1', [0.25, 0.96, 0.02, 0.02])
-gui.createText('States:', [0.30, 0.93, 0.08, 0.05])
-states = gui.createTextbox('4', [0.39, 0.96, 0.02, 0.02])
 
-%stateList = double(repmat(states,channels)); %i.e. [2 2] for two states in each of two channels
+importMenu = uimenu(gui.guiWindow, 'Text', 'Import');
+spkg = uimenu(importMenu, 'Text', 'spkg');
+
+gui.createDropdown({'ebFRET', 'QuB'}, [0.1, 0.93, 0.06, 0.05]);
+gui.createText('Channels:', [0.17, 0.93, 0.08, 0.05]);
+channels = gui.createTextbox('1', [0.25, 0.96, 0.02, 0.02]);
+gui.createText('States:', [0.30, 0.93, 0.08, 0.05]);
+states = gui.createTextbox('4', [0.39, 0.96, 0.02, 0.02]);
+
 
 function qubAnalyze()
     clear data;
@@ -46,13 +48,14 @@ function ebfretAnalyze()
     smdImport = load([path slash file]);
     clear matrix;
     for i = 1:size(smdImport.data,2)
-        import = smdImport.data(i).values(:,4);
-        matrix(1:length(import),i) = smdImport.data(i).values(:,4);
+        ebfretImport = smdebfretImport.data(i).values(:,4);
+        matrix(1:length(ebfretImport),i) = smdebfretImport.data(i).values(:,4);
     end
     matrix(matrix==0) = 1;
 end
 
 function processData()
+    stateList = double(repmat(str2num(states.String),str2num(channels.String))); %i.e. [2 2] for two states in each of two channels
     stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
     i = 1;
     insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));

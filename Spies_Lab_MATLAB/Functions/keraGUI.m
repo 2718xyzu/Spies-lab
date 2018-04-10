@@ -5,9 +5,9 @@ classdef keraGUI < handle
     end
     methods
         function gui = keraGUI()
-            guiWindow = figure('Visible', 'on');
-            guiWindow.MenuBar = 'none';
-            guiWindow.ToolBar = 'none';
+            gui.guiWindow = figure('Visible', 'on');
+            gui.guiWindow.MenuBar = 'none';
+            gui.guiWindow.ToolBar = 'none';
         end
 
         function button = createButton(gui, label, position, callback)
