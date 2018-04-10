@@ -14,8 +14,8 @@ classdef keraGUI < handle
             button = uicontrol('Style', 'pushbutton', 'Units', 'normalized', 'String', label, 'Position', position, 'Callback', callback);
         end
 
-        function dropdown = createDropdown(gui, labels, position, callback)
-            dropdown = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position, 'Callback', callback);
+        function dropdown = createDropdown(gui, labels, position)
+            dropdown = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position);
         end
 
         function slider = createSlider(gui, minimum, maximum, position, callback)
