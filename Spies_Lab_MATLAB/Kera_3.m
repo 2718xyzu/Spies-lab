@@ -2,22 +2,24 @@ addpath('Functions');
 clear nonZeros;
 clear timeData;
 clear names;
+clear savePackage;
 
 gui = keraGUI();
 
 importMenu = uimenu(gui.guiWindow, 'Text', 'Import');
-spkg = uimenu(importMenu, 'Text', 'spkg');
+spkg = uimenu(importMenu, 'Text', 'spkg', 'Callback', @import_data);
+ebFRET = uimenu(importMenu, 'Text', 'ebFRET', 'Callback', @ebfretAnalyze);
+qub = uimenu(importMenu, 'Text', 'QuB', 'Callback', @qubAnalyze);
 
-gui.createDropdown({'ebFRET', 'QuB'}, [0.1, 0.93, 0.06, 0.05]);
-gui.createText('Channels:', [0.17, 0.93, 0.08, 0.05]);
-channels = gui.createTextbox('1', [0.25, 0.96, 0.02, 0.02]);
-gui.createText('States:', [0.30, 0.93, 0.08, 0.05]);
-states = gui.createTextbox('4', [0.39, 0.96, 0.02, 0.02]);
+initialSettings = inputdlg({'How many channels (colors) are you analyzing?',...
+    'How many states does your model have?'}, 'Settings',3,{'1','4'});
 
+channels = round(str2double(initialSettings{1})); %i.e. a channel for cy3 and one for cy5
+states = round(str2double(initialSettings{2}));
+stateList = double(repmat(states,[1 channels])); %i.e. [2 2] for two states in each of two channels
 
-function qubAnalyze()
+function qubAnalyze(hObject, eventData, handles)
     clear data;
-    clear names;
     clear matrix; %location to store all QuB data in form parseable by the program
 
     timeInterval = 1E-3; %time unit used in QuB (milliseconds);
@@ -42,7 +44,7 @@ function qubAnalyze()
     end
 end
 
-function ebfretAnalyze()
+function ebfretAnalyze(hObject, eventData, handles)
     timeInterval = .1; %time unit used in ebFRET
     [file, path] = uigetfile;
     smdImport = load([path slash file]);
@@ -55,7 +57,6 @@ function ebfretAnalyze()
 end
 
 function processData()
-    stateList = double(repmat(str2num(states.String),str2num(channels.String))); %i.e. [2 2] for two states in each of two channels
     stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
     i = 1;
     insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
@@ -127,8 +128,8 @@ function processData()
         savePackageData = {channels, letters, timeData, nonZeros, stateDwellSummary, output};
     end
 
+    saveStructure = savePackage;
     savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
-    %save the output, and save the savePackage to computer
     [filename, path] = uiputfile('savePackage.spkg');
     save([path slash filename], 'savePackage', '-ascii', '-double');
 end
