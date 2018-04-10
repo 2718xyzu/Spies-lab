@@ -1,18 +1,17 @@
-function packagePairsebFRET(numCol)
+function packagePairsebFRET(channels)
     output = questdlg('Next, please select the folder which has all the txt files you want to convert',...
         'Instructions','OK','Quit','OK');
-    path = uigetdir;
-    if ispc
-        slash = '\';
-    else
-        slash = '/';
+    if output{1} == 'Q'
+        error('Quit program');
     end
+    path = uigetdir;
 
-    dir2 = dir([path slash '*.txt']);
+
+    dir2 = dir([path  '*.txt']);
     clear dir3;
     dir3 = { dir2.name };
     for i = 1:length(dir3)
-        A = importdata([path slash dir3{i}]);
+        A = importdata([path  dir3{i}]);
         if isstruct(A)
             A = A.data;
         end

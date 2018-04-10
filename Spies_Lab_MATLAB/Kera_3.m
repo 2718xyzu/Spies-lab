@@ -62,9 +62,13 @@ else
 
     elseif lower(inputMethod(1)) == 'e' %ebFRET ordered traces
         timeInterval = .1; %time unit used in ebFRET
+        if channels == 1
         [file, path] = uigetfile;
         smdImport = load([path slash file]);
         clear matrix;
+        else
+            packagePairsebFRET(channels);
+        end
         for i = 1:size(smdImport.data,2)
             import = smdImport.data(i).values(:,4);
             matrix(1:length(import),i) = smdImport.data(i).values(:,4);
