@@ -135,18 +135,20 @@ classdef Kera < handle
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
             save([path '/' filename], 'savePackage', '-ascii', '-double');
+            kera.histogramData()
         end
 
         function import_spkg(kera, hObject, eventData, handles)
             [filename, path] = uigetfile('*.spkg');
             if filename
                 kera.savePackage = jsondecode(char(load([path '/' filename])));
+                kera.histogramData()
             else
                 error('No file selected');
             end
         end
 
-        function out = histogramData(struct)
+        function histogramData(kera)
             row = inputdlg('Which row of the output file would you like to plot?','Data select');
             row = str2double(row{1});
 
@@ -155,11 +157,11 @@ classdef Kera < handle
 
             if dataType(1) == 'D'
                 out.dataType = 1;
-                rawData = struct.output(row).timeLengths;
+                rawData = kera.savePackage.output(row).timeLengths;
                 out.rawData = rawData;
             else
                 out.dataType = 2;
-                rawData = struct.output(row).timeLengths_Gaps;
+                rawData = kera.savePackage.output(row).timeLengths_Gaps;
                 out.rawData = rawData;
             end
 
@@ -183,12 +185,13 @@ classdef Kera < handle
                 out.order = 2;
             end
 
-            figure();
             hold on;
             out.handle = gcf;
 
 
+            subplot(1,2,1)
             h1 = histogram(out.data);
+            subplot(1,2,2)
             fitModel = getFitHistogram(h1,out.fitType,out.order);
 
             xList = linspace(h1.BinEdges(1),h1.BinEdges(end),500);
