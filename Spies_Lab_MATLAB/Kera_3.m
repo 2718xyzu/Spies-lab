@@ -47,7 +47,7 @@ end
 function ebfretAnalyze(hObject, eventData, handles)
     timeInterval = .1; %time unit used in ebFRET
     [file, path] = uigetfile;
-    smdImport = load([path slash file]);
+    smdImport = load([path '/' file]);
     clear matrix;
     for i = 1:size(smdImport.data,2)
         ebfretImport = smdebfretImport.data(i).values(:,4);
@@ -131,7 +131,7 @@ function processData()
     saveStructure = savePackage;
     savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
     [filename, path] = uiputfile('savePackage.spkg');
-    save([path slash filename], 'savePackage', '-ascii', '-double');
+    save([path '/' filename], 'savePackage', '-ascii', '-double');
 end
 
 function import_data(hObject, eventData, handles)
