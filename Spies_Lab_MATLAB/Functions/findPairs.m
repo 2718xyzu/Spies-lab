@@ -1,20 +1,30 @@
-function [data,names] = findPairs(numCol)
+function [data,names] = findPairs(channels)
+%This function is only for QuB data, where the files are imported
+%separately and we have to pair them up
     output = questdlg('Next, please select the folder which has all the dwt files you want to analyze',...
         'Instructions','OK','Quit','OK');
     path = uigetdir;
-    if ispc
-        slash = '\';
-    else
-        slash = '/';
-    end
 
-    dir2 = dir([path slash '*.dwt']);
+    dir2 = dir([path  '*.dwt']);
     dir3(1:numel({dir2.name})) = { dir2.name };
+    %the file naming convention is '## tr####Chan.dwt', where the first number
+    %is the experiment number, ' tr' means 'trace', the trace number, and
+    %the characters which determine the trace's channel.  The experiment
+    %number and trace number may be any length (which is annoying), and the
+    %channel suffixes are rarely consistent.  For the Spies lab data, if no
+    %Chan is given, assume it is channel 1.  But other file endings will
+    %look like 'CY5', 'Cy5', and 'cy5', and they expect our program to be
+    %able to recognize that all of these suffixes refer to the same
+    %channel.  The upshot is the user needs to be presented with all the
+    %existent suffixes and asked which channel they would like to place
+    %those traces into.
+    %the next issue is that there might be a '1 tr12Cy5' and a '2 tr12Cy5',
+    %and we need to keep these separate (hence the variable 'column').
     for i = 1:numel(dir3)
         column = str2double(dir3{i}(1));
         match = regexp(strjoin(dir3(i)),'r\d+.+','match');
         suffix = regexp(strjoin(match(1)),'\d[^\d].+','match');
-        suffixes(i) = {suffix{1}(2:end)};
+        suffixes(i) = {lower(suffix{1}(2:end))};
         matches{i,column} = match{1}(2:end-length(suffix{1})+1);
         if ~isnan(str2double(matches{i,column}))
             allmatches{i,column} = str2double(matches{i,column});
@@ -48,26 +58,34 @@ function [data,names] = findPairs(numCol)
     if length(u) < 20
         for i = 1:length(u)
             letters(i) = inputdlg([ 'What color should files ending in ***' ...
-                u{i} ' be assigned to?  Type a number from 1 to ' num2str(numCol)]);
+                u{i} ' be assigned to?  Type a number from 1 to ' num2str(channels)]);
         end
     else
         error('Too many distinct filetypes.  Check naming guidelines and sanitize input');
     end
 
+    
+    %In a given dataset, there are supposed to be matching traces for each
+    %channel (e.g. '1 tr1' goes with '1 tr1Cy5', where the first file would
+    %go in channel 1 and the second would go in channel 2, but these are
+    %'pairs' because they are colocalized on the microscope slide.  
+    %In other words, any traces which have the same experiment number and
+    %same trace number must somehow be linked.  That's what the mess of
+    %code in the next for loop is doing.
     i0 = 1;
     for k = 1:size(allmatches,2)
 
         matches = allmatches(:,k);
-        pairs = zeros(1,numCol);
-        pairFriends = zeros(1,numCol);
+        pairs = zeros(1,channels);
+        pairFriends = zeros(1,channels);
 
         for i = 1:numel(matches)
             if ~isempty(matches{i}) && isnumeric(matches{i})
                 column = letters(strcmp(u,suffixes{i}));
                 column = str2double(column{1});
                 index = [];
-                for j = 1:numCol-1
-                    index = max([find(pairs(:,mod(column+j-1,numCol)+1)==matches{i}) index]);
+                for j = 1:channels-1
+                    index = max([find(pairs(:,mod(column+j-1,channels)+1)==matches{i}) index]);
                 end
                 if ~isempty(index)
                     pairs(index,column) = matches{i};
@@ -78,14 +96,14 @@ function [data,names] = findPairs(numCol)
                 end
             end
         end
-
+        %import them, and record the names of each file
         for i = 1:size(pairFriends,1)
             if prod(pairFriends(i,:))~=0
                 for j= 1:size(pairFriends,2)
                     name = strjoin(dir3(pairFriends(i,j)));
                     fileID = fopen([path slash name]);
                     tempData = textscan(fileID,'%s',1,'Delimiter','\t');
-                    tempData = textscan(fileID,'%f %f');
+                    tempData = textscan(fileID,'%f %f'); 
                     tempData = cat(2,tempData{1}, tempData{2});
                     fclose(fileID);
                     data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;
