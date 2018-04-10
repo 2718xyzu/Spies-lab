@@ -1,7 +1,7 @@
 classdef keraGUI < handle
     properties
         guiWindow
-        elements = {}
+        elements = containers.Map()
     end
     methods
         function gui = keraGUI()
@@ -22,12 +22,20 @@ classdef keraGUI < handle
             slider = uicontrol('Style', 'slider', 'Units', 'normalized', 'Min', minimum, 'Max', maximum, 'Value', round((minimum+maximum)/2), 'Callback', callback);
         end
 
-        function text_obj = createText(gui, text_to_show, position)
-            text_obj = uicontrol('Style', 'text', 'Units', 'normalized', 'Position', position, 'String', text_to_show);
+        function createText(gui, label, position)
+            uicontrol('Style', 'text', 'Units', 'normalized', 'Position', position, 'String', label);
         end
 
-        function textbox = createTextbox(gui, default_text, position)
-            textbox = uicontrol('Style', 'edit', 'Units', 'normalized', 'Position', position, 'String', default_text);
+        function createTextbox(gui, label, position)
+            gui.elements(label) = uicontrol('Style', 'edit', 'Units', 'normalized', 'Position', position, 'String', label);
+        end
+
+        function createPrimaryMenu(gui, label)
+            gui.elements(label) = uimenu(gui.guiWindow, 'Text', label);
+        end
+
+        function createSeconaryMenu(gui, primaryLabel, label, callback)
+            gui.elements(label) = uimenu(gui.elements(primaryLabel), 'Text', label, 'Callback', callback);
         end
     end
 end
