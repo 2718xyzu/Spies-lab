@@ -52,7 +52,7 @@ function ebfretAnalyze()
     matrix(matrix==0) = 1;
 end
 
-function processNewData()
+function processData()
     stateDwellSummary = dwellSummary(matrix,timeInterval, channels);
     i = 1;
     insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
