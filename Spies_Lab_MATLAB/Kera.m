@@ -19,7 +19,7 @@ classdef Kera < handle
         function getChannelsAndStates(kera)
             prompts = {'Channels', 'States'};
             title = 'Channel and States';
-            dims = [1 5];
+            dims = [1 10];
             default = {'1', '4'};
             channelsAndStates = inputdlg(prompts, title, dims, default);
             kera.channels = round(str2double(channelsAndStates{1}));
@@ -82,7 +82,7 @@ classdef Kera < handle
                 kera.transM = transM;
                 transM = sum(transM,2); %add all three rows
                 [timeDataTemp,~,nonZerosTemp] = find(transM); %isolate only the non-zero values, with timestamps
-                timeDataTemp = timeDataTemp * kera.timeInterval;
+                imeDataTemp = timeDataTemp * kera.timeInterval;
                 k = logical(abs(mod(nonZerosTemp,1)-(bFlag+eFlag))<.01); %find locations where events are 2 frames long
                 if nnz(k)>0
                     for f = fliplr(find(k)')
