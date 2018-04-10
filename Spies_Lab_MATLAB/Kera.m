@@ -122,13 +122,14 @@ classdef Kera < handle
 
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
+            kera.savePackage.output = kera.output
 
             if exist('names','var')
                 savePackageNames = {'name', 'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-                savePackageData = {name, kera.channels, letters, timeData, nonZeros, kera.stateDwellSummary, kera.output};
+                savePackageData = {name, kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
             else
                 savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-                savePackageData = {kera.channels, letters, timeData, nonZeros, kera.stateDwellSummary, kera.output};
+                savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
             end
 
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
@@ -143,6 +144,57 @@ classdef Kera < handle
             else
                 error('No file selected');
             end
+        end
+
+        function out = histogramData(struct)
+            row = inputdlg('Which row of the output file would you like to plot?','Data select');
+            row = str2double(row{1});
+
+            dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
+                'Dwell Times', 'Off Times', 'Dwell Times');
+
+            if dataType(1) == 'D'
+                out.dataType = 1;
+                rawData = struct.output(row).timeLengths;
+                out.rawData = rawData;
+            else
+                out.dataType = 2;
+                rawData = struct.output(row).timeLengths_Gaps;
+                out.rawData = rawData;
+            end
+
+            fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
+                'Default', 'Logarithmic', 'Default');
+
+            if fitType(1) == 'D'
+                out.fitType = 1;
+                out.data = rawData;
+            else
+                out.fitType = 2;
+                out.data = log(rawData);
+            end
+
+            order = questdlg('Single or double exponential?', 'Fit select',...
+                'Single', 'Double', 'Single');
+
+            if order(1) == 'S'
+                out.order = 1;
+            else
+                out.order = 2;
+            end
+
+            figure();
+            hold on;
+            out.handle = gcf;
+
+
+            h1 = histogram(out.data);
+            fitModel = getFitHistogram(h1,out.fitType,out.order);
+
+            xList = linspace(h1.BinEdges(1),h1.BinEdges(end),500);
+            yList = fitModel(xList);
+            plot(xList,yList);
+            disp(fitModel);
         end
     end
 end
