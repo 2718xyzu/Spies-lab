@@ -35,7 +35,7 @@ function [data,names] = findPairs(numCol)
     if contains(missingPair, 'constant trajectory')
         constantState = inputdlg(['What state number should the missing trajectories be in?'...
             '  Type a number, where 1 is the lowest state']);
-        constateState = str2double(constantState{1})-1;
+        constantState = str2double(constantState{1})-1;
 
     elseif contains(missingPair, 'Ignore')
         ignore = 1;
