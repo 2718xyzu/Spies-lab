@@ -17,6 +17,9 @@ classdef Kera < handle
         end
 
         function getChannelsAndStates(kera)
+            %GETCHANNELSANDSTATES Prompts the user for the number of channels
+            %   and the number of states their data has
+
             prompts = {'Channels', 'States'};
             title = 'Channel and States';
             dims = [1 10];
@@ -28,6 +31,9 @@ classdef Kera < handle
         end
 
         function qubAnalyze(kera, hObject, eventData, handles)
+            %QUBANALYZE Analyzes QuB data
+            %   See also EBFRETANALYZE
+
             kera.timeInterval = 1E-3; %time unit used in QuB (milliseconds);
             dir3 = {0};
             kera.getChannelsAndStates()
@@ -49,6 +55,9 @@ classdef Kera < handle
         end
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
+            %EBFRETANALYZE Analyzes ebFRET data
+            %   See also QUBANALYZE
+
             kera.timeInterval = .1; %time unit used in ebFRET
             [file, path] = uigetfile;
             smdImport = load([path '/' file]);
@@ -148,12 +157,18 @@ classdef Kera < handle
             end
         end
 
+        function histogramDataSetup(kera)
+            kera.dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
+                'Dwell Times', 'Off Times', 'Dwell Times');
+            kera.fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
+                'Default', 'Logarithmic', 'Default');
+            kera.order = questdlg('Single or double exponential?', 'Fit select',...
+                'Single', 'Double', 'Single');
+        end
+
         function histogramData(kera)
             row = inputdlg('Which row of the output file would you like to plot?','Data select');
             row = str2double(row{1});
-
-            dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
-                'Dwell Times', 'Off Times', 'Dwell Times');
 
             if dataType(1) == 'D'
                 out.dataType = 1;
@@ -165,9 +180,6 @@ classdef Kera < handle
                 out.rawData = rawData;
             end
 
-            fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
-                'Default', 'Logarithmic', 'Default');
-
             if fitType(1) == 'D'
                 out.fitType = 1;
                 out.data = rawData;
@@ -175,9 +187,6 @@ classdef Kera < handle
                 out.fitType = 2;
                 out.data = log(rawData);
             end
-
-            order = questdlg('Single or double exponential?', 'Fit select',...
-                'Single', 'Double', 'Single');
 
             if order(1) == 'S'
                 out.order = 1;
@@ -187,7 +196,6 @@ classdef Kera < handle
 
             hold on;
             out.handle = gcf;
-
 
             subplot(1,2,1)
             h1 = histogram(out.data);
