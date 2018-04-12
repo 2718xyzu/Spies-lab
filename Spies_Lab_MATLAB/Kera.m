@@ -10,10 +10,30 @@ classdef Kera < handle
         savePackage
         transM
         output
+        dataType
+        fitType
+        order
     end
     methods
         function kera = Kera()
-            kera.gui = keraGUI()
+            kera.gui = keraGUI();
+
+            kera.gui.createPrimaryMenu('Import');
+            kera.gui.createSeconaryMenu('Import', 'ebFRET', @kera.ebfretAnalyze);
+            kera.gui.createSeconaryMenu('Import', 'QuB', @kera.qubAnalyze);
+            kera.gui.createSeconaryMenu('Import', 'spkg', @kera.import_spkg);
+
+            kera.gui.createPrimaryMenu('Analysis');
+            kera.gui.createSeconaryMenu('Analysis', 'Histogram', @kera.histogramData);
+
+            kera.gui.createPrimaryMenu('Export');
+            kera.gui.createSeconaryMenu('Export', 'spkg', @kera.export_spkg);
+            kera.gui.createSeconaryMenu('Export', 'Output');
+            kera.gui.createSeconaryMenu('Output', 'csv', @kera.export_output);
+            kera.gui.createSeconaryMenu('Output', 'Matlab variable', @kera.export_output);
+            kera.gui.createSeconaryMenu('Export', 'State Dwell Summary');
+            kera.gui.createSeconaryMenu('State Dwell Summary', 'csv', @kera.export_stateDwellSummary);
+            kera.gui.createSeconaryMenu('State Dwell Summary', 'Matlab variable', @kera.export_stateDwellSummary);
         end
 
         function getChannelsAndStates(kera)
@@ -132,7 +152,18 @@ classdef Kera < handle
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
             kera.savePackage.output = kera.output
+        end
 
+        function import_spkg(kera, hObject, eventData, handles)
+            [filename, path] = uigetfile('*.spkg');
+            if filename
+                kera.savePackage = jsondecode(char(load([path '/' filename])));
+            else
+                error('No file selected');
+            end
+        end
+
+        function export_spkg(kera, hObject, eventData, handles)
             if exist('names','var')
                 savePackageNames = {'name', 'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
                 savePackageData = {name, kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
@@ -144,17 +175,6 @@ classdef Kera < handle
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
             save([path '/' filename], 'savePackage', '-ascii', '-double');
-            kera.histogramData()
-        end
-
-        function import_spkg(kera, hObject, eventData, handles)
-            [filename, path] = uigetfile('*.spkg');
-            if filename
-                kera.savePackage = jsondecode(char(load([path '/' filename])));
-                kera.histogramData()
-            else
-                error('No file selected');
-            end
         end
 
         function histogramDataSetup(kera)
@@ -166,11 +186,15 @@ classdef Kera < handle
                 'Single', 'Double', 'Single');
         end
 
-        function histogramData(kera)
+        function histogramData(kera, hObject, eventData, handles)
+            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
+                kera.histogramDataSetup()
+            end
+
             row = inputdlg('Which row of the output file would you like to plot?','Data select');
             row = str2double(row{1});
 
-            if dataType(1) == 'D'
+            if kera.dataType(1) == 'D'
                 out.dataType = 1;
                 rawData = kera.savePackage.output(row).timeLengths;
                 out.rawData = rawData;
@@ -180,7 +204,7 @@ classdef Kera < handle
                 out.rawData = rawData;
             end
 
-            if fitType(1) == 'D'
+            if kera.fitType(1) == 'D'
                 out.fitType = 1;
                 out.data = rawData;
             else
@@ -188,7 +212,7 @@ classdef Kera < handle
                 out.data = log(rawData);
             end
 
-            if order(1) == 'S'
+            if kera.order(1) == 'S'
                 out.order = 1;
             else
                 out.order = 2;
