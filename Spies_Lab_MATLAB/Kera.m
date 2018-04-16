@@ -17,23 +17,6 @@ classdef Kera < handle
     methods
         function kera = Kera()
             kera.gui = keraGUI();
-
-            kera.gui.createPrimaryMenu('Import');
-            kera.gui.createSeconaryMenu('Import', 'ebFRET', @kera.ebfretAnalyze);
-            kera.gui.createSeconaryMenu('Import', 'QuB', @kera.qubAnalyze);
-            kera.gui.createSeconaryMenu('Import', 'spkg', @kera.import_spkg);
-
-            kera.gui.createPrimaryMenu('Analysis');
-            kera.gui.createSeconaryMenu('Analysis', 'Histogram', @kera.histogramData);
-
-            kera.gui.createPrimaryMenu('Export');
-            kera.gui.createSeconaryMenu('Export', 'spkg', @kera.export_spkg);
-            kera.gui.createSeconaryMenu('Export', 'Output');
-            kera.gui.createSeconaryMenu('Output', 'csv', @kera.export_output);
-            kera.gui.createSeconaryMenu('Output', 'Matlab variable', @kera.export_output);
-            kera.gui.createSeconaryMenu('Export', 'State Dwell Summary');
-            kera.gui.createSeconaryMenu('State Dwell Summary', 'csv', @kera.export_stateDwellSummary);
-            kera.gui.createSeconaryMenu('State Dwell Summary', 'Matlab variable', @kera.export_stateDwellSummary);
         end
 
         function getChannelsAndStates(kera)
@@ -58,9 +41,15 @@ classdef Kera < handle
             dir3 = {0};
             kera.getChannelsAndStates()
             [data,names] = findPairs(kera.channels);
+            if max(data(:))>1000 %if data provided in "long" form
+                data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
+                kera.timeInterval = kera.timeInterval*10; %update timeInterval
+            end
             record = zeros(1);
             k=1;
             for i = 1:size(data,4)
+                clear binM;
+                clear transM;
                 for j = 1:kera.channels
                     timeM = squeeze(data(:,:,j,i));
                     count = 1;
@@ -68,10 +57,12 @@ classdef Kera < handle
                         binM(count:count+timeM(i0,2),j) = timeM(i0,1)+1;
                         count = count + timeM(i0,2);
                     end
-                    kera.matrix(1:size(binM,1),k) = binM(:,j);
+                    matrix(1:size(binM,1),k) = binM(:,j);
                     k = k+1;
                 end
             end
+            kera.matrix = matrix;
+            kera.processData()
         end
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
@@ -147,11 +138,11 @@ classdef Kera < handle
             kera.savePackage.timeData = timeData;
             kera.savePackage.nonZeros = nonZeros;
             kera.output = defaultAnalyze2(kera.savePackage); %analyze the structure to produce output
-            kera.stateDwellSummary.eventTimes = kera.output(1).timeLengths;
+            kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
 
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
-            kera.savePackage.output = kera.output
+            kera.savePackage.output = kera.output;
         end
 
         function import_spkg(kera, hObject, eventData, handles)

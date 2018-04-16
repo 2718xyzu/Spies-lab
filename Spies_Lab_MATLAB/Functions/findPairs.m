@@ -138,7 +138,6 @@ function [data,names] = findPairs(channels)
             for j = 2:size(names,2)
                 if ~isempty(names{i,j})
                     names(i,1) = names(i,2);
-                    continue;
                 end
             end
         end
