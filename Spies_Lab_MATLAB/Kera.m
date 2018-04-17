@@ -35,16 +35,18 @@ classdef Kera < handle
 
         function qubAnalyze(kera, hObject, eventData, handles)
             %QUBANALYZE Analyzes QuB data
-            %   See also EBFRETANALYZE
+            %   See also EBFRETANALYZE and PROCESSDATA
 
             kera.timeInterval = 1E-3; %time unit used in QuB (milliseconds);
             dir3 = {0};
             kera.getChannelsAndStates()
             [data,names] = findPairs(kera.channels);
+
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
             end
+
             record = zeros(1);
             k=1;
             for i = 1:size(data,4)
@@ -67,7 +69,7 @@ classdef Kera < handle
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
-            %   See also QUBANALYZE
+            %   See also QUBANALYZE and PROCESSDATA
 
             kera.timeInterval = .1; %time unit used in ebFRET
             [file, path] = uigetfile;
@@ -143,25 +145,28 @@ classdef Kera < handle
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
             kera.savePackage.output = kera.output;
+
+            kera.postProcessing()
         end
 
-        function import_spkg(kera, hObject, eventData, handles)
+        function importSPKG(kera, hObject, eventData, handles)
             [filename, path] = uigetfile('*.spkg');
             if filename
                 kera.savePackage = jsondecode(char(load([path '/' filename])));
+                kera.postProcessing()
             else
-                error('No file selected');
+                kera.gui.errorMessage('Failed to import Save Package file')
             end
         end
 
-        function export_spkg(kera, hObject, eventData, handles)
-            if exist('names','var')
-                savePackageNames = {'name', 'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-                savePackageData = {name, kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
-            else
-                savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-                savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
-            end
+        function postProcessing(kera)
+            kera.gui.toggle('Analysis');
+            kera.gui.toggle('Export');
+        end
+
+        function exportSPKG(kera, hObject, eventData, handles)
+            savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
+            savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
 
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
@@ -171,20 +176,37 @@ classdef Kera < handle
         function histogramDataSetup(kera)
             kera.dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
                 'Dwell Times', 'Off Times', 'Dwell Times');
+            if ~kera.checkInput(kera.dataType)
+                return
+            end
+
             kera.fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
                 'Default', 'Logarithmic', 'Default');
+            if ~kera.checkInput(kera.fitType)
+                return
+            end
+
             kera.order = questdlg('Single or double exponential?', 'Fit select',...
                 'Single', 'Double', 'Single');
         end
 
         function histogramData(kera, hObject, eventData, handles)
+            if isempty(kera.savePackage)
+                kera.gui.errorMessage('Import data before analyzing');
+                return
+            end
+
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
                 kera.histogramDataSetup()
             end
 
             row = inputdlg('Which row of the output file would you like to plot?','Data select');
-            row = str2double(row{1});
 
+            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order) || isempty(row)
+                return
+            end
+
+            row = str2double(row{1});
             if kera.dataType(1) == 'D'
                 out.dataType = 1;
                 rawData = kera.savePackage.output(row).timeLengths;
@@ -221,6 +243,13 @@ classdef Kera < handle
             yList = fitModel(xList);
             plot(xList,yList);
             disp(fitModel);
+        end
+
+        function out = checkInput(kera, checkingInput)
+            out = 1;
+            if isempty(checkingInput)
+                out = 0;
+            end
         end
     end
 end

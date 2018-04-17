@@ -23,7 +23,7 @@ classdef keraGUI < handle
         end
 
         function createText(gui, label, position)
-            uicontrol('Style', 'text', 'Units', 'normalized', 'Position', position, 'String', label);
+            gui.elements(label) = uicontrol('Style', 'text', 'Units', 'normalized', 'Position', position, 'String', label);
         end
 
         function createTextbox(gui, label, position)
@@ -41,6 +41,27 @@ classdef keraGUI < handle
             addOptional(p, 'callback', '');
             parse(p,primaryLabel, label, varargin(:));
             gui.elements(label) = uimenu(gui.elements(p.Results.primaryLabel), 'Text', p.Results.label, 'Callback', p.Results.callback);
+        end
+
+        function toggle(gui, label)
+            if strcmp(gui.elements(label).Enable,'on')
+                set(gui.elements(label), 'Enable', 'off');
+            else
+                set(gui.elements(label), 'Enable', 'on');
+            end
+        end
+
+        function remove(gui, label)
+            set(gui.elements(label), 'Visible', 'off');
+            remove(gui.elements, label);
+        end
+
+        function errorMessage(gui, errorMessage)
+            gui.createText(errorMessage, [0 0 1 0.1]);
+            errorTimer = timer;
+            errorTimer.StartDelay = 5;
+            errorTimer.TimerFcn = @(~,~) gui.remove(errorMessage);
+            start(errorTimer);
         end
     end
 end
