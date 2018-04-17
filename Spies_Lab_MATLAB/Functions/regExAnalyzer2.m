@@ -1,5 +1,4 @@
-function out = regExAnalyzer2(expr, input)
-    [timeLong, posLong] = timeLengthen(input.timeData,input.letters);
+function out = regExAnalyzer2(expr, input, timeLong, posLong)
     timeData = (input.timeData);
     letters = input.letters;
     events = (input.nonZeros);
@@ -15,7 +14,7 @@ function out = regExAnalyzer2(expr, input)
         ends = ends+2;
     end
     bitLengths = ends - starts + 1;
-    width = size(events,1); 
+    width = size(events,1);
     startTimes = arrayfun(@(x) timeLong(x),starts);
     endTimes = arrayfun(@(x) timeLong(x),ends);
     if isfield(input,'names')

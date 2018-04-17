@@ -26,8 +26,8 @@ classdef Kera < handle
             prompts = {'Channels', 'States'};
             title = 'Channel and States';
             dims = [1 10];
-            default = {'1', '4'};
-            channelsAndStates = inputdlg(prompts, title, dims, default);
+            defaultValues = {'1', '4'};
+            channelsAndStates = inputdlg(prompts, title, dims, defaultValues);
             kera.channels = round(str2double(channelsAndStates{1}));
             kera.states = round(str2double(channelsAndStates{2}));
             kera.stateList = double(repmat(kera.states, [1 kera.channels]));
@@ -51,7 +51,7 @@ classdef Kera < handle
             k=1;
             for i = 1:size(data,4)
                 clear binM;
-                clear transM;
+                binM = zeros(kera.channels,sum(data(:,1,1,i))+1);
                 for j = 1:kera.channels
                     timeM = squeeze(data(:,:,j,i));
                     count = 1;
@@ -162,6 +162,8 @@ classdef Kera < handle
         function postProcessing(kera)
             kera.gui.toggle('Analysis');
             kera.gui.toggle('Export');
+            assignin('base', 'analyzedData', kera.output);
+            assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
         end
 
         function exportSPKG(kera, hObject, eventData, handles)

@@ -1,5 +1,6 @@
 function output = defaultAnalyze2(results)
-    out = regExAnalyzer2('_[^_,]{3,}_',results);
+    [timeLong, posLong] = timeLengthen(results.timeData,results.letters);
+    out = regExAnalyzer2('_[^_,]{3,}_',results, timeLong, posLong);
     %the above line searches the transition matrix (nonZeros) for all
     %'completed' events
     C = out.eventList;
@@ -19,7 +20,7 @@ function output = defaultAnalyze2(results)
 
     for i = 1:rows
         expr = output(i).expr{:}; %the text to search for
-        out = regExAnalyzer2(expr,results); %function which does the searching
+        out = regExAnalyzer2(expr,results, timeLong, posLong); %function which does the searching
         output(i).count = out.numEvents;
         output(i).meanLength = mean(out.timeLengths);
         output(i).eventList = out.eventList;
@@ -38,7 +39,7 @@ function output = defaultAnalyze2(results)
         %are periods of ground state immediately preceded and followed by
         %the type of event which we are currently looking at.
         expr2 = ['(?<=(' output(i).expr{:}(2:end-1) '))_  _(?=' output(i).expr{:}(2:end-1) ')'];
-        out = regExAnalyzer2(expr2,results); %again, get information about any gaps
+        out = regExAnalyzer2(expr2,results, timeLong, posLong); %again, get information about any gaps
         output(i).count_Gaps = out.numEvents;
         output(i).meanLength_Gaps = mean(out.timeLengths);
         output(i).timeLengths_Gaps = out.timeLengths;
