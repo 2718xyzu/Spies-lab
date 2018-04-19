@@ -1,23 +1,18 @@
-function packagePairsebFRET(channels)
-    output = questdlg('Next, please select the folder which has all the txt files you want to convert',...
-        'Instructions','OK','Quit','OK');
-    if output{1} == 'Q'
-        error('Quit program');
-    end
-    path = uigetdir;
-
-
-    dir2 = dir([path  '*.txt']);
-    clear dir3;
-    dir3 = { dir2.name };
-    for i = 1:length(dir3)
-        A = importdata([path  dir3{i}]);
-        if isstruct(A)
-            A = A.data;
+function matrix = packagePairsebFRET(channels)
+    for i = 1:channels
+    output = questdlg(['Please select the SMD file for channel ',...
+        num2str(i)],'Instructions','OK','Quit','OK');
+        if output(1) == 'Q'
+            error('Quit program');
         end
-        intensitySingle(i,2*(1:size(A(:,2),1))-1) = A(:,2)./max(A(:,2)+.01);
-        intensitySingle(i,2*(1:size(A(:,3),1))) = A(:,3)./max(A(:,3)+.01);
-        
+        [file, path] = uigetfile;
+        smd = importdata([path file]);
+        for j = 1:size(smd.data,2)
+            longth = size(smd.data(j).values(:,4),1);
+            matrix(1:longth, i+j*channels-1) = smd.data(j).values(:,4);
+        end
     end
-    plotCut3(1-intensitySingle,intensitySingle,length(intensitySingle),.1);
-end
+
+    
+    
+    
