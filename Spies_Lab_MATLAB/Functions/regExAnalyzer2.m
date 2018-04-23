@@ -1,4 +1,4 @@
-function out = regExAnalyzer2(expr, input, timeLong, posLong)
+function out = regExAnalyzer2(expr, input, timeLong, posLong, rowLong)
     timeData = (input.timeData);
     letters = input.letters;
     events = (input.nonZeros);
@@ -19,7 +19,7 @@ function out = regExAnalyzer2(expr, input, timeLong, posLong)
     endTimes = arrayfun(@(x) timeLong(x),ends);
     if isfield(input,'names')
         names = input.names;
-        names2 = arrayfun(@(x) names(ceil(x/width),1),posLong(starts))'; %Fix naming
+        names2 = arrayfun(@(x) rowLong(x),starts)'; 
     end
 
     num = length(starts);
