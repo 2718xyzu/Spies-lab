@@ -9,7 +9,7 @@ function matrix = packagePairsebFRET(channels)
         smd = importdata([path file]);
         for j = 1:size(smd.data,2)
             longth = size(smd.data(j).values(:,4),1);
-            matrix(1:longth, i+j*channels-1) = smd.data(j).values(:,4);
+            matrix(1:longth, i+(j-1)*channels) = smd.data(j).values(:,4);
         end
     end
 end

@@ -98,7 +98,7 @@ classdef Kera < handle
             eFlag = .05; %to flag the end of each event
             powerAddition = [0 cumsum(kera.stateList)];
 
-            while i <= size(kera.matrix,2)
+            while i <= size(kera.matrix,2)+1-kera.channels
                 for j = 1:kera.channels
                     state(:,j) = 2.^(powerAddition(j)+kera.matrix(:,i)-1); %all states represented as binary #'s
                     i=i+1; %move to the next row
