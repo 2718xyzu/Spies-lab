@@ -72,13 +72,19 @@ classdef Kera < handle
             %   See also QUBANALYZE and PROCESSDATA
 
             kera.timeInterval = .1; %time unit used in ebFRET
-            [file, path] = uigetfile;
-            smdImport = load([path '/' file]);
             kera.getChannelsAndStates()
-            for i = 1:size(smdImport.data,2)
-                ebfretImport = smdImport.data(i).values(:,4);
-                kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
+
+            if kera.channels == 1
+                [file, path] = uigetfile;
+                smdImport = load([path '/' file]);
+                for i = 1:size(smdImport.data,2)
+                    ebfretImport = smdImport.data(i).values(:,4);
+                    kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
+                end
+            else
+                kera.matrix = packagePairsebFRET(kera.channels);
             end
+
             kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
