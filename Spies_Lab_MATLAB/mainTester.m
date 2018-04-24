@@ -12,8 +12,8 @@ kera.gui.toggle('Analysis');
 
 kera.gui.createPrimaryMenu('Export');
 kera.gui.createSeconaryMenu('Export', 'spkg', @kera.exportSPKG);
-kera.gui.createSeconaryMenu('Export', 'Output');
-kera.gui.createSeconaryMenu('Output', 'csv', @kera.exportOutput);
+kera.gui.createSeconaryMenu('Export', 'Analyzed Data');
+kera.gui.createSeconaryMenu('Analyzed Data', 'csv', @kera.exportAnalyzed);
 kera.gui.createSeconaryMenu('Export', 'State Dwell Summary');
 kera.gui.createSeconaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwellSummary);
 kera.gui.toggle('Export');

@@ -23,11 +23,7 @@ classdef Kera < handle
             %GETCHANNELSANDSTATES Prompts the user for the number of channels
             %   and the number of states their data has
 
-            prompts = {'Channels', 'States'};
-            title = 'Channel and States';
-            dims = [1 10];
-            defaultValues = {'1', '4'};
-            channelsAndStates = inputdlg(prompts, title, dims, defaultValues);
+            channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
             kera.channels = round(str2double(channelsAndStates{1}));
             kera.states = round(str2double(channelsAndStates{2}));
             kera.stateList = double(repmat(kera.states, [1 kera.channels]));
@@ -173,6 +169,14 @@ classdef Kera < handle
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
             save([path '/' filename], 'savePackage', '-ascii', '-double');
+        end
+
+        function exportAnalyzed(kera, hObject, eventData, handles)
+            row = str2double(kera.gui.inputdlg('Row?', {'Which would would you like to export?'}, {'1'}));
+            t1 = kera.output(row).table;
+            t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
+            t = [t1 t2];
+            writetable(t, 'table.csv', 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)

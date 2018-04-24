@@ -4,7 +4,7 @@ function output = defaultAnalyze2(results)
     %the above line searches the transition matrix (nonZeros) for all
     %'completed' events
     C = out.eventList;
-    nums = cellfun(@(x) mat2str(x),C,'UniformOutput',false);  
+    nums = cellfun(@(x) mat2str(x),C,'UniformOutput',false);
     u = unique(nums);
     %find all unique classifications of a 'completed' event
 
@@ -14,7 +14,7 @@ function output = defaultAnalyze2(results)
         output(i).expr = {['_  ' expr2 '  _']}; %underscores signal the ground state
     end
 
-    output(1).expr = {'_[^_,]{3,}_'}; %again, the expression which searches for all 
+    output(1).expr = {'_[^_,]{3,}_'}; %again, the expression which searches for all
     %completed events
     rows = size(output,2);
 
