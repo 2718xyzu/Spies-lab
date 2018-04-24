@@ -13,6 +13,7 @@ classdef Kera < handle
         dataType
         fitType
         order
+        filenames
     end
     methods
         function kera = Kera()
@@ -37,7 +38,8 @@ classdef Kera < handle
             dir3 = {0};
             kera.getChannelsAndStates()
             [data,names] = findPairs(kera.channels);
-
+            kera.filenames = names;
+            
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
@@ -68,13 +70,20 @@ classdef Kera < handle
             %   See also QUBANALYZE and PROCESSDATA
 
             kera.timeInterval = .1; %time unit used in ebFRET
-            [file, path] = uigetfile;
-            smdImport = load([path '/' file]);
             kera.getChannelsAndStates()
-            for i = 1:size(smdImport.data,2)
-                ebfretImport = smdImport.data(i).values(:,4);
-                kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
+
+            if kera.channels == 1
+                [file, path] = uigetfile;
+                smdImport = load([path '/' file]);
+                for i = 1:size(smdImport.data,2)
+                    ebfretImport = smdImport.data(i).values(:,4);
+                    kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
+                end
+            else
+                kera.matrix = packagePairsebFRET(kera.channels);
             end
+            
+            kera.filenames = num2cell(1:size(kera.matrix,2))';
             kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
@@ -88,7 +97,7 @@ classdef Kera < handle
             eFlag = .05; %to flag the end of each event
             powerAddition = [0 cumsum(kera.stateList)];
 
-            while i <= size(kera.matrix,2)
+            while i <= size(kera.matrix,2)+1-kera.channels
                 for j = 1:kera.channels
                     state(:,j) = 2.^(powerAddition(j)+kera.matrix(:,i)-1); %all states represented as binary #'s
                     i=i+1; %move to the next row
@@ -131,6 +140,7 @@ classdef Kera < handle
             letters = regexprep(letters,' 0 ',' , ');
             letters = letters(2:end-1);
 
+            kera.savePackage.filenames = kera.filenames;
             kera.savePackage.channels = kera.channels;
             kera.savePackage.letters = letters;
             kera.savePackage.timeData = timeData;
