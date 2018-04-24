@@ -17,9 +17,9 @@ function out = regExAnalyzer2(expr, input, timeLong, posLong, rowLong)
     width = size(events,1);
     startTimes = arrayfun(@(x) timeLong(x),starts);
     endTimes = arrayfun(@(x) timeLong(x),ends);
-    if isfield(input,'names')
-        names = input.names;
-        names2 = arrayfun(@(x) rowLong(x),starts)'; 
+    if isfield(input,'filenames')
+        names = input.filenames;
+        names2 = arrayfun(@(x) names(x,1),rowLong(starts))'; 
     end
 
     num = length(starts);
@@ -48,7 +48,7 @@ function out = regExAnalyzer2(expr, input, timeLong, posLong, rowLong)
     out.timeLengths = totalTimeLengths';
     out.eventList = eventList;
     if exist('names2','var')
-        out.names = names2;
+        out.filenames = names2;
     end
 
     out.bitLengths = bitLengths;

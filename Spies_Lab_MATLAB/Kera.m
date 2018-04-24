@@ -13,6 +13,7 @@ classdef Kera < handle
         dataType
         fitType
         order
+        filenames
     end
     methods
         function kera = Kera()
@@ -41,7 +42,8 @@ classdef Kera < handle
             dir3 = {0};
             kera.getChannelsAndStates()
             [data,names] = findPairs(kera.channels);
-
+            kera.filenames = names;
+            
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
@@ -84,7 +86,8 @@ classdef Kera < handle
             else
                 kera.matrix = packagePairsebFRET(kera.channels);
             end
-
+            
+            kera.filenames = num2cell(1:size(kera.matrix,2))';
             kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
@@ -141,6 +144,7 @@ classdef Kera < handle
             letters = regexprep(letters,' 0 ',' , ');
             letters = letters(2:end-1);
 
+            kera.savePackage.filenames = kera.filenames;
             kera.savePackage.channels = kera.channels;
             kera.savePackage.letters = letters;
             kera.savePackage.timeData = timeData;

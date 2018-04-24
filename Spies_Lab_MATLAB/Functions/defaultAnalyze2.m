@@ -26,13 +26,13 @@ function output = defaultAnalyze2(results)
         output(i).eventList = out.eventList;
         output(i).timeLengths = out.timeLengths; %how long was each event
 
-        if ~isfield(out,'names') %if name data exists
-            out.names = out.timeLengths.*0;
+        if ~isfield(out,'filenames') %if name data exists
+            out.filenames = out.timeLengths.*0;
         end
 
         if out.numEvents>0 %create a detailed table and store it in its own field
         output(i).table = table(output(i).eventList,output(i).timeLengths,...
-            out.timeList,out.timeDiff,out.begin,out.last,out.names,'VariableNames',...
+            out.timeList,out.timeDiff,out.begin,out.last,out.filenames,'VariableNames',...
             {'Events','Total_Duration','Time_Points','Delta_t','Time_first','Time_last','File'});
         end
         %the next line uses lookaround to search for the all 'gaps' which
@@ -44,13 +44,13 @@ function output = defaultAnalyze2(results)
         output(i).meanLength_Gaps = mean(out.timeLengths);
         output(i).timeLengths_Gaps = out.timeLengths;
 
-        if ~isfield(out,'names')
-            out.names = out.timeLengths.*0;
+        if ~isfield(out,'filenames')
+            out.filenames = out.timeLengths.*0;
         end
 
         if out.numEvents>0
             output(i).table_Gaps = table(output(i).timeLengths_Gaps,...
-                out.timeList,out.timeDiff,out.begin,out.last,out.names,'VariableNames',...
+                out.timeList,out.timeDiff,out.begin,out.last,out.filenames,'VariableNames',...
                 {'Total_Duration','Time_Points','Delta_t','Time_first','Time_last','File'});
         end
     end
