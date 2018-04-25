@@ -52,6 +52,11 @@ classdef keraGUI < handle
             gui.elements(p.Results.label) = uimenu(gui.elements(p.Results.primaryLabel), 'Text', p.Results.label, 'Callback', p.Results.callback);
         end
 
+        function out = inputdlg(gui, title, prompt, defaultValues)
+            dims = [1 10];
+            out = inputdlg(prompt, title, dims, defaultValues);
+        end
+
         function toggle(gui, label)
             if strcmp(gui.elements(label).Enable,'on')
                 set(gui.elements(label), 'Enable', 'off');

@@ -13,6 +13,7 @@ classdef Kera < handle
         dataType
         fitType
         order
+        filenames
     end
     methods
         function kera = Kera()
@@ -23,11 +24,7 @@ classdef Kera < handle
             %GETCHANNELSANDSTATES Prompts the user for the number of channels
             %   and the number of states their data has
 
-            prompts = {'Channels', 'States'};
-            title = 'Channel and States';
-            dims = [1 10];
-            defaultValues = {'1', '4'};
-            channelsAndStates = inputdlg(prompts, title, dims, defaultValues);
+            channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
             kera.channels = round(str2double(channelsAndStates{1}));
             kera.states = round(str2double(channelsAndStates{2}));
             kera.stateList = double(repmat(kera.states, [1 kera.channels]));
@@ -41,7 +38,8 @@ classdef Kera < handle
             dir3 = {0};
             kera.getChannelsAndStates()
             [data,names] = findPairs(kera.channels);
-
+            kera.filenames = names;
+            
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
@@ -84,7 +82,8 @@ classdef Kera < handle
             else
                 kera.matrix = packagePairsebFRET(kera.channels);
             end
-
+            
+            kera.filenames = num2cell(1:size(kera.matrix,2))';
             kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
@@ -98,7 +97,7 @@ classdef Kera < handle
             eFlag = .05; %to flag the end of each event
             powerAddition = [0 cumsum(kera.stateList)];
 
-            while i <= size(kera.matrix,2)
+            while i <= size(kera.matrix,2)+1-kera.channels
                 for j = 1:kera.channels
                     state(:,j) = 2.^(powerAddition(j)+kera.matrix(:,i)-1); %all states represented as binary #'s
                     i=i+1; %move to the next row
@@ -141,6 +140,7 @@ classdef Kera < handle
             letters = regexprep(letters,' 0 ',' , ');
             letters = letters(2:end-1);
 
+            kera.savePackage.filenames = kera.filenames;
             kera.savePackage.channels = kera.channels;
             kera.savePackage.letters = letters;
             kera.savePackage.timeData = timeData;
@@ -179,6 +179,14 @@ classdef Kera < handle
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
             save([path '/' filename], 'savePackage', '-ascii', '-double');
+        end
+
+        function exportAnalyzed(kera, hObject, eventData, handles)
+            row = str2double(kera.gui.inputdlg('Row?', {'Which would would you like to export?'}, {'1'}));
+            t1 = kera.output(row).table;
+            t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
+            t = [t1 t2];
+            writetable(t, 'table.csv', 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)
