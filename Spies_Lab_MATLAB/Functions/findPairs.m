@@ -5,7 +5,8 @@ function [data,names] = findPairs(channels)
         'Instructions','OK','Quit','OK');
     path = uigetdir;
 
-    dir2 = dir([path  '*.dwt']);
+    dir2 = dir([path '/' '*.dwt']);
+
     dir3(1:numel({dir2.name})) = { dir2.name };
     %the file naming convention is '## tr####Chan.dwt', where the first number
     %is the experiment number, ' tr' means 'trace', the trace number, and
@@ -101,7 +102,7 @@ function [data,names] = findPairs(channels)
             if prod(pairFriends(i,:))~=0
                 for j= 1:size(pairFriends,2)
                     name = strjoin(dir3(pairFriends(i,j)));
-                    fileID = fopen([path slash name]);
+                    fileID = fopen([path '/' name]);
                     tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                     tempData = textscan(fileID,'%f %f'); 
                     tempData = cat(2,tempData{1}, tempData{2});
@@ -114,7 +115,7 @@ function [data,names] = findPairs(channels)
                 for j= 1:size(pairFriends,2)
                     if pairFriends(i,j)>0
                         name = strjoin(dir3(pairFriends(i,j)));
-                        fileID = fopen([path slash name]);
+                        fileID = fopen([path '/' name]);
                         tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                         tempData = textscan(fileID,'%f %f');
                         tempData = cat(2,tempData{1}, tempData{2});
@@ -138,7 +139,6 @@ function [data,names] = findPairs(channels)
             for j = 2:size(names,2)
                 if ~isempty(names{i,j})
                     names(i,1) = names(i,2);
-                    continue;
                 end
             end
         end
