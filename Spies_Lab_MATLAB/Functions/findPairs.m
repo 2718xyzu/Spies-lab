@@ -6,6 +6,7 @@ function [data,names] = findPairs(channels)
     path = uigetdir;
 
     dir2 = dir([path '/' '*.dwt']);
+
     dir3(1:numel({dir2.name})) = { dir2.name };
     %the file naming convention is '## tr####Chan.dwt', where the first number
     %is the experiment number, ' tr' means 'trace', the trace number, and

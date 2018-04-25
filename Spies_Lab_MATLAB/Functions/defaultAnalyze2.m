@@ -1,6 +1,10 @@
 function output = defaultAnalyze2(results)
+<<<<<<< HEAD
     [timeLong, posLong] = timeLengthen(results.timeData,results.letters);
     out = regExAnalyzer2('_[^_,]{3,}_',results, timeLong, posLong);
+=======
+    out = regExAnalyzer2('_[^_,]{3,}_',results);
+>>>>>>> master
     %the above line searches the transition matrix (nonZeros) for all
     %'completed' events
     C = out.eventList;
