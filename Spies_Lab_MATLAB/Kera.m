@@ -211,18 +211,39 @@ classdef Kera < handle
 
         function exportAnalyzed(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            
-            row = str2double(kera.gui.inputdlg('Row?', {'Which would would you like to export?'}, {'2'}));
-            t1 = kera.output(row).table;
-            t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
-            t = [t1 t2];
-            writetable(t, 'table.csv', 'Delimiter', ',');
+            ans = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
+            if ~ans=='Ok'
+                return
+            end
+            path = kera.selectFolder();
+            if ~exist(path)
+                return
+            end
+                
+            for row = 2:length(kera.output)
+                t1 = kera.output(row).table;
+                t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
+                t = [t2 t1];
+                filename = strcat(path, '/', 'row_', int2str(row), '.csv');
+                writetable(t, filename, 'Delimiter', ',');
+            end
         end
 
         function exportStateDwellSummary(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            
-            t1 = kera.stateDwellSummary;
+            ans = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
+            if ~ans=='Ok'
+                return
+            end
+            path = kera.selectFolder();
+            if ~exist(path)
+                return
+            end
+                
+            t1 = table(kera.stateDwellSummary.dwellTimes);
+            t2 = table(kera.stateDwellSummary.eventTimes);
+            writetable(t1, [path '/dwellTimes.csv'], 'Delimiter', ',');
+            writetable(t2, [path '/eventTimes.csv'], 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)
@@ -303,6 +324,14 @@ classdef Kera < handle
             yList = fitModel(xList);
             plot(xList,yList);
             disp(fitModel);
+        end
+        
+        function path = selectFolder(kera)
+            p = uigetdir;
+            if ~exist(p) || ~exist(p,'dir')
+                return
+            end
+            path = p;
         end
     end
 end
