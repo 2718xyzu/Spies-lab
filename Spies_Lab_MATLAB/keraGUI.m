@@ -1,6 +1,7 @@
 classdef keraGUI < handle
     properties
         guiWindow
+        error = 0
         elements = containers.Map()
     end
     methods
@@ -64,6 +65,14 @@ classdef keraGUI < handle
                 set(gui.elements(label), 'Enable', 'on');
             end
         end
+        
+        function enable(gui, label)
+            set(gui.elements(label), 'Enable', 'on');
+        end
+        
+        function disable(gui, label)
+            set(gui.elements(label), 'Enable', 'off');
+        end
 
         function remove(gui, label)
             set(gui.elements(label), 'Visible', 'off');
@@ -71,11 +80,16 @@ classdef keraGUI < handle
         end
 
         function errorMessage(gui, errorMessage)
+            gui.error = 1;
             gui.createText(errorMessage, [0 0 1 0.1]);
             errorTimer = timer;
-            errorTimer.StartDelay = 5;
+            errorTimer.StartDelay = 10;
             errorTimer.TimerFcn = @(~,~) gui.remove(errorMessage);
             start(errorTimer);
+        end
+        
+        function resetError(gui)
+            gui.error = 0;
         end
     end
 end

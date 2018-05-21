@@ -23,23 +23,41 @@ classdef Kera < handle
         function getChannelsAndStates(kera)
             %GETCHANNELSANDSTATES Prompts the user for the number of channels
             %   and the number of states their data has
-
+            kera.gui.resetError();
+            
             channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
-            kera.channels = round(str2double(channelsAndStates{1}));
-            kera.states = round(str2double(channelsAndStates{2}));
-            kera.stateList = double(repmat(kera.states, [1 kera.channels]));
+            try
+                channels = round(str2double(channelsAndStates{1}));
+                states = round(str2double(channelsAndStates{2}));
+                if (~isreal(states) && ~isreal(channels)) || states < 0 || channels < 0
+                    kera.gui.errorMessage('Invalid Channel or State');
+                    return
+                end
+                kera.channels = channels;
+                kera.states = states;
+                kera.stateList = double(repmat(kera.states, [1 kera.channels]));
+                return
+            catch
+                kera.gui.errorMessage('Invalid Channel or State');
+                return
+            end
         end
 
         function qubAnalyze(kera, hObject, eventData, handles)
             %QUBANALYZE Analyzes QuB data
             %   See also EBFRETANALYZE and PROCESSDATA
-
+            kera.gui.resetError();
+            
             kera.timeInterval = 1E-3; %time unit used in QuB (milliseconds);
             dir3 = {0};
-            kera.getChannelsAndStates()
+            kera.getChannelsAndStates();
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
             [data,names] = findPairs(kera.channels);
             kera.filenames = names;
-            
+
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
@@ -68,10 +86,13 @@ classdef Kera < handle
         function ebfretAnalyze(kera, hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
             %   See also QUBANALYZE and PROCESSDATA
-
+            kera.gui.resetError();
+            
             kera.timeInterval = .1; %time unit used in ebFRET
             kera.getChannelsAndStates()
-
+            if isnan(kera.states) || isnan(kera.channels)
+                return
+            end
             if kera.channels == 1
                 [file, path] = uigetfile;
                 smdImport = load([path '/' file]);
@@ -82,13 +103,15 @@ classdef Kera < handle
             else
                 kera.matrix = packagePairsebFRET(kera.channels);
             end
-            
+
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
 
         function processData(kera)
+            kera.gui.resetError();
+            
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
             i = 1;
             insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
@@ -156,23 +179,28 @@ classdef Kera < handle
         end
 
         function importSPKG(kera, hObject, eventData, handles)
+            kera.gui.resetError();
+            
             [filename, path] = uigetfile('*.spkg');
             if filename
                 kera.savePackage = jsondecode(char(load([path '/' filename])));
-                kera.postProcessing()
+                kera.postProcessing();
             else
-                kera.gui.errorMessage('Failed to import Save Package file')
+                kera.gui.errorMessage('Failed to import Save Package file');
             end
         end
 
         function postProcessing(kera)
-            kera.gui.toggle('Analysis');
-            kera.gui.toggle('Export');
+            % kera.gui.alert('Processing is done!');
+            kera.gui.enable('Analysis');
+            kera.gui.enable('Export');
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
         end
 
         function exportSPKG(kera, hObject, eventData, handles)
+            kera.gui.resetError();
+            
             savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
             savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
 
@@ -182,23 +210,31 @@ classdef Kera < handle
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
-            row = str2double(kera.gui.inputdlg('Row?', {'Which would would you like to export?'}, {'1'}));
+            kera.gui.resetError();
+            
+            row = str2double(kera.gui.inputdlg('Row?', {'Which would would you like to export?'}, {'2'}));
             t1 = kera.output(row).table;
             t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
             t = [t1 t2];
             writetable(t, 'table.csv', 'Delimiter', ',');
         end
 
+        function exportStateDwellSummary(kera, hObject, eventData, handles)
+            kera.gui.resetError();
+            
+            t1 = kera.stateDwellSummary;
+        end
+
         function histogramDataSetup(kera)
             kera.dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
                 'Dwell Times', 'Off Times', 'Dwell Times');
-            if ~kera.checkInput(kera.dataType)
+            if isnan(kera.dataType)
                 return
             end
 
             kera.fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
                 'Default', 'Logarithmic', 'Default');
-            if ~kera.checkInput(kera.fitType)
+            if isnan(kera.fitType)
                 return
             end
 
@@ -207,6 +243,8 @@ classdef Kera < handle
         end
 
         function histogramData(kera, hObject, eventData, handles)
+            kera.gui.resetError();
+            
             if isempty(kera.savePackage)
                 kera.gui.errorMessage('Import data before analyzing');
                 return
@@ -215,10 +253,16 @@ classdef Kera < handle
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
                 kera.histogramDataSetup()
             end
+            
+            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
+                kera.gui.errorMessage('Histogram Cancelled');
+                return
+            end
 
             row = inputdlg('Which row of the output file would you like to plot?','Data select');
 
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order) || isempty(row)
+                kera.gui.errorMessage('Histogram Cancelled');
                 return
             end
 
@@ -259,13 +303,6 @@ classdef Kera < handle
             yList = fitModel(xList);
             plot(xList,yList);
             disp(fitModel);
-        end
-
-        function out = checkInput(kera, checkingInput)
-            out = 1;
-            if isempty(checkingInput)
-                out = 0;
-            end
         end
     end
 end
