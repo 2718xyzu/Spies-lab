@@ -9,14 +9,15 @@ classdef keraGUI < handle
             gui.guiWindow = figure('Visible', 'on');
             gui.guiWindow.MenuBar = 'none';
             gui.guiWindow.ToolBar = 'none';
+            gui.guiWindow.Units = 'normalized';
         end
 
         function createButton(gui, label, position, callback)
             gui.elements(label) = uicontrol('Style', 'pushbutton', 'Units', 'normalized', 'String', label, 'Position', position, 'Callback', callback);
         end
 
-        function dropdown = createDropdown(gui, labels, position)
-            dropdown = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position);
+        function dropdown = createDropdown(gui, name, labels, position, callback)
+            gui.elements(name) = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position, 'Callback', callback);
         end
 
         function slider = createSlider(gui, minimum, maximum, position, callback)
@@ -65,11 +66,11 @@ classdef keraGUI < handle
                 set(gui.elements(label), 'Enable', 'on');
             end
         end
-        
+
         function enable(gui, label)
             set(gui.elements(label), 'Enable', 'on');
         end
-        
+
         function disable(gui, label)
             set(gui.elements(label), 'Enable', 'off');
         end
@@ -87,7 +88,7 @@ classdef keraGUI < handle
             errorTimer.TimerFcn = @(~,~) gui.remove(errorMessage);
             start(errorTimer);
         end
-        
+
         function resetError(gui)
             gui.error = 0;
         end

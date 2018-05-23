@@ -14,6 +14,9 @@ classdef Kera < handle
         fitType
         order
         filenames
+        histogram
+        histogramFit
+        histogramRow = 1
     end
     methods
         function kera = Kera()
@@ -24,7 +27,7 @@ classdef Kera < handle
             %GETCHANNELSANDSTATES Prompts the user for the number of channels
             %   and the number of states their data has
             kera.gui.resetError();
-            
+
             channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
             try
                 channels = round(str2double(channelsAndStates{1}));
@@ -47,7 +50,7 @@ classdef Kera < handle
             %QUBANALYZE Analyzes QuB data
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-            
+
             kera.timeInterval = 1E-3; %time unit used in QuB (milliseconds);
             dir3 = {0};
             kera.getChannelsAndStates();
@@ -87,7 +90,7 @@ classdef Kera < handle
             %EBFRETANALYZE Analyzes ebFRET data
             %   See also QUBANALYZE and PROCESSDATA
             kera.gui.resetError();
-            
+
             kera.timeInterval = .1; %time unit used in ebFRET
             kera.getChannelsAndStates()
             if isnan(kera.states) || isnan(kera.channels)
@@ -111,7 +114,7 @@ classdef Kera < handle
 
         function processData(kera)
             kera.gui.resetError();
-            
+
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
             i = 1;
             insert1 = @(item,vector,index) cat(1, vector(1:index-1), item, vector(index:end));
@@ -180,7 +183,7 @@ classdef Kera < handle
 
         function importSPKG(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            
+
             [filename, path] = uigetfile('*.spkg');
             if filename
                 kera.savePackage = jsondecode(char(load([path '/' filename])));
@@ -200,7 +203,7 @@ classdef Kera < handle
 
         function exportSPKG(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            
+
             savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
             savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
 
@@ -219,7 +222,7 @@ classdef Kera < handle
             if ~exist(path)
                 return
             end
-                
+
             for row = 2:length(kera.output)
                 t1 = kera.output(row).table;
                 t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
@@ -239,7 +242,7 @@ classdef Kera < handle
             if ~exist(path)
                 return
             end
-                
+
             t1 = table(kera.stateDwellSummary.dwellTimes);
             t2 = table(kera.stateDwellSummary.eventTimes);
             writetable(t1, [path '/dwellTimes.csv'], 'Delimiter', ',');
@@ -247,25 +250,26 @@ classdef Kera < handle
         end
 
         function histogramDataSetup(kera)
-            kera.dataType = questdlg('Would you like to plot dwell times or off times?', 'Data select',...
-                'Dwell Times', 'Off Times', 'Dwell Times');
-            if isnan(kera.dataType)
-                return
-            end
+            kera.gui.createText('Data Type:', [0.60 0.2 0.2 0.1]);
+            kera.gui.createDropdown('dataType', {'Dwell Times', 'Off Times'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
+            kera.dataType = 1;
 
-            kera.fitType = questdlg('Would you like to plot a default or a logarithmic histogram', 'Fit select',...
-                'Default', 'Logarithmic', 'Default');
-            if isnan(kera.fitType)
-                return
-            end
+            kera.gui.createText('Fit Type:', [0.60 0.1 0.2 0.1]);
+            kera.gui.createDropdown('fitType', {'Default', 'Logarithmic'}, [0.75 0.1 0.2 0.1], @kera.histogramData);
+            kera.fitType = 1;
 
-            kera.order = questdlg('Single or double exponential?', 'Fit select',...
-                'Single', 'Double', 'Single');
+            kera.gui.createText('Data Order:', [0.60 0 0.2 0.1]);
+            kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
+            kera.order = 1;
+
+            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.11 0.05 0.05]);
+            kera.gui.createButton('<', [0.1 0.1 0.1 0.1], @kera.histogramData);
+            kera.gui.createButton('>', [0.25 0.1 0.1 0.1], @kera.histogramData);
         end
 
         function histogramData(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            
+
             if isempty(kera.savePackage)
                 kera.gui.errorMessage('Import data before analyzing');
                 return
@@ -273,22 +277,29 @@ classdef Kera < handle
 
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
                 kera.histogramDataSetup()
+            else
+                kera.dataType = get(kera.gui.elements('dataType'), 'Value');
+                kera.fitType = get(kera.gui.elements('fitType'), 'Value');
+                kera.order = get(kera.gui.elements('order'), 'Value');
             end
-            
-            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
+
+            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order) || isempty(kera.histogramRow)
                 kera.gui.errorMessage('Histogram Cancelled');
                 return
             end
 
-            row = inputdlg('Which row of the output file would you like to plot?','Data select');
-
-            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order) || isempty(row)
-                kera.gui.errorMessage('Histogram Cancelled');
-                return
+            if isprop(hObject, 'Style') & strcmpi(get(hObject, 'Style'),'pushbutton')
+                if hObject.String == '<' && kera.histogramRow > 1
+                    kera.histogramRow = kera.histogramRow - 1
+                elseif hObject.String == '>' && kera.histogramRow < length(kera.savePackage.output)
+                    kera.histogramRow = kera.histogramRow + 1
+                end
             end
 
-            row = str2double(row{1});
-            if kera.dataType(1) == 'D'
+            set(kera.gui.elements('1'), 'String', kera.histogramRow);
+            row = kera.histogramRow
+
+            if kera.dataType == 1
                 out.dataType = 1;
                 rawData = kera.savePackage.output(row).timeLengths;
                 out.rawData = rawData;
@@ -298,7 +309,7 @@ classdef Kera < handle
                 out.rawData = rawData;
             end
 
-            if kera.fitType(1) == 'D'
+            if kera.fitType == 1
                 out.fitType = 1;
                 out.data = rawData;
             else
@@ -306,26 +317,27 @@ classdef Kera < handle
                 out.data = log(rawData);
             end
 
-            if kera.order(1) == 'S'
+            if kera.order == 1
                 out.order = 1;
             else
                 out.order = 2;
             end
 
+            delete(kera.histogram);
+            delete(kera.histogramFit);
+
             hold on;
             out.handle = gcf;
+            subplot('Position', [0.05 0.4 0.4 0.5]);
+            kera.histogram = histogram(out.data);
+            subplot('Position', [0.55 0.4 0.4 0.5]);
+            fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
 
-            subplot(1,2,1)
-            h1 = histogram(out.data);
-            subplot(1,2,2)
-            fitModel = getFitHistogram(h1,out.fitType,out.order);
-
-            xList = linspace(h1.BinEdges(1),h1.BinEdges(end),500);
+            xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
             yList = fitModel(xList);
-            plot(xList,yList);
-            disp(fitModel);
+            kera.histogramFit = plot(xList, yList);
         end
-        
+
         function path = selectFolder(kera)
             p = uigetdir;
             if ~exist(p) || ~exist(p,'dir')
