@@ -30,19 +30,23 @@ classdef Kera < handle
 
             channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
             try
+                disp(channelsAndStates);
                 channels = round(str2double(channelsAndStates{1}));
                 states = round(str2double(channelsAndStates{2}));
                 if (~isreal(states) && ~isreal(channels)) || states < 0 || channels < 0
                     kera.gui.errorMessage('Invalid Channel or State');
-                    return
+                    kera.getChannelsAndStates()
                 end
                 kera.channels = channels;
                 kera.states = states;
                 kera.stateList = double(repmat(kera.states, [1 kera.channels]));
-                return
             catch
+                if isempty(channelsAndStates)
+                    kera.gui.errorMessage('Import Cancelled');
+                    return
+                end
                 kera.gui.errorMessage('Invalid Channel or State');
-                return
+                kera.getChannelsAndStates()
             end
         end
 
@@ -58,9 +62,13 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [data,names] = findPairs(kera.channels);
-            kera.filenames = names;
+            [data,names] = findPairs(kera);
+            if kera.gui.error
+                kera.gui.resetError()
+                return
+            end
 
+            kera.filenames = names;
             if max(data(:))>1000 %if data provided in "long" form
                 data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
                 kera.timeInterval = kera.timeInterval*10; %update timeInterval
@@ -93,11 +101,13 @@ classdef Kera < handle
 
             kera.timeInterval = .1; %time unit used in ebFRET
             kera.getChannelsAndStates()
-            if isnan(kera.states) || isnan(kera.channels)
+            if kera.gui.error
+                kera.gui.resetError();
                 return
             end
+
             if kera.channels == 1
-                [file, path] = uigetfile;
+                [file, path] = kera.selectFile();
                 smdImport = load([path '/' file]);
                 for i = 1:size(smdImport.data,2)
                     ebfretImport = smdImport.data(i).values(:,4);
@@ -195,10 +205,13 @@ classdef Kera < handle
 
         function postProcessing(kera)
             % kera.gui.alert('Processing is done!');
-            kera.gui.enable('Analysis');
             kera.gui.enable('Export');
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
+            delete(kera.histogram);
+            delete(kera.histogramFit);
+            kera.histogramRow = 1;
+            kera.histogramData(1, 1, 1);
         end
 
         function exportSPKG(kera, hObject, eventData, handles)
@@ -283,11 +296,6 @@ classdef Kera < handle
                 kera.order = get(kera.gui.elements('order'), 'Value');
             end
 
-            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order) || isempty(kera.histogramRow)
-                kera.gui.errorMessage('Histogram Cancelled');
-                return
-            end
-
             if isprop(hObject, 'Style') & strcmpi(get(hObject, 'Style'),'pushbutton')
                 if hObject.String == '<' && kera.histogramRow > 1
                     kera.histogramRow = kera.histogramRow - 1
@@ -340,10 +348,21 @@ classdef Kera < handle
 
         function path = selectFolder(kera)
             p = uigetdir;
-            if ~exist(p) || ~exist(p,'dir')
+            if isempty(p) || ~exist(p,'dir')
+                kera.gui.errorMessage('Folder not found');
                 return
             end
             path = p;
+        end
+
+        function [filename, path] = selectFile(kera)
+            [file, dir] = uigetfile;
+            if isempty(dir) || isempty(file) || ~exist([dir '/' file], 'file')
+                kera.gui.errorMessage('File not found');
+                return
+            end
+            filename = file;
+            path = dir;
         end
     end
 end
