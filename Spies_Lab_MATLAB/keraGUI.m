@@ -1,6 +1,7 @@
 classdef keraGUI < handle
     properties
         guiWindow
+        error = 0
         elements = containers.Map()
     end
     methods
@@ -8,14 +9,15 @@ classdef keraGUI < handle
             gui.guiWindow = figure('Visible', 'on');
             gui.guiWindow.MenuBar = 'none';
             gui.guiWindow.ToolBar = 'none';
+            gui.guiWindow.Units = 'normalized';
         end
 
         function createButton(gui, label, position, callback)
             gui.elements(label) = uicontrol('Style', 'pushbutton', 'Units', 'normalized', 'String', label, 'Position', position, 'Callback', callback);
         end
 
-        function dropdown = createDropdown(gui, labels, position)
-            dropdown = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position);
+        function dropdown = createDropdown(gui, name, labels, position, callback)
+            gui.elements(name) = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position, 'Callback', callback);
         end
 
         function slider = createSlider(gui, minimum, maximum, position, callback)
@@ -65,17 +67,30 @@ classdef keraGUI < handle
             end
         end
 
+        function enable(gui, label)
+            set(gui.elements(label), 'Enable', 'on');
+        end
+
+        function disable(gui, label)
+            set(gui.elements(label), 'Enable', 'off');
+        end
+
         function remove(gui, label)
             set(gui.elements(label), 'Visible', 'off');
             remove(gui.elements, label);
         end
 
         function errorMessage(gui, errorMessage)
+            gui.error = 1;
             gui.createText(errorMessage, [0 0 1 0.1]);
             errorTimer = timer;
-            errorTimer.StartDelay = 5;
+            errorTimer.StartDelay = 10;
             errorTimer.TimerFcn = @(~,~) gui.remove(errorMessage);
             start(errorTimer);
+        end
+
+        function resetError(gui)
+            gui.error = 0;
         end
     end
 end
