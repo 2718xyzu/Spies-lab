@@ -1,11 +1,26 @@
-function [data,names] = findPairs(channels)
+function [data,names] = findPairs(kera)
 %This function is only for QuB data, where the files are imported
 %separately and we have to pair them up
-    output = questdlg('Next, please select the folder which has all the dwt files you want to analyze',...
+    output = questdlg('Select a folder which has the *.dwt files you want to analyze',...
         'Instructions','OK','Quit','OK');
-    path = uigetdir;
+    if ~strcmp(output, 'OK')
+        kera.gui.errorMessage('Import Cancelled');
+        return
+    end
+    path = kera.selectFolder();
+
+    if isempty(path)
+        kera.gui.errorMessage('Import Cancelled');
+        return
+    end
 
     dir2 = dir([path '/' '*.dwt']);
+
+    if isempty(dir2)
+        kera.gui.errorMessage('Choose a folder with dwt files within it')
+        [data, names] = findPairs(kera);
+        return
+    end
 
     dir3(1:numel({dir2.name})) = { dir2.name };
     %the file naming convention is '## tr####Chan.dwt', where the first number
@@ -33,7 +48,7 @@ function [data,names] = findPairs(channels)
             disp(['Error: bad filename "' strjoin(dir2(i)) '"']);
         end
     end
-    u = unique(suffixes);
+    u = unique(lower(suffixes));
 
     %if not all files have all pairs in set
     missingPair = questdlg(['There are files without matching pairs.  Would you '...
@@ -59,17 +74,18 @@ function [data,names] = findPairs(channels)
     if length(u) < 20
         for i = 1:length(u)
             letters(i) = inputdlg([ 'What color should files ending in ***' ...
-                u{i} ' be assigned to?  Type a number from 1 to ' num2str(channels)]);
+                u{i} ' be assigned to?  Type a number from 1 to ' num2str(kera.channels)]);
         end
     else
-        error('Too many distinct filetypes.  Check naming guidelines and sanitize input');
+        kera.gui.errorMessage('Too many distinct filetypes.  Check naming guidelines and sanitize input');
+        return
     end
 
-    
+
     %In a given dataset, there are supposed to be matching traces for each
     %channel (e.g. '1 tr1' goes with '1 tr1Cy5', where the first file would
     %go in channel 1 and the second would go in channel 2, but these are
-    %'pairs' because they are colocalized on the microscope slide.  
+    %'pairs' because they are colocalized on the microscope slide.
     %In other words, any traces which have the same experiment number and
     %same trace number must somehow be linked.  That's what the mess of
     %code in the next for loop is doing.
@@ -77,16 +93,16 @@ function [data,names] = findPairs(channels)
     for k = 1:size(allmatches,2)
 
         matches = allmatches(:,k);
-        pairs = zeros(1,channels);
-        pairFriends = zeros(1,channels);
+        pairs = zeros(1,kera.channels);
+        pairFriends = zeros(1,kera.channels);
 
         for i = 1:numel(matches)
             if ~isempty(matches{i}) && isnumeric(matches{i})
                 column = letters(strcmp(u,suffixes{i}));
                 column = str2double(column{1});
                 index = [];
-                for j = 1:channels-1
-                    index = max([find(pairs(:,mod(column+j-1,channels)+1)==matches{i}) index]);
+                for j = 1:kera.channels-1
+                    index = max([find(pairs(:,mod(column+j-1,kera.channels)+1)==matches{i}) index]);
                 end
                 if ~isempty(index)
                     pairs(index,column) = matches{i};
@@ -104,7 +120,7 @@ function [data,names] = findPairs(channels)
                     name = strjoin(dir3(pairFriends(i,j)));
                     fileID = fopen([path '/' name]);
                     tempData = textscan(fileID,'%s',1,'Delimiter','\t');
-                    tempData = textscan(fileID,'%f %f'); 
+                    tempData = textscan(fileID,'%f %f');
                     tempData = cat(2,tempData{1}, tempData{2});
                     fclose(fileID);
                     data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;

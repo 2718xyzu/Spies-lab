@@ -6,10 +6,6 @@ kera.gui.createSeconaryMenu('Import', 'ebFRET', @kera.ebfretAnalyze);
 kera.gui.createSeconaryMenu('Import', 'QuB', @kera.qubAnalyze);
 kera.gui.createSeconaryMenu('Import', 'spkg', @kera.importSPKG);
 
-kera.gui.createPrimaryMenu('Analysis');
-kera.gui.createSeconaryMenu('Analysis', 'Histogram', @kera.histogramData);
-kera.gui.disable('Analysis');
-
 kera.gui.createPrimaryMenu('Export');
 kera.gui.createSeconaryMenu('Export', 'spkg', @kera.exportSPKG);
 kera.gui.createSeconaryMenu('Export', 'Analyzed Data');
