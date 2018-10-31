@@ -1,3 +1,6 @@
 *.spkg
 *.asv
 *.csv
+*.m~
+.DS_Store
+*.Testing

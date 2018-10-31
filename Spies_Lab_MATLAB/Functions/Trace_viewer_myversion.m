@@ -45,7 +45,6 @@ function Trace_viewer_myversion()
     %  File_id=fopen([Directory_of_TracesFiles '/' 'hel' FileIndexNumber GenericFileType],'r');
 
 
-    Timeunit=0.1;
 
     Timeunit=input('Enter the value of the time unit i.e. the duration of your frame rate [Default=0.1 sec]  ');
         if isempty(Timeunit)
@@ -106,7 +105,7 @@ function Trace_viewer_myversion()
     Acceptors=zeros(Number_of_traces/2,Length_of_the_TimeTraces);
     DataMatrix(Index_of_SelectedSpots)=Raw_Data(Index_of_SelectedSpots);
 
-    for i=1:(Number_of_traces/2),
+    for i=1:(Number_of_traces/2)
        Donors(i,:)=(DataMatrix(i*2-1,:)+(DataMatrix(i*2-1,:)*ChannelLeakage)-Donor_Backgrnd_Correction);   %So this will be a matrix where each column will be the Donor time series of each selected spot of the movie
        Acceptors(i,:)=(DataMatrix(i*2,:)-(DataMatrix(i*2-1,:)*ChannelLeakage)-Acceptor_Backgrnd_Correction); %So this will be a matrix where each column will be the Acceptor time series of each selected spot of the movie
     end
