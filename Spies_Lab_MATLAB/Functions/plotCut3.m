@@ -1,16 +1,16 @@
 function plotCut3(matrixID,matrixIA,frames,timeUnit)
-    saveMode = '2'
-    QuB = 1;
+saveMode = '2';
+QuB = 1;
+ebFRET = 1;
+modes = {'QuB','ebFRET'};
+if saveMode(1) == '2'
+    QuB = 0;
     ebFRET = 1;
-    modes = {'QuB','ebFRET'};
-    if saveMode(1) == '2'
-        QuB = 0;
-        ebFRET = 1;
-    elseif saveMode(1) == '4'
-        QuB = 1;
-        ebFRET = 0;
-    end
-    for i = 2
+elseif saveMode(1) == '4'
+    QuB = 1;
+    ebFRET = 0;
+end
+for i = 2
     blank = questdlg('Please select a directory (or make a new one) in which to save traces in the format for ebFRET',...
         'Select Directory','Ok','Ok');
     saveDir(i) = {uigetdir};
@@ -24,65 +24,31 @@ function plotCut3(matrixID,matrixIA,frames,timeUnit)
         errordlg('Directory not found.  Using default directory');
         saveDir{i} = [];
     end
+end
+
+goOn = 1;
+i = 1;
+timeSeries = 0:timeUnit:timeUnit*(frames-1);
+while i <= size(matrixIA,1) && goOn ~= 6
+    try
+        assert(~iscell(matrixIA));
+        traceD = matrixID(i,:);
+        traceA = 1-traceD;
+    catch %in case it was passed as a cell array
+        traceA = matrixIA{i};
+        traceD = 1-traceA;
     end
-    
-    goOn = 1;
-    i = 1;
-    timeSeries = 0:timeUnit:timeUnit*(frames-1);
-    cutCount = zeros(size(matrixID,1),1);
-    while i <= size(matrixID,1) && goOn ~= 6
-        goOn=1;
-        if isempty(goOn)
-            goOn = 10;
-        end
-        switch goOn
-            case 1
-                traceD = matrixID(i,:);
-                traceA = matrixIA(i,:);
-                traceFret = getFret(traceD,traceA);
-                saveMatrix = vertcat(timeSeries,traceD,traceA,traceFret);
-                saveMatrix = transpose(saveMatrix);
-                if QuB
-                save(([saveDir{1} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
-                cutCount(i,1) = cutCount(i,1) + 1;
-                end
-                if ebFRET
-                    saveMatrix = vertcat(traceD,traceA);
-                    saveMatrix = transpose(saveMatrix);
-                    save(([saveDir{2} 'trace_' num2str(i) '_' num2str(cutCount(i,1)) '.dat']),'saveMatrix','-ascii');
-                    cutCount(i,1) = cutCount(i,1) + 1;
-                end
-            case 3
-                x = x./timeUnit;
-                x = round(x);
-                traceD = matrixID(i,x(1):x(2));
-                traceA = matrixIA(i,x(1):x(2));
-                traceFret = getFret(traceD,traceA);
-                if QuB
-                saveMatrix = vertcat((x(1):x(2))*timeUnit,traceD,traceA,traceFret);
-                saveMatrix = transpose(saveMatrix);
-                if cutCount(i,1) == 0
-                    save(([saveDir{1} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
-                else
-                    save(([saveDir{1} 'trace_' num2str(i) '_' num2str(cutCount(i,1)) '.dat']),'saveMatrix','-ascii');
-                end
-                cutCount(i,1) = 1 + cutCount(i,1);
-                end
-                if ebFRET
-                saveMatrix = vertcat(traceD,traceA);
-                saveMatrix = transpose(saveMatrix);
-                if cutCount(i,1) == 0
-                    save(([saveDir{2} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
-                else
-                    save(([saveDir{2} 'trace_' num2str(i) '_' num2str(cutCount(i,1)) '.dat']),'saveMatrix','-ascii');
-                end
-                cutCount(i,1) = 1 + cutCount(i,1);
-                end
-            case 5
-                i = str2double(strjoin(inputdlg('Trace to go to:')))-1;
-            case 0
-                i = i-2;
-        end
-          i = i+1;
+    traceFret = getFret(traceD,traceA);
+    saveMatrix = vertcat(timeSeries,traceD,traceA,traceFret);
+    saveMatrix = transpose(saveMatrix);
+    if QuB
+        save(([saveDir{1} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
     end
+    if ebFRET
+        saveMatrix = vertcat(traceD,traceA);
+        saveMatrix = transpose(saveMatrix);
+        save(([saveDir{2} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
+    end
+    i = i+1;
+end
 end

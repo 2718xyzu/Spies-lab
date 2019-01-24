@@ -43,21 +43,28 @@ else
         ' If it helps, the mean of each column is, in order: ' mat2str(meanA,5) ]);
 
     column = str2double(column{1});
+    intensity = cell(length(dir3),1);
     for q = 1:length(dir3)
         A = importdata([ path filesep dir3{q}]);
         if isstruct(A)
             A = A.data;
         end
-        intensity(q,1:length(A)) = A(:,column);
+        intensity(q) = {A(:,column)'};
     end
 
     emFRET = emulateFRET(intensity);
+    if isempty(emFRET)
+        return
+    end
     timeUnit = inputdlg('Input time unit of the video in seconds');
     if isempty(timeUnit{:})
         timeUnit = .1;
     else
         timeUnit = str2double(timeUnit{1});
     end
-
-    plotCut3(1-emFRET,emFRET,length(intensity),timeUnit);
+    if iscell(emFRET)
+        plotCut3(0,emFRET,length(intensity{1}),timeUnit);
+    else
+        plotCut3(1-emFRET,emFRET,length(intensity),timeUnit);
+    end
 end
