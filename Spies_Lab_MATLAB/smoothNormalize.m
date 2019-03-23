@@ -4,7 +4,7 @@ function [matrix] = smoothNormalize(varargin)
 %   The input matrix should have each trace as a different row, with the
 %   second (optional) input being two columns of data, with the same number of rows
 %   as the input matrix, which contain the start and end indices of the
-%   baseline for each trace.
+%   baseline for each trace (typically a region of photoblinking, if it is present).
 
 input = varargin{1};
 matrix = cell(size(input));
