@@ -1,7 +1,7 @@
 function [matrix] = smoothNormalize(varargin)
 %smoothNormalize: Smooths and normalizes a matrix containing a
 %group of fluorescence traces
-%   The input matrix should have each trace as a different row, with the
+%   The input matrix should have each trace stored as a list within a 1xN cell array, with the
 %   second (optional) input being two columns of data, with the same number of rows
 %   as the input matrix, which contain the start and end indices of the
 %   baseline for each trace (typically a region of photoblinking, if it is present).
@@ -11,8 +11,19 @@ matrix = cell(size(input));
 width = 7; %width of comparison region
 N = size(input,1);
 
-v = version('-release');
-if str2double(v(1:4))<2017
+% v = version('-release');
+
+try %Check that required functions are available in the user's version
+    smoothdata(rand(1,100));
+    filloutliers(rand(1,100),'spline');
+    old_version = findchangepts(rand(1,100));
+    old_version = old_version*0;
+catch
+    old_version = 1;
+end
+
+% if str2double(v(1:4))<2017
+if old_version
 msgbox('Your MATLAB version does not support smoothing techniques; performance may be affected');
 for j = 1:N
     trace = input{j};
@@ -81,16 +92,22 @@ for j = 1:N
     FWHM = (prctile(trace(:),96)-min(trace(:)))/25;
     dist = repmat(trace,[length(trace),1])-repmat(trace',[1,length(trace)]);
     signs = sign(dist);
-    point = sum((((dist.^2)+FWHM.^2).^-1).*signs,2);
+    point = sum((((dist.^2)+FWHM.^2).^-1).*signs,2); %an attempt to create a vector field
+    %where each arrow points toward the "watershed" of highest density
+    %nearby it, splitting the trace into regions where the vectors point
+    %towards the nearest peak
     [traceSort, pointSort] = sort(trace);
     point = point(pointSort)';
     diffPoint = [2 diff(sign(point))];
+    %the locations of vector direction changes are the locations of peaks
+    %(or the boundaries between watershed regions, but those are the
+    %positive changes, diffPoint==+2)
     clear peaks;
     peaks(:,1) = traceSort(diffPoint==-2); %The location of the peaks
     peaks(:,2) = diff(find([diffPoint==2, 1])); %The intensity of the peaks
     allPeaks(j) = {peaks};
 end
-
+%if version is 2017a or newer:
 else %smooth the traces, remove outliers, find contiguous regions, organize into peaks
     allPeaks = cell([N,1]);
     peaksTrimmed = cell([N,1]);
@@ -100,6 +117,8 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
         trace = filloutliers(trace,'spline','movmean',7);
         trace = trace/(max(trace));
         regions = [1 findchangepts(trace, 'MinDistance',5,'MinThreshold',.5) length(trace)+1];
+        %Find locations within the trace which are good candidates for
+        %state boundaries
         pk = 0;
         peaks = zeros(length(regions),3);
         peakIndices = cell(length(regions),1);
@@ -115,10 +134,14 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
                 h = zeros(1,pk);
             end
             for ip = 1:pk
+                %check to see if this peak is statistically similar to any
+                %of the ones we have already found in this trace (compare:
+                %mean via t test; standard deviation via simple comparison)
                 h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.01,'Vartype','unequal') || ...
                     peaks(ip,3)>3*peaks(pk+1,3) || peaks(ip,3)*3<peaks(pk+1,3);
+                %h will equal 1 if the two regions are distinct
             end
-            if h
+            if h %if distinct from all other peaks
                 pk = pk+1;
                 peaks(pk,:) = [mean(segment), length(segment), std(segment)];
             else
@@ -152,12 +175,16 @@ if length(varargin)==2 %if baseline provided
         i = 2;
         try
             while ~ttest2(matrix{j}(allPeakIndices{j}{i}),baseline,'Vartype','unequal','Alpha',.05)
+                %Is this peak statistically similar to the baseline?
+                %if yes, remember it and check the next peak
                 i = i+1;
 %                 skip(j) = i;
             end
-            peaksTrimmed{j} = allPeaks{j}(i:end,:);
+            peaksTrimmed{j} = allPeaks{j}(i:end,:); 
+            %record all peaks that don't look like the baseline
         catch
             peaksTrimmed{j} = allPeaks{j}(end,:);
+            %if there is only one peak
         end
     end
 else
@@ -176,8 +203,8 @@ for j = 1:N
     %Set lowest state at 0 for now (can always change), and squeeze to fit
     %together (approximately)
     mult(j) = 0.8/(range(peaksTrimmed{j}(:,1)));
-    goodMatrix{j} = trace*mult(j)-peaksTrimmed{j}(1,1);
-    peaksTrimmed{j} = [peaksTrimmed{j}(:,1)*mult(j)-peaksTrimmed{j}(1,1) peaksTrimmed{j}(:,2)];
+    goodMatrix{j} = (trace-peaksTrimmed{j}(1,1))*mult(j);
+    peaksTrimmed{j} = [(peaksTrimmed{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) peaksTrimmed{j}(:,2)];
     niceList(j) = 1;
 end
 
@@ -194,12 +221,13 @@ mult = zeros(1,n);
 [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5); 
 valueS = valueS/(sum(lengths))*n*5; %A normalization based on the number of bins and number of data points
 centers = edges(1:end-1) + diff(edges)/2;
-miN = round(centers(1),3);
+miN = round(centers(1),3); %Get beginning and end points
 maX = round(centers(end),3);
 dist = interp1(centers, valueS, miN:.001:maX); %A vector describing population density at each level
-dist(isnan(dist))=0;
-shift = round(-1*miN*1000)+1+length(dist);
-dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
+dist(isnan(dist))=0; %remove NaN values
+shift = round(-1*miN*1000)+1+length(dist); %define the position within dist of the original starting point
+dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10]; 
+%extend it on both sides to enable extrapolation outside 
 
 basisScore = 0;
 for j = 1:n
@@ -233,12 +261,12 @@ while ~satisfied
     
     repeats = str2double(cell2mat(inputdlg('How many shuffles would you like to attempt?')));
     for i = 1:repeats
-        iteration = iteration+1;
+        iteration = iteration+1; %pick a random selection of traces to serve as the new basis
         shuffle = randperm(n);
         n0 = randi(n);
         shuffle = shuffle(1:n0);
         basisMatrix = originalMatrix(shuffle);
-
+        %repeat the histogram (population distribution) calculations for this new basis 
         [valueS,edges] = histcounts(cell2mat(basisMatrix),max(n0*5,100));
         valueS = valueS/(sum(lengths(shuffle)))*max(n0*5,100); 
         centers = edges(1:end-1) + diff(edges)/2;
@@ -248,7 +276,7 @@ while ~satisfied
         dist(isnan(dist))=0;
         shift = round(-1*miN*1000)+1+length(dist);
         dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
-
+        %repeat the scaling and fitting process for each trace
         scoreMatrix(iteration) = 0;
         for j = 1:n
             fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
