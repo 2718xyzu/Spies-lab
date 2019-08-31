@@ -14,12 +14,7 @@ for i = 2
     blank = questdlg('Please select a directory (or make a new one) in which to save traces in the format for ebFRET',...
         'Select Directory','Ok','Ok');
     saveDir(i) = {uigetdir};
-    if ismac
-        slash = '/';
-    else
-        slash = '\';
-    end
-    saveDir{i} = [saveDir{i} slash];
+    saveDir{i} = [saveDir{i} filesep];
     if ~isdir(saveDir{i})
         errordlg('Directory not found.  Using default directory');
         saveDir{i} = [];

@@ -99,7 +99,7 @@ elseif answer(1)=='N'
         emFret(i,:) = .85*intensity(i,:)./prctile(intensity(i,:),98);
     end
 else %if the advanced method is selected (recommended)
-    N = length(intensity); %number of traces
+    N = length(intensity); %number of traces; assumes a cell input
     YN = questdlg(['Would you like to view and select traces?  This is recommended ',...
         'to allow you to trim the trace (removing photobleaching), and also'...
         ' to select any portions of the trace which exhibit photoblinking'...
@@ -116,6 +116,7 @@ else %if the advanced method is selected (recommended)
         for i = 1:length(intensity)
             figure();
             plot(intensity{i}); %show the trace
+            currentTrim = [1 length(intensity{1})];
             title(['Trace ' num2str(i)]);
             output = newEmFretUi; %display the buttons, wait until one is pushed
             if isfield(output,'baseline') %if baseline selected (photoblinking)
@@ -148,10 +149,9 @@ else %if the advanced method is selected (recommended)
                     end
                     continue;
                 case 6
-                    YN = questdlg(['Do you want to exit and not normalize anything, or do you'...
-                        ' just want to have the other traces in this set simply be accepted untrimmed with no '...
-                        'baseline selected?'],'Choose wisely','No, just exit',['Yes please, I"m tired of '...
-                        'pushing these buttons'], 'No, just exit');
+                    YN = questdlg(['Do you want to exit and stop analysis, or do you'...
+                        ' want to have the other traces in this set simply be accepted untrimmed with no '...
+                        'baseline selected?'],'Exit option','No; exit program','Yes', 'No; exit program');
                     %The above is shown since closing the figure window
                     %is easier than manually clicking 'Next trace' many
                     %times

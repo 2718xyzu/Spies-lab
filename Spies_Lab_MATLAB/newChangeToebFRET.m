@@ -1,4 +1,9 @@
 addpath('Functions');
+%A wrapper function to guide through data input from raw intensity values;
+%contains call to "emulateFRET", which allows for trace pre-processing,
+%before calling smoothNormalize which smooths and normalizes all traces,
+%with or without baselines specified.
+
 clear intensity
 
 blank = questdlg('Are your traces in a .traces file or saved individually in txt, csv, or dat?',...

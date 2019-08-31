@@ -17,7 +17,7 @@ try %Check that required functions are available in the user's version
     smoothdata(rand(1,100));
     filloutliers(rand(1,100),'spline');
     old_version = findchangepts(rand(1,100));
-    old_version = old_version*0;
+    old_version = 0;
 catch
     old_version = 1;
 end
@@ -116,7 +116,7 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
         trace = input{j};
         trace = filloutliers(trace,'spline','movmean',7);
         trace = trace/(max(trace));
-        regions = [1 findchangepts(trace, 'MinDistance',5,'MinThreshold',.5) length(trace)+1];
+        regions = [1 findchangepts(trace, 'MinDistance',5,'MinThreshold',.25) length(trace)+1];
         %Find locations within the trace which are good candidates for
         %state boundaries
         pk = 0;

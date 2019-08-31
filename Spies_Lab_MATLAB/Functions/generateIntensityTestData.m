@@ -1,12 +1,12 @@
 %Generates fake intensity data, to test the normalizer
 N = 100;
-states = [.1, .3, .5, .9];
+states = [.1 .3, .5, .9];
 noise = .01;
-baseline = 0;
+baseline = 0.1;
 lengtH = 600;
 testDataMatrix = zeros(N,lengtH);
 baselines = zeros(N,2);
-baselineIndices = 600;
+baselineIndices = 550:600;
 for j = 1:N
     mult = rand+.3;
     trace = [];
