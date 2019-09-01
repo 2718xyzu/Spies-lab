@@ -17,6 +17,7 @@ classdef Kera < handle
         histogram
         histogramFit
         histogramRow = 1
+        visualizeTrans
     end
     methods
         function kera = Kera()
@@ -210,6 +211,8 @@ classdef Kera < handle
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
             delete(kera.histogram);
             delete(kera.histogramFit);
+            delete(kera.visualizeTrans);
+            
             kera.histogramRow = 1;
             kera.histogramData(1, 1, 1);
         end
@@ -296,16 +299,16 @@ classdef Kera < handle
                 kera.order = get(kera.gui.elements('order'), 'Value');
             end
 
-            if isprop(hObject, 'Style') & strcmpi(get(hObject, 'Style'),'pushbutton')
+            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
                 if hObject.String == '<' && kera.histogramRow > 1
-                    kera.histogramRow = kera.histogramRow - 1
+                    kera.histogramRow = kera.histogramRow - 1;
                 elseif hObject.String == '>' && kera.histogramRow < length(kera.savePackage.output)
-                    kera.histogramRow = kera.histogramRow + 1
+                    kera.histogramRow = kera.histogramRow + 1;
                 end
             end
 
             set(kera.gui.elements('1'), 'String', kera.histogramRow);
-            row = kera.histogramRow
+            row = kera.histogramRow;
 
             if kera.dataType == 1
                 out.dataType = 1;
@@ -333,17 +336,34 @@ classdef Kera < handle
 
             delete(kera.histogram);
             delete(kera.histogramFit);
-
+            delete(kera.visualizeTrans);
             hold on;
             out.handle = gcf;
-            subplot('Position', [0.05 0.4 0.4 0.5]);
+            h1 = subplot('Position', [0.05 0.35 0.4 0.45]);
             kera.histogram = histogram(out.data);
-            subplot('Position', [0.55 0.4 0.4 0.5]);
-            fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
-
-            xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
-            yList = fitModel(xList);
-            kera.histogramFit = plot(xList, yList);
+            h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            try
+                fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
+                xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
+                yList = fitModel(xList);
+                kera.histogramFit = plot(xList, yList);
+            catch
+                disp('Fitting failed due to insufficient data');
+                kera.histogramFit = plot([0 0],[0 0]);
+            end
+            h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
+            set(gca, 'ColorOrderIndex', 1);
+            try
+                [xList, yList, outText] = visualizeTransition(kera.output(row).expr{:},kera.channels, kera.stateList);
+            catch
+            end
+            if row ~= 1
+                kera.visualizeTrans = plot(xList, yList);
+                disp(outText);
+            else
+                kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
+                disp('Wildcard: any event beginning and ending at baseline');
+            end
         end
 
         function path = selectFolder(kera)
