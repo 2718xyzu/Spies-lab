@@ -29,18 +29,21 @@ classdef Kera < handle
             %   and the number of states their data has
             kera.gui.resetError();
 
-            channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States'}, {'1', '4'});
+            channelsAndStates = kera.gui.inputdlg('Channels and States', {'Channels', 'States in each channel (comma separated)'}, {'1', '4'});
             try
-                disp(channelsAndStates);
-                channels = round(str2double(channelsAndStates{1}));
-                states = round(str2double(channelsAndStates{2}));
-                if (~isreal(states) && ~isreal(channels)) || states < 0 || channels < 0
+%                 disp(channelsAndStates);
+                channelS = round(str2double(channelsAndStates{1}));
+                stateLisT = round(eval(['[' channelsAndStates{2} ']' ]));
+                if prod(~isreal(stateLisT)) || ~isreal(channelS) || prod(stateLisT < 0) || prod(channelS < 0)
                     kera.gui.errorMessage('Invalid Channel or State');
                     kera.getChannelsAndStates()
                 end
-                kera.channels = channels;
-                kera.states = states;
-                kera.stateList = double(repmat(kera.states, [1 kera.channels]));
+                kera.channels = channelS;
+                kera.stateList = stateLisT;
+                if length(stateLisT)~=channelS
+                    assert(length(stateLisT)==1,'stateList length must match channels');
+                    kera.stateList = repmat(stateLisT, [1 channelS]);
+                end
             catch
                 if isempty(channelsAndStates)
                     kera.gui.errorMessage('Import Cancelled');
@@ -278,11 +281,16 @@ classdef Kera < handle
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
 
-            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.11 0.05 0.05]);
-            kera.gui.createButton('<', [0.1 0.1 0.1 0.1], @kera.histogramData);
-            kera.gui.createButton('>', [0.25 0.1 0.1 0.1], @kera.histogramData);
+            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.12 0.05 0.05]);
+            kera.gui.createButton('<', [0.1 0.11 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('Custom Event Search', [0.1 0.04 0.2 0.05], @kera.customSearch);
         end
 
+        function customSearch(kera, hObject, eventData, handles)
+            
+        end
+        
         function histogramData(kera, hObject, eventData, handles)
             kera.gui.resetError();
 
