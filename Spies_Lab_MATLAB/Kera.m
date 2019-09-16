@@ -288,7 +288,18 @@ classdef Kera < handle
         end
 
         function customSearch(kera, hObject, eventData, handles)
-            
+            searchWindow = figure('Visible','on','Position',[400 400 300 100]);
+            searchWindow.MenuBar = 'none';
+            searchWindow.ToolBar = 'none'; 
+            [channel, transitionList] = customSearchUi(kera.channels, kera.stateList);
+            searchExpr = states2search(kera.stateList, channel, transitionList);
+            row2fill = size(kera.output,2)+1;
+            kera.output(row2fill).expr = {searchExpr};
+            [timeLong, posLong, rowLong] = timeLengthen(kera.savePackage.timeData,kera.savePackage.letters);
+            kera.output = fillRow(kera.output,row2fill, searchExpr,kera.savePackage, timeLong, posLong, rowLong);
+            clear timeLong posLong rowLong row2fill searchExpr channel transitionList
+            analyzedData = kera.output;
+            kera.savePackage.output = kera.output;
         end
         
         function histogramData(kera, hObject, eventData, handles)
