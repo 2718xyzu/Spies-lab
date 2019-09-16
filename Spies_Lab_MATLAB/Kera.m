@@ -109,7 +109,7 @@ classdef Kera < handle
 
             if kera.channels == 1
                 [file, path] = kera.selectFile();
-                smdImport = load([path '/' file]);
+                smdImport = load([path filesep file]);
                 for i = 1:size(smdImport.data,2)
                     ebfretImport = smdImport.data(i).values(:,4);
                     kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
@@ -197,7 +197,7 @@ classdef Kera < handle
 
             [filename, path] = uigetfile('*.spkg');
             if filename
-                kera.savePackage = jsondecode(char(load([path '/' filename])));
+                kera.savePackage = jsondecode(char(load([path filesep filename])));
                 kera.postProcessing();
             else
                 kera.gui.errorMessage('Failed to import Save Package file');
@@ -225,7 +225,7 @@ classdef Kera < handle
 
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
-            save([path '/' filename], 'savePackage', '-ascii', '-double');
+            save([path filesep filename], 'savePackage', '-ascii', '-double');
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
@@ -243,7 +243,7 @@ classdef Kera < handle
                 t1 = kera.output(row).table;
                 t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
                 t = [t2 t1];
-                filename = strcat(path, '/', 'row_', int2str(row), '.csv');
+                filename = strcat(path, filesep, 'row_', int2str(row), '.csv');
                 writetable(t, filename, 'Delimiter', ',');
             end
         end
@@ -261,8 +261,8 @@ classdef Kera < handle
 
             t1 = table(kera.stateDwellSummary.dwellTimes);
             t2 = table(kera.stateDwellSummary.eventTimes);
-            writetable(t1, [path '/dwellTimes.csv'], 'Delimiter', ',');
-            writetable(t2, [path '/eventTimes.csv'], 'Delimiter', ',');
+            writetable(t1, [path filesep 'dwellTimes.csv'], 'Delimiter', ',');
+            writetable(t2, [path filesep 'eventTimes.csv'], 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)
@@ -377,7 +377,7 @@ classdef Kera < handle
 
         function [filename, path] = selectFile(kera)
             [file, dir] = uigetfile;
-            if isempty(dir) || isempty(file) || ~exist([dir '/' file], 'file')
+            if isempty(dir) || isempty(file) || ~exist([dir filesep file], 'file')
                 kera.gui.errorMessage('File not found');
                 return
             end
