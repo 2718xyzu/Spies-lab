@@ -9,5 +9,5 @@ function searchExpr = states2search(stateList, channel, transitionList)
         S.type = '()';
         searchExpr = [searchExpr num2str(subsref(matriX,S)) '  '];
     end
-    searchExpr = searchExpr(1:end-1);
+    searchExpr = [' ' searchExpr '[^,]'];
 end

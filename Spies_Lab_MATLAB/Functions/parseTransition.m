@@ -6,15 +6,12 @@ function [stateRecord, text] = parseTransition(transition, channels, stateList)
 %StateList is the list of the number of states in each channel
 matrixFinal = getTransitionDesignationMatrix(stateList);
 
-if transition(1) == '_' && transition(end) == '_'
-    transition(1) = '[';
-    transition(end) = ']';
-else
-    transition = ['[' transition ']'];
+transition = regexprep(transition,'[^0-9 -]','');
+transition = ['[' transition ']'];
     %many searches begin and end with the '_' character, indicating
-    %baseline events.  This removes those, and adds the necessary brackets
+    %baseline events, or contain the wildcard or other special characters '.'.
+    %This removes those, and adds the necessary brackets
     %to make the text into a readable list.
-end
 transition = eval(transition); %turning the text back into an array
 text = ''; 
 initialText = '';

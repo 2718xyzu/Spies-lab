@@ -298,7 +298,7 @@ classdef Kera < handle
             [timeLong, posLong, rowLong] = timeLengthen(kera.savePackage.timeData,kera.savePackage.letters);
             kera.output = fillRow(kera.output,row2fill, searchExpr,kera.savePackage, timeLong, posLong, rowLong);
             clear timeLong posLong rowLong row2fill searchExpr channel transitionList
-            analyzedData = kera.output;
+            assignin('base','analyzedData',kera.output);
             kera.savePackage.output = kera.output;
         end
         

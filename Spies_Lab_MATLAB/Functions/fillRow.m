@@ -10,9 +10,14 @@ function output = fillRow(output, i, expr, results, timeLong, posLong, rowLong)
         end
 
         if out.numEvents>0 %create a detailed table and store it in its own field
+            
         output(i).table = table(output(i).eventList,output(i).timeLengths,...
             out.timeList,out.timeDiff,out.begin,out.last,out.filenames,'VariableNames',...
             {'Events','Total_Duration','Time_Points','Delta_t','Time_first','Time_last','File'});
+            try 
+                output(i).excel = cell2mat(out.timeDiff);
+            catch
+            end
         end
         %the next line uses lookaround to search for the all 'gaps' which
         %are periods of ground state immediately preceded and followed by
