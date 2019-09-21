@@ -6,6 +6,12 @@ function [stateRecord, text] = parseTransition(transition, channels, stateList)
 %StateList is the list of the number of states in each channel
 matrixFinal = getTransitionDesignationMatrix(stateList);
 
+if strcmp(transition,'_[^_,]{3,}_')
+    stateRecord = zeros([channels 1]);
+    text = 'Wildcard: any event beginning and ending at baseline';
+    return
+end
+
 transition = regexprep(transition,'[^0-9 -]','');
 transition = ['[' transition ']'];
     %many searches begin and end with the '_' character, indicating
@@ -13,6 +19,7 @@ transition = ['[' transition ']'];
     %This removes those, and adds the necessary brackets
     %to make the text into a readable list.
 transition = eval(transition); %turning the text back into an array
+
 text = ''; 
 initialText = '';
 stateRecord = zeros([channels,length(transition)+1]);

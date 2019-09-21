@@ -39,7 +39,9 @@ classdef Kera < handle
                     kera.getChannelsAndStates()
                 end
                 kera.channels = channelS;
+                kera.savePackage.channels = channelS;
                 kera.stateList = stateLisT;
+                kera.savePackage.stateList = stateLisT;
                 if length(stateLisT)~=channelS
                     assert(length(stateLisT)==1,'stateList length must match channels');
                     kera.stateList = repmat(stateLisT, [1 channelS]);
@@ -149,7 +151,7 @@ classdef Kera < handle
                 kera.transM = transM;
                 transM = sum(transM,2); %add all three rows
                 [timeDataTemp,~,nonZerosTemp] = find(transM); %isolate only the non-zero values, with timestamps
-                imeDataTemp = timeDataTemp * kera.timeInterval;
+                timeDataTemp = timeDataTemp * kera.timeInterval;
                 k = logical(abs(mod(nonZerosTemp,1)-(bFlag+eFlag))<.01); %find locations where events are 2 frames long
                 if nnz(k)>0
                     for f = fliplr(find(k)')
@@ -223,8 +225,8 @@ classdef Kera < handle
         function exportSPKG(kera, hObject, eventData, handles)
             kera.gui.resetError();
 
-            savePackageNames = {'channels', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-            savePackageData = {kera.savePackage.channels, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
+            savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
+            savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
 
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');

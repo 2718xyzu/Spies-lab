@@ -1,5 +1,10 @@
 function output = fillRow(output, i, expr, results, timeLong, posLong, rowLong)
         out = regExAnalyzer2(expr,results, timeLong, posLong, rowLong); %function which does the searching
+        [~,output(i).interpretation] = parseTransition(expr, results.channels, results.stateList);
+        try
+            [output(i).statesSummary,~] = parseTransition(expr, results.channels, results.stateList);
+        catch
+        end
         output(i).count = out.numEvents;
         output(i).meanLength = mean(out.timeLengths);
         output(i).eventList = out.eventList;
