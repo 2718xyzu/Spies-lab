@@ -1,7 +1,5 @@
-function out = regExAnalyzer2(expr, input, timeLong, posLong, rowLong)
-    timeData = (input.timeData);
-    letters = input.letters;
-    events = (input.nonZeros);
+function out = regExAnalyzer2(expr, events, letters, timeData, timeLong, posLong, rowLong, filenames)
+
     [starts,ends] = regexp(letters,expr);
     if expr(1) == '_'
         starts = starts+2;
@@ -14,11 +12,10 @@ function out = regExAnalyzer2(expr, input, timeLong, posLong, rowLong)
         ends = ends+2;
     end
     bitLengths = ends - starts + 1;
-    width = size(events,1);
     startTimes = arrayfun(@(x) timeLong(x),starts);
     endTimes = arrayfun(@(x) timeLong(x),ends);
-    if isfield(input,'filenames')
-        names = input.filenames;
+    if iscell(filenames)
+        names = filenames;
         names2 = arrayfun(@(x) names(x,1),rowLong(starts))'; 
     end
 
