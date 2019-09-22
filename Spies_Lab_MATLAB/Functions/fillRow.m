@@ -1,8 +1,8 @@
-function output = fillRow(output, i, expr, results, timeLong, posLong, rowLong)
-        out = regExAnalyzer2(expr,results, timeLong, posLong, rowLong); %function which does the searching
-        [~,output(i).interpretation] = parseTransition(expr, results.channels, results.stateList);
+function output = fillRow(output, i, expr, nonZeros, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
+        out = regExAnalyzer2(expr, nonZeros, letters, timeData, timeLong, posLong, rowLong, filenames); %function which does the searching
+        [~,output(i).interpretation] = parseTransition(expr, channels, stateList);
         try
-            [output(i).statesSummary,~] = parseTransition(expr, results.channels, results.stateList);
+            [output(i).statesSummary,~] = parseTransition(expr, channels, stateList);
         catch
         end
         output(i).count = out.numEvents;
@@ -28,7 +28,7 @@ function output = fillRow(output, i, expr, results, timeLong, posLong, rowLong)
         %are periods of ground state immediately preceded and followed by
         %the type of event which we are currently looking at.
         expr2 = ['(?<=(' output(i).expr{:}(2:end-1) '))_  _(?=' output(i).expr{:}(2:end-1) ')'];
-        out = regExAnalyzer2(expr2,results, timeLong, posLong, rowLong); %again, get information about any gaps
+        out = regExAnalyzer2(expr2, nonZeros, letters, timeData, timeLong, posLong, rowLong, filenames); %again, get information about any gaps
         output(i).count_Gaps = out.numEvents;
         output(i).meanLength_Gaps = mean(out.timeLengths);
         output(i).timeLengths_Gaps = out.timeLengths;

@@ -1,6 +1,6 @@
-function output = defaultAnalyze2(results)
-    [timeLong, posLong, rowLong] = timeLengthen(results.timeData,results.letters);
-    out = regExAnalyzer2('_[^_,]{3,}_',results, timeLong, posLong, rowLong);
+function output = defaultAnalyze2(channels, stateList, nonZeros, timeData, letters, filenames)
+    [timeLong, posLong, rowLong] = timeLengthen(timeData,letters);
+    out = regExAnalyzer2('_[^_,]{3,}_', nonZeros, letters, timeData, timeLong, posLong, rowLong, filenames);
     %the above line searches the transition matrix (nonZeros) for all
     %'completed' events
     C = out.eventList;
@@ -20,7 +20,7 @@ function output = defaultAnalyze2(results)
 
     for i = 1:rows
         expr = output(i).expr{:}; %the text to search for
-        output = fillRow(output, i, expr, results, timeLong, posLong, rowLong);
+        output = fillRow(output, i, expr, nonZeros, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames);
 
     end
 end

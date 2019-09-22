@@ -9,6 +9,7 @@ classdef Kera < handle
         stateDwellSummary
         savePackage
         transM
+        rawM
         output
         dataType
         fitType
@@ -145,13 +146,17 @@ classdef Kera < handle
                     i=i+1; %move to the next row
                 end
                 transM(:,1) = sum(state,2); %add together all 'digits' of the binary states
+                rawM = [diff(transM(:,1)); 0];
+                kera.rawM = rawM;
                 transM(1:end-2,2) = bFlag*(diff(transM(2:end,1)==baseline)<0); %in a new row, flag every event beginning
                 transM(2:end,3) = eFlag*(diff(transM(:,1)~=baseline)<0); %in the third row, flag every event ending
-                transM(1:end-1,1) = diff(transM(:,1)); %the only non-zero values are now the transition quantities
+                transM(1:end,1) = [diff(transM(:,1)); 0 ]; %the only non-zero values are now the transition quantities
                 kera.transM = transM;
                 transM = sum(transM,2); %add all three rows
                 [timeDataTemp,~,nonZerosTemp] = find(transM); %isolate only the non-zero values, with timestamps
                 timeDataTemp = timeDataTemp * kera.timeInterval;
+                [timeRawT, ~, nonZerosRawT] = find(rawM);
+                timeDataRawT = timeRawT*kera.timeInterval;
                 k = logical(abs(mod(nonZerosTemp,1)-(bFlag+eFlag))<.01); %find locations where events are 2 frames long
                 if nnz(k)>0
                     for f = fliplr(find(k)')
@@ -171,6 +176,9 @@ classdef Kera < handle
                 dataPoints = length(timeDataTemp);
                 timeData(1:dataPoints,(i-1)/kera.channels) = timeDataTemp; %combine into large arrays
                 nonZeros(1:dataPoints,(i-1)/kera.channels) = nonZerosTemp;
+                dataPoints = length(timeDataRawT);
+                timeDataRaw(1:dataPoints,(i-1)/kera.channels) = timeDataRawT;
+                nonZerosRaw(1:dataPoints,(i-1)/kera.channels) = nonZerosRawT;
             end
             nonZeros(nonZeros == bFlag+eFlag) = bFlag; %consolidate event markers
             nonZeros(end+1,:) = 0;
@@ -181,13 +189,24 @@ classdef Kera < handle
             letters = regexprep(letters,'[ ;]','  ');
             letters = regexprep(letters,' 0 ',' , ');
             letters = letters(2:end-1);
+            
+            nonZerosRaw(end+1,:) = 0;
+            timeDataRaw(end+1,:) = 0;
+            lettersRaw = mat2str(nonZerosRaw');
+            lettersRaw = regexprep(lettersRaw,'[ ;]','  ');
+            lettersRaw = regexprep(lettersRaw,' 0 ',' , ');
+            lettersRaw = lettersRaw(2:end-1);
 
             kera.savePackage.filenames = kera.filenames;
             kera.savePackage.channels = kera.channels;
             kera.savePackage.letters = letters;
+            kera.savePackage.lettersR = lettersRaw;
             kera.savePackage.timeData = timeData;
+            kera.savePackage.timeDataR = timeDataRaw;
             kera.savePackage.nonZeros = nonZeros;
-            kera.output = defaultAnalyze2(kera.savePackage); %analyze the structure to produce output
+            kera.savePackage.nonZerosR = nonZerosRaw;
+            kera.output = defaultAnalyze2(kera.channels, kera.stateList, nonZeros, ...
+                timeData, letters, kera.filenames); %analyze the structure to produce output
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
 
             [~,index] = sortrows([kera.output.count].');
@@ -203,6 +222,12 @@ classdef Kera < handle
             [filename, path] = uigetfile('*.spkg');
             if filename
                 kera.savePackage = jsondecode(char(load([path filesep filename])));
+                kera.channels = kera.savePackage.channels;
+                kera.stateList = kera.savePackage.stateList;
+                kera.output = kera.savePackage.output;
+                kera.stateDwellSummary = kera.savePackage.stateDwellSummary;
+                assignin('base', 'analyzedData', kera.output);
+                assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
                 kera.postProcessing();
             else
                 kera.gui.errorMessage('Failed to import Save Package file');
@@ -225,8 +250,9 @@ classdef Kera < handle
         function exportSPKG(kera, hObject, eventData, handles)
             kera.gui.resetError();
 
-            savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'stateDwellSummary', 'output'};
-            savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters, kera.savePackage.timeData, kera.savePackage.nonZeros, kera.stateDwellSummary, kera.savePackage.output};
+            savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'lettersR', 'timeDataR', 'nonZerosR', 'stateDwellSummary', 'output'};
+            savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
+                kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR, kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
 
             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
             [filename, path] = uiputfile('savePackage.spkg');
@@ -283,10 +309,13 @@ classdef Kera < handle
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
 
-            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.12 0.05 0.05]);
+            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.10 0.05 0.07]);
             kera.gui.createButton('<', [0.1 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
+            kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
             kera.gui.createButton('Custom Event Search', [0.1 0.04 0.2 0.05], @kera.customSearch);
+            kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits);
+            
         end
 
         function customSearch(kera, hObject, eventData, handles)
@@ -297,8 +326,10 @@ classdef Kera < handle
             searchExpr = states2search(kera.stateList, channel, transitionList);
             row2fill = size(kera.output,2)+1;
             kera.output(row2fill).expr = {searchExpr};
-            [timeLong, posLong, rowLong] = timeLengthen(kera.savePackage.timeData,kera.savePackage.letters);
-            kera.output = fillRow(kera.output,row2fill, searchExpr,kera.savePackage, timeLong, posLong, rowLong);
+            [timeLong, posLong, rowLong] = timeLengthen(kera.savePackage.timeDataR,kera.savePackage.lettersR);
+            kera.output = fillRow(kera.output, row2fill, searchExpr, kera.savePackage.nonZerosR, kera.channels, ...
+                kera.stateList, kera.savePackage.timeDataR, kera.savePackage.lettersR, timeLong, posLong, rowLong, kera.filenames);
+            %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
             clear timeLong posLong rowLong row2fill searchExpr channel transitionList
             assignin('base','analyzedData',kera.output);
             kera.savePackage.output = kera.output;
@@ -330,6 +361,7 @@ classdef Kera < handle
 
             set(kera.gui.elements('1'), 'String', kera.histogramRow);
             row = kera.histogramRow;
+            set(kera.gui.elements('Total'), 'String', ['Total: ' int2str(kera.output(kera.histogramRow).count)]);
 
             if kera.dataType == 1
                 out.dataType = 1;
@@ -362,16 +394,6 @@ classdef Kera < handle
             out.handle = gcf;
             h1 = subplot('Position', [0.05 0.35 0.4 0.45]);
             kera.histogram = histogram(out.data);
-            h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
-            try
-                fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
-                xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
-                yList = fitModel(xList);
-                kera.histogramFit = plot(xList, yList);
-            catch
-                disp('Fitting failed due to insufficient data');
-                kera.histogramFit = plot([0 0],[0 0]);
-            end
             h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
             set(gca, 'ColorOrderIndex', 1);
             try
@@ -385,6 +407,58 @@ classdef Kera < handle
                 kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
                 disp('Wildcard: any event beginning and ending at baseline');
             end
+        end
+            
+        function generateFits(kera, hObject, eventData, handles)
+            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
+                kera.histogramDataSetup()
+            else
+                kera.dataType = get(kera.gui.elements('dataType'), 'Value');
+                kera.fitType = get(kera.gui.elements('fitType'), 'Value');
+                kera.order = get(kera.gui.elements('order'), 'Value');
+            end
+
+            row = kera.histogramRow;
+
+            if kera.dataType == 1
+                out.dataType = 1;
+                rawData = kera.savePackage.output(row).timeLengths;
+                out.rawData = rawData;
+            else
+                out.dataType = 2;
+                rawData = kera.savePackage.output(row).timeLengths_Gaps;
+                out.rawData = rawData;
+            end
+
+            if kera.fitType == 1
+                out.fitType = 1;
+                out.data = rawData;
+            else
+                out.fitType = 2;
+                out.data = log(rawData);
+            end
+
+            if kera.order == 1
+                out.order = 1;
+            else
+                out.order = 2;
+            end
+
+            delete(kera.histogramFit);
+            hold on;
+            out.handle = gcf;
+            
+            h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            try
+                fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
+                xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
+                yList = fitModel(xList);
+                kera.histogramFit = plot(xList, yList);
+            catch
+                disp('Fitting failed due to insufficient data');
+                kera.histogramFit = plot([0 0],[0 0]);
+            end
+           
         end
 
         function path = selectFolder(kera)
