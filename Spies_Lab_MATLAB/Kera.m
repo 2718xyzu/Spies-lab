@@ -121,14 +121,40 @@ classdef Kera < handle
                     kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
                 end
             else
-                kera.matrix = packagePairsebFRET(kera.channels);
+                kera.matrix = packagePairsebFRET(kera.channels,'smd');
             end
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
-            kera.matrix(kera.matrix==0) = 1;
+            %kera.matrix(kera.matrix==0) = 1;
             kera.processData()
         end
 
+        function rawAnalyze(kera, hObject, eventData, handles)
+            %RAWANALYZE Analyzes data stored as column vectors of states in
+            %MATLAB matrix variables
+            %   See also EBFRETANALYZE and PROCESSDATA
+            kera.gui.resetError();
+
+            kera.timeInterval = .1; %time unit used in ebFRET
+            kera.getChannelsAndStates()
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+
+            if kera.channels == 1
+                [file, path] = kera.selectFile();
+                kera.matrix = load([path filesep file]);
+            else
+                kera.matrix = packagePairsebFRET(kera.channels,'raw');
+            end
+
+            kera.filenames = num2cell(1:size(kera.matrix,2))';
+            %kera.matrix(kera.matrix==0) = 1;
+            kera.processData()
+        end
+        
+        
         function processData(kera)
             kera.gui.resetError();
 
@@ -138,6 +164,7 @@ classdef Kera < handle
             baseline = sum(2.^[0 cumsum(kera.stateList(1:end-1))]); %the number corresponding to the "default" state
             bFlag = .15; %to flag the beginning of every event
             eFlag = .05; %to flag the end of each event
+            fFlag = .35; %to flag the end of each trajectory
             powerAddition = [0 cumsum(kera.stateList)];
 
             while i <= size(kera.matrix,2)+1-kera.channels
@@ -157,14 +184,14 @@ classdef Kera < handle
                 timeDataTemp = timeDataTemp * kera.timeInterval;
                 [timeRawT, ~, nonZerosRawT] = find(rawM);
                 timeDataRawT = timeRawT*kera.timeInterval;
-                k = logical(abs(mod(nonZerosTemp,1)-(bFlag+eFlag))<.01); %find locations where events are 2 frames long
+                k = logical(abs(mod(nonZerosTemp,1)-(bFlag+eFlag))<.001); %find locations where events are 2 frames long
                 if nnz(k)>0
                     for f = fliplr(find(k)')
                         nonZerosTemp = insert1(eFlag,nonZerosTemp, f); %fix the representation of those events
                         timeDataTemp = insert1(timeDataTemp(f),timeDataTemp,f);
                     end
                 end
-                k = logical(abs(diff(mod(nonZerosTemp,1))+.1)<.01); %find locations where events are 1 frame long
+                k = logical(abs(diff(mod(nonZerosTemp,1))+.1)<.001); %find locations where events are 1 frame long
 
                 if nnz(k)>0
                     for f = fliplr(find(k)')
@@ -401,7 +428,7 @@ classdef Kera < handle
             catch
             end
             if row ~= 1
-                kera.visualizeTrans = plot(xList, yList);
+                kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
                 disp(outText);
             else
                 kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
