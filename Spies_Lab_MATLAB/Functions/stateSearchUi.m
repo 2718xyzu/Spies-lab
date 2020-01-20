@@ -7,9 +7,11 @@ function [stateCell] = stateSearchUi(channels,stateList)
     dropDowns = cell([1 channels]);
     channel = 1;
     stateCell = {};
+    searchArray = {};
+    searchText = {'Search text'};
     lengtH = 0;
     for i = 1:channels
-        dropDownOpt{i}{1} = '.';
+        dropDownOpt{i}{1} = 'any';
         for j = 1:stateList(i)
             dropDownOpt{i}{j+1} = num2str(j);
         end
@@ -20,48 +22,63 @@ function [stateCell] = stateSearchUi(channels,stateList)
             'UserData', 1,'Callback', @searchCallback); 
         
     btn2 = uicontrol('Style', 'pushbutton', 'String', 'Add to Search',...
-            'Position', [180 10 40 30],...
+            'Position', [140 10 80 30],...
             'UserData', 2,'Callback', @addCallback); 
         
     btn3 = uicontrol('Style', 'pushbutton', 'String', 'Remove Previous',...
-            'Position', [180 10 40 30],...
+            'Position', [50 10 80 30],...
             'UserData', 3,'Callback', @removeCallback,'Enable','off'); 
-        
-    dropdown = uicontrol('Style', 'popupmenu', 'String', dropDownOpt,  ...
-            'Position', [10 10 80 30], 'Callback', @dropDownCallback);
+    
+    for dd = 1:channels
+        dropDowns{dd} = uicontrol('Style', 'popupmenu', 'String', dropDownOpt{dd},  ...
+            'Position', [-80+80*dd 40 70 30], 'Callback', @dropDownCallback);
+    end
 
         
     instructions = uicontrol('Style', 'text', 'String', ['Select the ' ...
-            'channel you wish to search within, and enter a comma-' ...
-            'separated list of the states transitioned between'], ...
-            'Position', [10 45 200 40]);
+            'states desired for the beginning of the event, then click' ...
+            'add to specify sequential transitions'], ...
+            'Units','normalized','Position', [.1 .8 .8 .17]);
         
-    searchString = uicontrol('Style', 'text', 'String', '....', ...
-            'Position', [10 45 200 40]);
+    searchString = uicontrol('Style', 'text', 'String', 'Search String Unspecified', ...
+            'Units','normalized','Position', [.1 .4 .8 .2]);
         
         fig = gcf;
         uiwait(fig);
     function dropDownCallback(hObject,data)
         stateSearch = zeros([1 channels]);
-        stateText = [];
+        stateText = [] ;
         for k = 1:channels
-            stateSearch(k) = str2double(get(dropDowns{k},'Value'));
-            stateText = [stateText ' ' get(dropDowns{k},'Value')]
+            stateSearch(k) = get(dropDowns{k},'Value')-1;
+            stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))}];
         end
         searchArray{lengtH+1} = stateSearch;
-        searchText{lengtH+1} = stateText;
+        searchText{lengtH+2} = stateText;
         set(searchString, 'String', strjoin(searchText,' ;'));
     end
 
     function addCallback(hObject,data)
+        dropDownCallback;
         lengtH = lengtH+1;
         set(btn3,'Enable','on');
     end
     
     function removeCallback(hObject,data)
-        lengtH = lengtH-1;
+        searchText(end) = [];
+        searchArray(end) = [];
+        set(searchString, 'String', strjoin(searchText,' ;'));
+        lengtH = length(searchArray);
+        if lengtH == 0
+            set(hObject,'Enable','off');
+        end
     end    
 
-
+    function searchCallback(hObject,data)
+        try
+            stateCell = searchText(2:end);
+        catch
+        end
+        close(gcf);
+    end
 
 end
