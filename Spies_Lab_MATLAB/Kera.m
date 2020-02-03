@@ -19,10 +19,11 @@ classdef Kera < handle
         histogramFit
         histogramRow = 1
         visualizeTrans
-        
+        %added in state update:
         stateText
         condensedStates
         stateTimes
+        stateOutput
     end
     methods
         function kera = Kera()
@@ -98,7 +99,8 @@ classdef Kera < handle
                 end
             end
             kera.matrix = matrix;
-            kera.processData()
+            kera.processData();
+            kera.processDataStates();
         end
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
@@ -126,7 +128,8 @@ classdef Kera < handle
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
-            kera.processData()
+            kera.processData();
+            kera.processDataStates();
         end
 
         function rawAnalyze(kera, hObject, eventData, handles)
@@ -151,15 +154,15 @@ classdef Kera < handle
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
-            kera.processData()
+            kera.processData();
+            kera.processDataStates();
         end
         
         
         function processDataStates(kera)
+            kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
             c = kera.channels;
-            try
-                assert(mod(size(kera.matrix,2)/c,1)==0);
-            catch
+            if mod(size(kera.matrix,2)/c,1)~=0
                 error('Kera matrix does not contain a full set of trajectories for channels specified.  Check number of channels or input size.');
             end
             
@@ -171,15 +174,18 @@ classdef Kera < handle
                 kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
             end
             kera.stateText = '';
-            for i = 1:length(condensedStates)
-                tempText = mat2str(condensedStates{i});
+            for i = 1:length(kera.condensedStates)
+                tempText = mat2str(kera.condensedStates{i});
                 kera.stateText = [kera.stateText tempText];
             end
             kera.stateText = regexprep(kera.stateText,' ','  ');
             kera.stateText = regexprep(kera.stateText,';',' ; ');
-            kera.stateOutput = 
+            kera.stateOutput = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
+                kera.stateTimes, kera.stateText, kera.filenames);
+            dispOutput = kera.stateOutput;
         end
         
+
         
         function processData(kera)
             kera.gui.resetError();
