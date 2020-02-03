@@ -19,6 +19,10 @@ classdef Kera < handle
         histogramFit
         histogramRow = 1
         visualizeTrans
+        
+        stateText
+        condensedStates
+        stateTimes
     end
     methods
         function kera = Kera()
@@ -76,10 +80,6 @@ classdef Kera < handle
             end
 
             kera.filenames = names;
-            if max(data(:))>1000 %if data provided in "long" form
-                data(:,2,:,:) = round(data(:,2,:,:)./10); %condense by a factor of 10
-                kera.timeInterval = kera.timeInterval*10; %update timeInterval
-            end
 
             record = zeros(1);
             k=1;
@@ -155,6 +155,32 @@ classdef Kera < handle
         end
         
         
+        function processDataStates(kera)
+            c = kera.channels;
+            try
+                assert(mod(size(kera.matrix,2)/c,1)==0);
+            catch
+                error('Kera matrix does not contain a full set of trajectories for channels specified.  Check number of channels or input size.');
+            end
+            
+            for i = 1:size(kera.matrix,2)/c
+                workingStates = kera.matrix(:,(i-1)*c+1:i*c);
+                changeStates = diff(workingStates,1,2);
+                changeStates = logical([1 sum(abs(changeStates))]);
+                kera.condensedStates{i} = workingStates(:,changeStates)';
+                kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
+            end
+            kera.stateText = '';
+            for i = 1:length(condensedStates)
+                tempText = mat2str(condensedStates{i});
+                kera.stateText = [kera.stateText tempText];
+            end
+            kera.stateText = regexprep(kera.stateText,' ','  ');
+            kera.stateText = regexprep(kera.stateText,';',' ; ');
+            kera.stateOutput = 
+        end
+        
+        
         function processData(kera)
             kera.gui.resetError();
 
@@ -166,7 +192,7 @@ classdef Kera < handle
             eFlag = .05; %to flag the end of each event
             fFlag = .35; %to flag the end of each trajectory
             powerAddition = [0 cumsum(kera.stateList)];
-
+            k = 1;
             while i <= size(kera.matrix,2)+1-kera.channels
                 for j = 1:kera.channels
                     state(:,j) = 2.^(powerAddition(j)+kera.matrix(:,i)-1); %all states represented as binary #'s
@@ -207,6 +233,8 @@ classdef Kera < handle
                 timeDataRaw(1:dataPoints,(i-1)/kera.channels) = timeDataRawT;
                 nonZerosRaw(1:dataPoints,(i-1)/kera.channels) = nonZerosRawT;
             end
+
+            
             nonZeros(nonZeros == bFlag+eFlag) = bFlag; %consolidate event markers
             nonZeros(end+1,:) = 0;
             timeData(end+1,:) = 0;
