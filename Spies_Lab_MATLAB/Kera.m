@@ -208,7 +208,7 @@ classdef Kera < handle
                 rawM = [diff(transM(:,1)); 0];
                 kera.rawM = rawM;
                 transM(1:end-2,2) = bFlag*(diff(transM(2:end,1)==baseline)<0); %in a new row, flag every event beginning
-                transM(2:end,3) = eFlag*(diff(transM(:,1)~=baseline)<0); %in the third row, flag every event ending
+                transM(2:end,3) = eFlag*(diff(transM(:,1)~=baseline)<0); %#ok<*PROP> %in the third row, flag every event ending
                 transM(1:end,1) = [diff(transM(:,1)); 0 ]; %the only non-zero values are now the transition quantities
                 kera.transM = transM;
                 transM = sum(transM,2); %add all three rows
@@ -277,7 +277,7 @@ classdef Kera < handle
             kera.postProcessing()
         end
 
-        function importSPKG(kera, hObject, eventData, handles)
+        function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
             kera.gui.resetError();
 
             [filename, path] = uigetfile('*.spkg');
@@ -315,19 +315,19 @@ classdef Kera < handle
             savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
                 kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR, kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
 
-            savePackage = jsonencode(containers.Map(savePackageNames, savePackageData));
+            savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); %#ok<*PROPLC>
             [filename, path] = uiputfile('savePackage.spkg');
             save([path filesep filename], 'savePackage', '-ascii', '-double');
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            ans = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
-            if ~ans=='Ok'
+            ans1 = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
+            if ~strcmp(ans1,'Ok')
                 return
             end
             path = kera.selectFolder();
-            if ~exist(path)
+            if ~exist(path,'var')
                 return
             end
 
@@ -342,12 +342,12 @@ classdef Kera < handle
 
         function exportStateDwellSummary(kera, hObject, eventData, handles)
             kera.gui.resetError();
-            ans = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
-            if ~ans=='Ok'
+            ans1 = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
+            if ~strcmp(ans1,'Ok')
                 return
             end
             path = kera.selectFolder();
-            if ~exist(path)
+            if ~exist(path,'var')
                 return
             end
 
@@ -453,8 +453,8 @@ classdef Kera < handle
             delete(kera.visualizeTrans);
             hold on;
             out.handle = gcf;
-            h1 = subplot('Position', [0.05 0.35 0.4 0.45]);
-            kera.histogram = histogram(out.data);
+            h1 = subplot('Position', [0.05 0.35 0.4 0.45]); %#ok<*NASGU>
+            kera.histogram = histogram(out.data); %#ok<*CPROPLC>
             h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
             set(gca, 'ColorOrderIndex', 1);
             try
