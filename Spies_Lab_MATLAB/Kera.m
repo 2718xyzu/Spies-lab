@@ -66,8 +66,9 @@ classdef Kera < handle
             %QUBANALYZE Analyzes QuB data
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-
-            kera.timeInterval = 1E-3; %time unit used in QuB (milliseconds);
+            if isempty(kera.timeInterval)
+                kera.timeInterval = 1E-3; %time unit commonly used in QuB (milliseconds);
+            end
             dir3 = {0};
             kera.getChannelsAndStates();
             if kera.gui.error
@@ -107,8 +108,9 @@ classdef Kera < handle
             %EBFRETANALYZE Analyzes ebFRET data
             %   See also QUBANALYZE and PROCESSDATA
             kera.gui.resetError();
-
-            kera.timeInterval = .1; %time unit used in ebFRET
+            if isempty(kera.timeInterval)
+                kera.timeInterval = .1; %time unit commonly used in ebFRET
+            end
             kera.getChannelsAndStates()
             if kera.gui.error
                 kera.gui.resetError();
@@ -129,6 +131,7 @@ classdef Kera < handle
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
             kera.processData();
+            %new script:
             kera.processDataStates();
         end
 
@@ -137,8 +140,9 @@ classdef Kera < handle
             %MATLAB matrix variables
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-
-            kera.timeInterval = .1; %time unit used in ebFRET
+            if isempty(kera.timeInterval)
+                kera.timeInterval = .1; %time unit commonly used in ebFRET
+            end
             kera.getChannelsAndStates()
             if kera.gui.error
                 kera.gui.resetError();
@@ -162,16 +166,19 @@ classdef Kera < handle
         function processDataStates(kera)
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
             c = kera.channels;
-            if mod(size(kera.matrix,2)/c,1)~=0
+            if mod(size(kera.matrix,2),c)~=0
                 error('Kera matrix does not contain a full set of trajectories for channels specified.  Check number of channels or input size.');
             end
             
             for i = 1:size(kera.matrix,2)/c
                 workingStates = kera.matrix(:,(i-1)*c+1:i*c);
-                changeStates = diff(workingStates,1,2);
+                changeStates = diff(workingStates);
                 changeStates = logical([1 sum(abs(changeStates))]);
-                kera.condensedStates{i} = workingStates(:,changeStates)';
+                kera.condensedStates{i} = workingStates(:,changeStates);
+                %condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
+                % with 'channels' columns, and one row for each transition
                 kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
+                %the time point of each change in state (transition)
             end
             kera.stateText = '';
             for i = 1:length(kera.condensedStates)
@@ -180,6 +187,8 @@ classdef Kera < handle
             end
             kera.stateText = regexprep(kera.stateText,' ','  ');
             kera.stateText = regexprep(kera.stateText,';',' ; ');
+            kera.stateText = regexprep(kera.stateText,'[','[ ');
+            kera.stateText = regexprep(kera.stateText,']',' ]');
             kera.stateOutput = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
                 kera.stateTimes, kera.stateText, kera.filenames);
             dispOutput = kera.stateOutput;
@@ -539,6 +548,12 @@ classdef Kera < handle
             end
             filename = file;
             path = dir;
+        end
+        
+        function setTimeStep(kera)
+            timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
+            kera.timeInterval = eval(timeIntervalCell{1});
+            
         end
     end
 end
