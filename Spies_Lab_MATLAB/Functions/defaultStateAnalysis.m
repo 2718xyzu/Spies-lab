@@ -1,9 +1,9 @@
 function output = defaultStateAnalysis(channels, stateList, condensedStates, ...
-    timeData, stateText, filenames)
+    timeData, stateText, filenames, baseState)
     
     [timeLong, posLong, rowLong] = timeLengthenState(timeData,letters);
-    default_state = repmat(' 1 ',[1,channels]);
-    defaultString = ['(?<=' default_state(1:end-1) ')[^\]]+?(?=' default_state(2:end) ')'];
+%     baseState = repmat(' 1 ',[1,channels]);
+    defaultString = ['(?<=' baseState(1:end-1) ')[^\]]+?(?=' baseState(2:end) ')'];
     out = regExAnalyzer3(defaultString, nonZeros, letters, timeLong, posLong, rowLong, filenames);
     %the above line searches the transition matrix (nonZeros) for all
     %events matching the 'default' description (typically, all events which
@@ -14,8 +14,8 @@ function output = defaultStateAnalysis(channels, stateList, condensedStates, ...
     u = unique(nums);
     %find all unique classifications of a 'completed' event
     for i = 2:numel(u)+1 %turn each event found into the text-search form
-        expr2 = ['(?<=' default_state(1:end-1) ')' u{i-1}  '(?=' default_state(2:end) ')'];
-        output(i).expr = {default_state(1:end-1) u{i-1} default_state(2:end)}; %for display purposes
+        expr2 = ['(?<=' baseState(1:end-1) ')' u{i-1}  '(?=' baseState(2:end) ')'];
+        output(i).expr = {baseState(1:end-1) u{i-1} baseState(2:end)}; %for display purposes
     end
     output(1).expr = {defaultString};
         rows = size(output,2);

@@ -5,7 +5,7 @@ classdef Kera < handle
         states
         stateList
         matrix
-        timeInterval
+        timeInterval = 1
         stateDwellSummary
         savePackage
         transM
@@ -24,6 +24,8 @@ classdef Kera < handle
         condensedStates
         stateTimes
         stateOutput
+        baseState
+        dataLoaded
     end
     methods
         function kera = Kera()
@@ -47,11 +49,11 @@ classdef Kera < handle
                 kera.channels = channelS;
                 kera.savePackage.channels = channelS;
                 kera.stateList = stateLisT;
-                kera.savePackage.stateList = stateLisT;
                 if length(stateLisT)~=channelS
                     assert(length(stateLisT)==1,'stateList length must match channels');
                     kera.stateList = repmat(stateLisT, [1 channelS]);
                 end
+                kera.savePackage.stateList = kera.stateList;
             catch
                 if isempty(channelsAndStates)
                     kera.gui.errorMessage('Import Cancelled');
@@ -59,16 +61,15 @@ classdef Kera < handle
                 end
                 kera.gui.errorMessage('Invalid Channel or State');
                 kera.getChannelsAndStates()
+                return
             end
+            kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
         end
 
         function qubAnalyze(kera, hObject, eventData, handles)
             %QUBANALYZE Analyzes QuB data
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-            if isempty(kera.timeInterval)
-                kera.timeInterval = 1E-3; %time unit commonly used in QuB (milliseconds);
-            end
             dir3 = {0};
             kera.getChannelsAndStates();
             if kera.gui.error
@@ -100,17 +101,14 @@ classdef Kera < handle
                 end
             end
             kera.matrix = matrix;
-            kera.processData();
-            kera.processDataStates();
+%             kera.processData();
+%             kera.processDataStates();
         end
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
             %   See also QUBANALYZE and PROCESSDATA
             kera.gui.resetError();
-            if isempty(kera.timeInterval)
-                kera.timeInterval = .1; %time unit commonly used in ebFRET
-            end
             kera.getChannelsAndStates()
             if kera.gui.error
                 kera.gui.resetError();
@@ -130,7 +128,8 @@ classdef Kera < handle
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
-            kera.processData();
+            
+%             kera.processData();
             %new script:
             kera.processDataStates();
         end
@@ -140,9 +139,6 @@ classdef Kera < handle
             %MATLAB matrix variables
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-            if isempty(kera.timeInterval)
-                kera.timeInterval = .1; %time unit commonly used in ebFRET
-            end
             kera.getChannelsAndStates()
             if kera.gui.error
                 kera.gui.resetError();
@@ -163,7 +159,7 @@ classdef Kera < handle
         end
         
         
-        function processDataStates(kera)
+        function processDataStates(kera, ~, ~, ~)
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
             c = kera.channels;
             if mod(size(kera.matrix,2),c)~=0
@@ -189,8 +185,11 @@ classdef Kera < handle
             kera.stateText = regexprep(kera.stateText,';',' ; ');
             kera.stateText = regexprep(kera.stateText,'[','[ ');
             kera.stateText = regexprep(kera.stateText,']',' ]');
+            if isempty(kera.baseState)
+                kera.baseState = repmat(' 1 ',[1,channels]);
+            end
             kera.stateOutput = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
-                kera.stateTimes, kera.stateText, kera.filenames);
+                kera.stateTimes, kera.stateText, kera.filenames, kera.baseState);
             dispOutput = kera.stateOutput;
         end
         
@@ -384,19 +383,18 @@ classdef Kera < handle
             kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
             kera.gui.createButton('Custom Event Search', [0.1 0.04 0.2 0.05], @kera.customSearch);
-            kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits);
-            
+            kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
         function customSearch(kera, hObject, eventData, handles)
             searchWindow = figure('Visible','on','Position',[400 400 300 100]);
             searchWindow.MenuBar = 'none';
             searchWindow.ToolBar = 'none'; 
-            [channel, transitionList] = customSearchUi(kera.channels, kera.stateList);
-            searchExpr = states2search(kera.stateList, channel, transitionList);
+            searchExpr = stateSearchUi(kera.channels, kera.stateList);
+%             searchExpr = states2search(kera.stateList, channel, transitionList);
             row2fill = size(kera.output,2)+1;
             kera.output(row2fill).expr = {searchExpr};
-            [timeLong, posLong, rowLong] = timeLengthen(kera.savePackage.timeDataR,kera.savePackage.lettersR);
+            [timeLong, posLong, rowLong] = timeLengthenState(kera.savePackage.timeDataR,kera.savePackage.lettersR);
             kera.output = fillRow(kera.output, row2fill, searchExpr, kera.savePackage.nonZerosR, kera.channels, ...
                 kera.stateList, kera.savePackage.timeDataR, kera.savePackage.lettersR, timeLong, posLong, rowLong, kera.filenames);
             %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
@@ -550,10 +548,20 @@ classdef Kera < handle
             path = dir;
         end
         
-        function setTimeStep(kera)
+        function setTimeStep(kera, ~, ~, ~)
             timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
             kera.timeInterval = eval(timeIntervalCell{1});
-            
+            try
+                kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
+                %If data has already been loaded, re-do the dwell summary with the new timeInterval
+            catch
+                %else ignore that
+            end
         end
+        
+        function setBaselineState(kera, ~, ~, ~)
+            kera.baseState = stateSetUi(kera.channels, kera.stateList);
+        end
+            
     end
 end

@@ -45,7 +45,7 @@ classdef keraGUI < handle
             gui.elements(label) = uimenu(gui.guiWindow, 'Text', label, 'Callback', p.Results.callback);
         end
 
-        function createSeconaryMenu(gui, primaryLabel, label, varargin)
+        function createSecondaryMenu(gui, primaryLabel, label, varargin)
             p = inputParser;
             addRequired(p, 'primaryLabel');
             addRequired(p, 'label');
