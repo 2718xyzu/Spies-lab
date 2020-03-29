@@ -169,8 +169,8 @@ classdef Kera < handle
             for i = 1:size(kera.matrix,2)/c
                 workingStates = kera.matrix(:,(i-1)*c+1:i*c);
                 changeStates = diff(workingStates);
-                changeStates = logical([1 sum(abs(changeStates))]);
-                kera.condensedStates{i} = workingStates(:,changeStates);
+                changeStates = logical([1; sum(abs(changeStates),2)]);
+                kera.condensedStates{i} = workingStates(changeStates,:);
                 %condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
                 % with 'channels' columns, and one row for each transition
                 kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
@@ -186,7 +186,7 @@ classdef Kera < handle
             kera.stateText = regexprep(kera.stateText,'[','[ ');
             kera.stateText = regexprep(kera.stateText,']',' ]');
             if isempty(kera.baseState)
-                kera.baseState = repmat(' 1 ',[1,channels]);
+                kera.baseState = repmat(' 1 ',[1,kera.channels]);
             end
             kera.stateOutput = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
                 kera.stateTimes, kera.stateText, kera.filenames, kera.baseState);

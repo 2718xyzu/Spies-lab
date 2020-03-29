@@ -9,7 +9,7 @@ function [timeLong,posLong,rowLong] = timeLengthenState(timeData, letters)
         timeLong(end+1) = timeData{row}(i-iCurr);
         posLong(end+1) = i;
         rowLong(end+1) = row;
-        if letters(j) == ' ' && letters(j+1) == ' '
+        if letters(j) == ';' && letters(j+1) == ' '
             i = i+1;
         elseif letters(j) == ']'
             row = row+1;
