@@ -47,13 +47,13 @@ classdef Kera < handle
                     kera.getChannelsAndStates()
                 end
                 kera.channels = channelS;
-                kera.savePackage.channels = channelS;
+
                 kera.stateList = stateLisT;
                 if length(stateLisT)~=channelS
                     assert(length(stateLisT)==1,'stateList length must match channels');
                     kera.stateList = repmat(stateLisT, [1 channelS]);
                 end
-                kera.savePackage.stateList = kera.stateList;
+
             catch
                 if isempty(channelsAndStates)
                     kera.gui.errorMessage('Import Cancelled');
@@ -188,9 +188,15 @@ classdef Kera < handle
             if isempty(kera.baseState)
                 kera.baseState = repmat(' 1 ',[1,kera.channels]);
             end
-            kera.stateOutput = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
+
+            
+            kera.output = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
                 kera.stateTimes, kera.stateText, kera.filenames, kera.baseState);
-            dispOutput = kera.stateOutput;
+%             dispOutput = kera.output;
+            kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
+            [~,index] = sortrows([kera.output.count].');
+            kera.output = kera.output(index(end:-1:1));
+            kera.postProcessing()
         end
         
 
@@ -266,21 +272,12 @@ classdef Kera < handle
             lettersRaw = regexprep(lettersRaw,' 0 ',' , ');
             lettersRaw = lettersRaw(2:end-1);
 
-            kera.savePackage.filenames = kera.filenames;
-            kera.savePackage.channels = kera.channels;
-            kera.savePackage.letters = letters;
-            kera.savePackage.lettersR = lettersRaw;
-            kera.savePackage.timeData = timeData;
-            kera.savePackage.timeDataR = timeDataRaw;
-            kera.savePackage.nonZeros = nonZeros;
-            kera.savePackage.nonZerosR = nonZerosRaw;
             kera.output = defaultAnalyze2(kera.channels, kera.stateList, nonZeros, ...
                 timeData, letters, kera.filenames); %analyze the structure to produce output
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
 
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
-            kera.savePackage.output = kera.output;
 
             kera.postProcessing()
         end
@@ -323,7 +320,7 @@ classdef Kera < handle
             savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
                 kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR, kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
 
-            savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); %#ok<*PROPLC>
+            savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); 
             [filename, path] = uiputfile('savePackage.spkg');
             save([path filesep filename], 'savePackage', '-ascii', '-double');
         end
@@ -387,20 +384,27 @@ classdef Kera < handle
         end
 
         function customSearch(kera, hObject, eventData, handles)
-            searchWindow = figure('Visible','on','Position',[400 400 300 100]);
+            searchWindow = figure('Visible','on','Position',[400 400 300 200]);
             searchWindow.MenuBar = 'none';
             searchWindow.ToolBar = 'none'; 
             searchExpr = stateSearchUi(kera.channels, kera.stateList);
+            
 %             searchExpr = states2search(kera.stateList, channel, transitionList);
             row2fill = size(kera.output,2)+1;
             kera.output(row2fill).expr = {searchExpr};
-            [timeLong, posLong, rowLong] = timeLengthenState(kera.savePackage.timeDataR,kera.savePackage.lettersR);
-            kera.output = fillRow(kera.output, row2fill, searchExpr, kera.savePackage.nonZerosR, kera.channels, ...
-                kera.stateList, kera.savePackage.timeDataR, kera.savePackage.lettersR, timeLong, posLong, rowLong, kera.filenames);
+            firstState = regexp(searchExpr,'^.+?(?= ;)');
+            lastState = regexp(searchExpr,'(?<=; ).+?$');
+            if strcmp(firstState(1:end-1),lastState(2:end))
+                searchExpr = regexprep(searchExpr, '^.+?(?= ;)', ['(?<=' firstState ')']); %to allow overlap of results at the edge states
+            end
+            kera.output(row2fill).expr2 = {searchExpr};
+            [timeLong, posLong, rowLong] = timeLengthenState(kera.stateTimes,kera.stateText);
+            kera.output = fillRowState(kera.output, row2fill, searchExpr, kera.condensedStates, kera.channels, ...
+                kera.stateList, kera.stateText, timeLong, posLong, rowLong, kera.filenames);
             %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
             clear timeLong posLong rowLong row2fill searchExpr channel transitionList
             assignin('base','analyzedData',kera.output);
-            kera.savePackage.output = kera.output;
+%             kera.savePackage.output = kera.output;
         end
         
         function histogramData(kera, hObject, eventData, handles)
@@ -422,7 +426,7 @@ classdef Kera < handle
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
                 if hObject.String == '<' && kera.histogramRow > 1
                     kera.histogramRow = kera.histogramRow - 1;
-                elseif hObject.String == '>' && kera.histogramRow < length(kera.savePackage.output)
+                elseif hObject.String == '>' && kera.histogramRow < length(kera.output)
                     kera.histogramRow = kera.histogramRow + 1;
                 end
             end
@@ -433,11 +437,11 @@ classdef Kera < handle
 
             if kera.dataType == 1
                 out.dataType = 1;
-                rawData = kera.savePackage.output(row).timeLengths;
+                rawData = kera.output(row).timeLengths;
                 out.rawData = rawData;
             else
                 out.dataType = 2;
-                rawData = kera.savePackage.output(row).timeLengths_Gaps;
+                rawData = kera.output(row).timeLengths_Gaps;
                 out.rawData = rawData;
             end
 
@@ -460,17 +464,15 @@ classdef Kera < handle
             delete(kera.visualizeTrans);
             hold on;
             out.handle = gcf;
-            h1 = subplot('Position', [0.05 0.35 0.4 0.45]); %#ok<*NASGU>
-            kera.histogram = histogram(out.data); %#ok<*CPROPLC>
+            h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
+            kera.histogram = histogram(out.data);
             h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
             set(gca, 'ColorOrderIndex', 1);
-            try
-                [xList, yList, outText] = visualizeTransition(kera.output(row).expr{:},kera.channels, kera.stateList);
-            catch
-            end
+
             if row ~= 1
+                [xList, yList] = visualizeTransition(kera.output(row).expr{:},kera.channels);
                 kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
-                disp(outText);
+%                 disp(outText);
             else
                 kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
                 disp('Wildcard: any event beginning and ending at baseline');
@@ -490,11 +492,11 @@ classdef Kera < handle
 
             if kera.dataType == 1
                 out.dataType = 1;
-                rawData = kera.savePackage.output(row).timeLengths;
+                rawData = kera.output(row).timeLengths;
                 out.rawData = rawData;
             else
                 out.dataType = 2;
-                rawData = kera.savePackage.output(row).timeLengths_Gaps;
+                rawData = kera.output(row).timeLengths_Gaps;
                 out.rawData = rawData;
             end
 

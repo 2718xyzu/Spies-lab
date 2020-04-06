@@ -7,7 +7,7 @@ function [timeLong,posLong,rowLong] = timeLengthenState(timeData, letters)
     iCurr = 0;
     for j=1:length(letters)
         timeLong(end+1) = timeData{row}(i-iCurr);
-        posLong(end+1) = i;
+        posLong(end+1) = i-iCurr;
         rowLong(end+1) = row;
         if letters(j) == ';' && letters(j+1) == ' '
             i = i+1;

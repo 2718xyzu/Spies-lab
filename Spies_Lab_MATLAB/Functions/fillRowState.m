@@ -1,8 +1,9 @@
-function output = fillRowState(output, i, expr, nonZeros, channels, stateList, letters, timeLong, posLong, rowLong, filenames)
-        out = regExAnalyzer3(expr, nonZeros, letters, timeLong, posLong, rowLong, filenames); %function which does the searching
-        [~,output(i).interpretation] = parseTransitionState(expr, channels, stateList);
+function output = fillRowState(output, i, expr, events, ~, ~, letters, timeLong, posLong, rowLong, filenames)
+        out = regExAnalyzer3(expr, events, letters, timeLong, posLong, rowLong, filenames); %function which does the searching
+%         [~,output(i).interpretation] = parseTransitionState(expr, channels, stateList);
         try
-            [output(i).statesSummary,~] = parseTransition(expr, channels, stateList);
+%             [output(i).statesSummary,~] = parseTransition(expr, channels, stateList);
+            output(i).expr2 = expr;
         catch
         end
         output(i).count = out.numEvents;

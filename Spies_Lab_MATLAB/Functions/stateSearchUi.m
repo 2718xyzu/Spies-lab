@@ -1,4 +1,4 @@
-function [searchString] = stateSearchUi(channels,stateList)
+function [searchText] = stateSearchUi(channels,stateList)
     %This interface allows users to specify a sequence of states they would 
     %like to search for within the data
     %
