@@ -1,11 +1,10 @@
-function [stateCell] = stateSearchUi(channels,stateList)
+function [searchText] = stateSearchUi(channels,stateList)
     %This interface allows users to specify a sequence of states they would 
     %like to search for within the data
     %
 
     dropDownOpt = cell([1 channels]);
     dropDowns = cell([1 channels]);
-    channel = 1;
     stateCell = {};
     searchArray = {};
     searchText = {'Search text'};
@@ -45,25 +44,25 @@ function [stateCell] = stateSearchUi(channels,stateList)
         
         fig = gcf;
         uiwait(fig);
-    function dropDownCallback(hObject,data)
+    function dropDownCallback(~,~)
         stateSearch = zeros([1 channels]);
         stateText = [] ;
         for k = 1:channels
             stateSearch(k) = get(dropDowns{k},'Value')-1;
-            stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))}];
+            stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' '];
         end
         searchArray{lengtH+1} = stateSearch;
         searchText{lengtH+2} = stateText;
-        set(searchString, 'String', strjoin(searchText,' ;'));
+        set(searchString, 'String', strjoin(searchText,';'));
     end
 
-    function addCallback(hObject,data)
+    function addCallback(~,~)
         dropDownCallback;
         lengtH = lengtH+1;
         set(btn3,'Enable','on');
     end
     
-    function removeCallback(hObject,data)
+    function removeCallback(hObject,~)
         searchText(end) = [];
         searchArray(end) = [];
         set(searchString, 'String', strjoin(searchText,' ;'));
@@ -73,9 +72,14 @@ function [stateCell] = stateSearchUi(channels,stateList)
         end
     end    
 
-    function searchCallback(hObject,data)
+    function searchCallback(~,~)
         try
             stateCell = searchText(2:end);
+            searchText = strjoin(stateCell,';');
+            searchText = regexprep(searchText,'any', '\\d+');
+            delete(instructions);
+            delete(btn);
+            delete(btn2);
         catch
         end
         close(gcf);
