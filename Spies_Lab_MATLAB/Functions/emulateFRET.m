@@ -1,4 +1,6 @@
 function [emFret] = emulateFRET(intensity)
+%accepts an Nx1 cell of 1xlength matrices (where length can be different
+%for each cell entry)
 answer = questdlg('Which method would you like to use?', 'Method', 'Original', 'No baseline shift', 'Advanced', 'Advanced');
 if answer(1) == 'O'
     try

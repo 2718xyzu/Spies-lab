@@ -1,7 +1,7 @@
 function [matrix] = smoothNormalize(varargin)
 %smoothNormalize: Smooths and normalizes a matrix containing a
 %group of fluorescence traces
-%   The input matrix should have each trace stored as a list within a 1xN cell array, with the
+%   The input matrix should have each trace stored as an array (1xlength) within an Nx1 cell array, with the
 %   second (optional) input being two columns of data, with the same number of rows
 %   as the input matrix, which contain the start and end indices of the
 %   baseline for each trace (typically a region of photoblinking, if it is present).
@@ -16,7 +16,8 @@ N = size(input,1);
 try %Check that required functions are available in the user's version
     smoothdata(rand(1,100));
     filloutliers(rand(1,100),'spline');
-    old_version = findchangepts(rand(1,100));
+    findchangepts(rand(1,100));
+    close(gcf)
     old_version = 0;
 catch
     old_version = 1;
@@ -195,7 +196,7 @@ goodMatrix = cell(size(matrix));
 mult = zeros(N,1);
 niceList = zeros(N,1,'logical');
 for j = 1:N
-    if length(peaksTrimmed{j})<2||length(peaksTrimmed{j})>10
+    if size(peaksTrimmed{j},1)<3||length(peaksTrimmed{j})>10
         continue %skip ill-behaved traces
     end
     trace = matrix{j};
@@ -208,14 +209,14 @@ for j = 1:N
     niceList(j) = 1;
 end
 
-
-originalMatrix = goodMatrix(niceList);
-%Every trace in originalMatrix is scaled down and well-behaved
+originalMatrix = cell(size(goodMatrix));
+originalMatrix(niceList) = goodMatrix(niceList);
+%Every trace in originalMatrix is scaled down and well-behaved, but has an
+%index which matches its position in the peaksTrimmed list
 %Also matches the scaling of peaksTrimmed
-lengths = lengths(niceList);
 basisMatrix = originalMatrix;
-n = size(basisMatrix,1); %n is the number of well-behaved traces
-mult = zeros(1,n);
+n = nnz(niceList); %n is the number of well-behaved traces
+mult = zeros(1,N);
 %Make all the peaks into one big histogram to see where peaks fall
 
 [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5); 
@@ -230,7 +231,8 @@ dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
 %extend it on both sides to enable extrapolation outside 
 
 basisScore = 0;
-for j = 1:n
+
+for j = find(niceList)'
     fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
     mult(j) = fminbnd(fitScore, 250, 1500);
     basisMatrix{j} = basisMatrix{j}*mult(j)/1000;
@@ -261,13 +263,14 @@ while ~satisfied
     
     repeats = str2double(cell2mat(inputdlg('How many shuffles would you like to attempt?')));
     for i = 1:repeats
-        iteration = iteration+1; %pick a random selection of traces to serve as the new basis
+        iteration = iteration+1; %pick a random selection of well-behaved traces to serve as the new basis
         shuffle = randperm(n);
+        found = find(niceList);
         n0 = randi(n);
-        shuffle = shuffle(1:n0);
+        shuffle = found(shuffle(1:n0));
         basisMatrix = originalMatrix(shuffle);
         %repeat the histogram (population distribution) calculations for this new basis 
-        [valueS,edges] = histcounts(cell2mat(basisMatrix),max(n0*5,100));
+        [valueS,edges] = histcounts(cell2mat(basisMatrix'),max(n0*5,100));
         valueS = valueS/(sum(lengths(shuffle)))*max(n0*5,100); 
         centers = edges(1:end-1) + diff(edges)/2;
         miN = round(centers(1),3);
@@ -278,7 +281,7 @@ while ~satisfied
         dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
         %repeat the scaling and fitting process for each trace
         scoreMatrix(iteration) = 0;
-        for j = 1:n
+        for j = find(niceList)'
             fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
             multMatrix(iteration,j) = fminbnd(fitScore, 250, 1500);
 %             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)/1000;
@@ -289,7 +292,7 @@ while ~satisfied
     end
     [bestScore,bestIteration] = max(scoreMatrix);
     
-    for j = 1:n
+    for j = find(niceList)'
         displayedMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000; 
     end
     figure; histogram(cell2mat(displayedMatrix'));
@@ -316,7 +319,7 @@ while ~satisfied
 end
 
 
-for j = 1:n
+for j = find(niceList)'
     penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000;
 end
 
@@ -325,14 +328,19 @@ YN = questdlg(['It was determined that ' num2str(n) ' out of ' num2str(N) ' trac
     ' in as well?  When these traces are saved in whatever folder you choose, traces 1 through ' num2str(n) ...
     ' will be the good ones.'],'Save all?','Save only the good traces','Attempt a fit on the other traces and save them too',...
     'Save only the good traces');
-
+scale = [1E10,-1E10];
 if YN(1)=='A'
-    for j = find(~niceList)
-        penultimateMatrix{end+1} = matrix{j}/(2*max(matrix{j}));
+    for j = find(niceList)'
+        scale(1) = min([penultimateMatrix{j} scale(1)]);
+        scale(2) = max([penultimateMatrix{j} scale(2)]);
     end
+    for j = find(~niceList)'
+        penultimateMatrix{j} = scale(2)*(matrix{j}-min(matrix{j}))/(max(matrix{j})-min(matrix{j}));
+    end
+else
+    penultimateMatrix = penultimateMatrix(niceList);
 end
 
-scale = [1E10,-1E10];
 for j = 1:length(penultimateMatrix)
     scale(1) = min([penultimateMatrix{j} scale(1)]);
     scale(2) = max([penultimateMatrix{j} scale(2)]);

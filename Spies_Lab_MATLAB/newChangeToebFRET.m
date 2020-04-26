@@ -11,7 +11,13 @@ blank = questdlg('Are your traces in a .traces file or saved individually in txt
 
 
 if blank(2) == 't'
-    Trace_viewer_myversion();
+    [donors, acceptors] = extractTracesFiles();
+    blank = questdlg('Would you like to run emFRET on the donors or acceptors?','Select data','Donors', 'Acceptors', 'Donors'); 
+    if blank(1) == 'D'
+        intensity = donors;
+    else
+        intensity = acceptors;
+    end
 
 else
     blank = questdlg('Select the folder which contains all traces to normalize',...
@@ -56,6 +62,7 @@ else
         end
         intensity(q) = {A(:,column)'};
     end
+end
 
     emFRET = emulateFRET(intensity);
     if isempty(emFRET)
@@ -72,4 +79,4 @@ else
     else
         plotCut3(1-emFRET,emFRET,length(intensity),timeUnit);
     end
-end
+
