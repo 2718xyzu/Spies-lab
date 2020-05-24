@@ -344,11 +344,11 @@ if YN(1)=='A'
 %     matrix = matrix(1:length(penultimateMatrix));
 end
 scale = [1E10,-1E10];
-for j = 1:length(penultimateMatrix)
+for j = find(niceList)'
     scale(1) = min([penultimateMatrix{j} scale(1)]);
     scale(2) = max([penultimateMatrix{j} scale(2)]);
 end
-for j = 1:length(penultimateMatrix)
+for j = find(niceList)'
     matrix{j} = (penultimateMatrix{j}-scale(1))/(-scale(1)+scale(2));
 end
 
