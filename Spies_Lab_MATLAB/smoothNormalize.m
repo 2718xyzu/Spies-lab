@@ -1,4 +1,4 @@
-function [matrix] = smoothNormalize(varargin)
+function [matrix, niceList] = smoothNormalize(varargin)
 %smoothNormalize: Smooths and normalizes a matrix containing a
 %group of fluorescence traces
 %   The input matrix should have each trace stored as an array (1xlength) within an Nx1 cell array, with the
@@ -325,23 +325,25 @@ end
 
 YN = questdlg(['It was determined that ' num2str(n) ' out of ' num2str(N) ' traces were'...
     ' well-behaved; would you like to only save these good traces or attempt to fit the others'...
-    ' in as well?  When these traces are saved in whatever folder you choose, traces 1 through ' num2str(n) ...
-    ' will be the good ones.'],'Save all?','Save only the good traces','Attempt a fit on the other traces and save them too',...
+    ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
+    ' still a one-to-one correspondence of the traces in the two channels' ...
+    ],'Save all?','Save only the good traces','Attempt a fit on the other traces and save them too',...
     'Save only the good traces');
 scale = [1E10,-1E10];
 if YN(1)=='A'
     for j = find(niceList)'
-        scale(1) = min([penultimateMatrix{j} scale(1)]);
-        scale(2) = max([penultimateMatrix{j} scale(2)]);
+        scale(1) = min([prctile(penultimateMatrix{j},1) scale(1)]);
+        scale(2) = max([prctile(penultimateMatrix{j},99) scale(2)]);
     end
     for j = find(~niceList)'
-        penultimateMatrix{j} = scale(2)*(matrix{j}-min(matrix{j}))/(max(matrix{j})-min(matrix{j}));
+        penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
     end
-else
-    penultimateMatrix = penultimateMatrix(niceList);
-    matrix = matrix(1:length(penultimateMatrix));
+    niceList = ones(size(niceList));
+% else
+%     penultimateMatrix = penultimateMatrix(niceList);
+%     matrix = matrix(1:length(penultimateMatrix));
 end
-
+scale = [1E10,-1E10];
 for j = 1:length(penultimateMatrix)
     scale(1) = min([penultimateMatrix{j} scale(1)]);
     scale(2) = max([penultimateMatrix{j} scale(2)]);
@@ -350,6 +352,11 @@ for j = 1:length(penultimateMatrix)
     matrix{j} = (penultimateMatrix{j}-scale(1))/(-scale(1)+scale(2));
 end
 
+%         valueS = histcounts(emFret,[-Inf 0:.01:1 Inf]);
+%         [~,maxX] = max(valueS(1:50));
+%         fit1 = fit((-.005:.01:(.01*(maxX+2)+.005))',valueS(1:(maxX+4))','gauss1');
+%         newBaseLine = fit1.b1+fit1.c1*2;
+%         emFret = max(emFret,newBaseLine);
 
 end
 

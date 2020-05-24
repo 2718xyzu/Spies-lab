@@ -35,14 +35,14 @@ while i <= size(matrixIA,1) && goOn ~= 6
     end
     traceFret = getFret(traceD,traceA);
     if QuB
-        save(([saveDir{1} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
+        save(([saveDir{1} 'trace_' num2str(i,'%05u') '.dat']),'saveMatrix','-ascii');
         saveMatrix = vertcat(timeSeries,traceD,traceA,traceFret);
         saveMatrix = transpose(saveMatrix);
     end
     if ebFRET
         saveMatrix = vertcat(traceD,traceA);
         saveMatrix = transpose(saveMatrix);
-        save(([saveDir{2} 'trace_' num2str(i) '.dat']),'saveMatrix','-ascii');
+        save(([saveDir{2} 'trace_' num2str(i,'%05u') '.dat']),'saveMatrix','-ascii');
     end
     i = i+1;
 end

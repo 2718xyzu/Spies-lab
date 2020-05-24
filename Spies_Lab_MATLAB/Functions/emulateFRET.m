@@ -1,4 +1,4 @@
-function [emFret] = emulateFRET(intensity)
+function [emFret, selection] = emulateFRET(intensity,selection)
 %accepts an Nx1 cell of 1xlength matrices (where length can be different
 %for each cell entry)
 answer = questdlg('Which method would you like to use?', 'Method', 'Original', 'No baseline shift', 'Advanced', 'Advanced');
@@ -21,12 +21,7 @@ if answer(1) == 'O'
     emFret = emFret2;
     answer = questdlg('Would you like to smooth the baseline (recommended to suppress low states)');
     if answer(1) == 'Y'
-        figure();
-        handle1 = gcf;
-        histEmFRET = histogram(emFret,'BinEdges',[-Inf 0:.01:1 Inf]);
-        valueS = histEmFRET.Values;
-        close(handle1);
-        clear histEmFREt;
+        valueS = histcounts(emFret,[-Inf 0:.01:1 Inf]);
         [~,maxX] = max(valueS(1:50));
 %             gaussFit = 'a*exp(-((x-b)/c)^2)';
         fit1 = fit((-.005:.01:(.01*(maxX+2)+.005))',valueS(1:(maxX+4))','gauss1');
@@ -112,13 +107,14 @@ else %if the advanced method is selected (recommended)
         %to suppress low-state identification
     if YN(1) == 'Y'
         baseline = zeros(length(intensity),2); 
-        selection = ones(length(intensity),1,'logical');
         intensity2 = intensity;
-        helpMsg = 0;
         for i = 1:length(intensity)
+            if ~selection(i)
+                continue
+            end
             figure();
             plot(intensity{i}); %show the trace
-            currentTrim = [1 length(intensity{1})];
+            currentTrim = [1 length(intensity{i})];
             title(['Trace ' num2str(i)]);
             output = newEmFretUi; %display the buttons, wait until one is pushed
             if isfield(output,'baseline') %if baseline selected (photoblinking)
