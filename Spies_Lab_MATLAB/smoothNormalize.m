@@ -138,7 +138,7 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
                 %check to see if this peak is statistically similar to any
                 %of the ones we have already found in this trace (compare:
                 %mean via t test; standard deviation via simple comparison)
-                h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.01,'Vartype','unequal') || ...
+                h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.1,'Vartype','unequal') || ...
                     peaks(ip,3)>3*peaks(pk+1,3) || peaks(ip,3)*3<peaks(pk+1,3);
                 %h will equal 1 if the two regions are distinct
             end
@@ -196,7 +196,7 @@ goodMatrix = cell(size(matrix));
 mult = zeros(N,1);
 niceList = zeros(N,1,'logical');
 for j = 1:N
-    if size(peaksTrimmed{j},1)<3||length(peaksTrimmed{j})>10
+    if size(peaksTrimmed{j},1)<3||length(peaksTrimmed{j})>20
         continue %skip ill-behaved traces
     end
     trace = matrix{j};
@@ -216,7 +216,7 @@ originalMatrix(niceList) = goodMatrix(niceList);
 %Also matches the scaling of peaksTrimmed
 basisMatrix = originalMatrix;
 n = nnz(niceList); %n is the number of well-behaved traces
-mult = zeros(1,N);
+mult = ones(1,N)*1000;
 %Make all the peaks into one big histogram to see where peaks fall
 
 [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5); 
@@ -232,12 +232,12 @@ dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
 
 basisScore = 0;
 
-for j = find(niceList)'
-    fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
-    mult(j) = fminbnd(fitScore, 250, 1500);
-    basisMatrix{j} = basisMatrix{j}*mult(j)/1000;
-    basisScore = basisScore-fitScore(mult(j));
-end
+% for j = find(niceList)'
+%     fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
+%     mult(j) = fminbnd(fitScore, 250, 1500);
+%     basisMatrix{j} = basisMatrix{j}*mult(j)/1000;
+%     basisScore = basisScore-fitScore(mult(j));
+% end
 figure; histogram(cell2mat(basisMatrix'));
 title(['Basis score: ' num2str(basisScore)]);
 
@@ -339,6 +339,7 @@ if YN(1)=='A'
     end
 else
     penultimateMatrix = penultimateMatrix(niceList);
+    matrix = matrix(1:length(penultimateMatrix));
 end
 
 for j = 1:length(penultimateMatrix)
