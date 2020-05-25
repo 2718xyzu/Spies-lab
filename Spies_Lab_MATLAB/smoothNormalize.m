@@ -138,7 +138,7 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
                 %check to see if this peak is statistically similar to any
                 %of the ones we have already found in this trace (compare:
                 %mean via t test; standard deviation via simple comparison)
-                h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.1,'Vartype','unequal') || ...
+                h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.01,'Vartype','unequal') || ...
                     peaks(ip,3)>3*peaks(pk+1,3) || peaks(ip,3)*3<peaks(pk+1,3);
                 %h will equal 1 if the two regions are distinct
             end
@@ -163,9 +163,11 @@ end
 
 %Find baseline for all traces, if possible:
 if length(varargin)==2 %if baseline provided
+    baselineSwitch = 1;
     baseIndices = varargin{2};
     for j = 1:N
         try
+            clear baseline
             baseline = smoothTrace(matrix{j}(baseIndices(j,1):baseIndices(j,2)));
         catch
             peaksTrimmed{j} = allPeaks{j};
@@ -189,6 +191,7 @@ if length(varargin)==2 %if baseline provided
         end
     end
 else
+    baselineSwitch = 0;
     peaksTrimmed = allPeaks;
 end
 
@@ -196,7 +199,7 @@ goodMatrix = cell(size(matrix));
 mult = zeros(N,1);
 niceList = zeros(N,1,'logical');
 for j = 1:N
-    if size(peaksTrimmed{j},1)<3||length(peaksTrimmed{j})>20
+    if size(peaksTrimmed{j},1)<3 %||length(peaksTrimmed{j})>20
         continue %skip ill-behaved traces
     end
     trace = matrix{j};
@@ -232,12 +235,11 @@ dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
 
 basisScore = 0;
 
-% for j = find(niceList)'
-%     fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
+for j = find(niceList)'
+    fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
 %     mult(j) = fminbnd(fitScore, 250, 1500);
-%     basisMatrix{j} = basisMatrix{j}*mult(j)/1000;
-%     basisScore = basisScore-fitScore(mult(j));
-% end
+    basisScore = basisScore-fitScore(mult(j));
+end
 figure; histogram(cell2mat(basisMatrix'));
 title(['Basis score: ' num2str(basisScore)]);
 
@@ -284,7 +286,7 @@ while ~satisfied
         for j = find(niceList)'
             fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
             multMatrix(iteration,j) = fminbnd(fitScore, 250, 1500);
-%             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)/1000;
+% % % %             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)/1000;
             scoreMatrix(iteration) = scoreMatrix(iteration)-fitScore(multMatrix(iteration,j));
             %Fitscore returns a negative number, but a higher scoreMatrix
             %is better, so subtract.
@@ -323,17 +325,48 @@ for j = find(niceList)'
     penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000;
 end
 
+YN = questdlg(['Would you like to select the baseline (or low-state) region and smooth it?'... 
+    '  This helps to suppress low-state overfitting by ebFRET and allows an '...
+    'alignment of traces which have 2 or 1 distinct states'...
+    ],'Baseline');
+if YN(1)=='Y'
+          [valueS,edges] = histcounts(cell2mat(penultimateMatrix'));
+          figure; plot(valueS);
+          [~] = questdlg('Please select the region which contains the low state', 'Baseline',...
+              'Ok','Ok');
+          [x,~] = ginput(2);
+          dEdge = mean(diff(edges));
+          x = round(x);
+          fit1 = fit((edges(x(1):x(2))+dEdge/2),valueS(x(1):x(2)),'gauss1');
+%         newBaseLine = fit1.b1+fit1.c1*2;
+%         valueS = histcounts(emFret,[-Inf 0:.01:1 Inf]);
+%         [~,maxX] = max(valueS(1:50));
+%         fit1 = fit((-.005:.01:(.01*(maxX+2)+.005))',valueS(1:(maxX+4))','gauss1');
+%         newBaseLine = fit1.b1+fit1.c1*2;
+%         emFret = max(emFret,newBaseLine);
+    
+    
 YN = questdlg(['It was determined that ' num2str(n) ' out of ' num2str(N) ' traces were'...
     ' well-behaved; would you like to only save these good traces or attempt to fit the others'...
     ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
     ' still a one-to-one correspondence of the traces in the two channels' ...
-    ],'Save all?','Save only the good traces','Attempt a fit on the other traces and save them too',...
-    'Save only the good traces');
+    ],'Save all?','Save only the good traces','Fit all the other traces and save them too',...
+    'Fit the baseline-only traces','Save only the good traces');
 scale = [1E10,-1E10];
-if YN(1)=='A'
+if YN(1)=='F'
     for j = find(niceList)'
-        scale(1) = min([prctile(penultimateMatrix{j},1) scale(1)]);
-        scale(2) = max([prctile(penultimateMatrix{j},99) scale(2)]);
+        if size(allPeaks{j},1)>1 && YN(5)=='a' %if a trace has two states, set one to be low and the other high
+            %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
+            %states in general, use with caution. If you do save them, consider excluding these
+            %traces during ebFRET fitting
+            scale(1) = prctile(penultimateMatrix{j},1);
+            scale(2) = prctile(penultimateMatrix{j},99);
+            penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
+        elseif size(allPeaks{j},1)==1
+            %try to make the trace fit the identified baseline. 
+            trace1 = penultimateMatrix{j};
+            penultimateMatrix{j} = fit1.c1*(trace1-mean(trace1))/std(trace1);
+        end
     end
     for j = find(~niceList)'
         penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
@@ -343,20 +376,17 @@ if YN(1)=='A'
 %     penultimateMatrix = penultimateMatrix(niceList);
 %     matrix = matrix(1:length(penultimateMatrix));
 end
+end
 scale = [1E10,-1E10];
 for j = find(niceList)'
-    scale(1) = min([penultimateMatrix{j} scale(1)]);
-    scale(2) = max([penultimateMatrix{j} scale(2)]);
+    scale(1) = min([prctile(penultimateMatrix{j},1) scale(1)]);
+    scale(2) = max([prctile(penultimateMatrix{j},99) scale(2)]);
 end
 for j = find(niceList)'
     matrix{j} = (penultimateMatrix{j}-scale(1))/(-scale(1)+scale(2));
 end
 
-%         valueS = histcounts(emFret,[-Inf 0:.01:1 Inf]);
-%         [~,maxX] = max(valueS(1:50));
-%         fit1 = fit((-.005:.01:(.01*(maxX+2)+.005))',valueS(1:(maxX+4))','gauss1');
-%         newBaseLine = fit1.b1+fit1.c1*2;
-%         emFret = max(emFret,newBaseLine);
+
 
 end
 

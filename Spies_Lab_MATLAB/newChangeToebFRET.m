@@ -71,8 +71,15 @@ else
 end
     if c == 1
         selectionAll = ones(length(intensity{c}),1,'logical');
+        %keeps track of whether a trace set has passed all criteria for
+        %being included in the final export:
+        %must be selected during trace viewing/selection, the corresponding
+        %trace in all other channels must be selected, must be selected
+        %for saving during normalization, along with all corresponding traces in
+        %the other channels 
     else
         assert(length(selectionAll)==length(selection{c-1}),'Multichannel datasets must have same number of traces in all channels');
+        %make sure the corresponding traces have the same number of time points
         selectionAll = and(selectionAll,selection{c-1});
     end
     [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(intensity{c}, selectionAll);
@@ -82,22 +89,31 @@ end
 end
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
+% intensityTrimmed = intensity;
+N = length(intensity{1});
+finalTrim = zeros(N,2);
+%each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
-    N = length(intensity{c});
     saveList{c} = ones(length(intensity{c}),1,'logical');
     emFret{c} = cell([1 N]);
     for i = 1:N
         intensity{c}{i} = intensity{c}{i}(trim{c}(i,1):trim{c}(i,2));
+        finalTrim(i,1) = max(trim{c}(i,1),finalTrim(i,1));
+        finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
     if isempty(baseline{c})
         [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}));
     else
         [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}),baseline{c}(selection{c},:)); %normalize selected traces
-
     end
     selectionAll = and(selectionAll,saveList{c});
 end
 
+for c = 1:channels
+    for i = 1:N
+        emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
+        %realign all traces, even if they were trimmed differently earlier
+    end
     plotCut3(emFret{c}(selectionAll),length(intensity{c}{1}),timeUnit);
 
-
+end
