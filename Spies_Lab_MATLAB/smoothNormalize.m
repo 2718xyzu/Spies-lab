@@ -250,9 +250,9 @@ multMatrix(1,:) = mult;
 penultimateMatrix = cell(size(basisMatrix));
 scoreMatrix = basisScore;
 
-YN = questdlg('Would you like to shuffle the traces and attempt a better fit score?');
+YN = questdlg('Would you like to accept this fitting?  Otherwise the code will shuffle the traces and try again');
 try
-if YN(1) == 'N'
+if YN(1) == 'Y'
     satisfied = 1;
 end
 catch
@@ -293,7 +293,7 @@ while ~satisfied
         end
     end
     [bestScore,bestIteration] = max(scoreMatrix);
-    
+    displayedMatrix = cell([N,1]);
     for j = find(niceList)'
         displayedMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000; 
     end
@@ -347,14 +347,14 @@ if YN(1)=='Y'
     
     
 YN = questdlg(['It was determined that ' num2str(n) ' out of ' num2str(N) ' traces were'...
-    ' well-behaved; would you like to only save these good traces or attempt to fit the others'...
+    ' multi-state; would you like to only save these traces or attempt to fit the others'...
     ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
     ' still a one-to-one correspondence of the traces in the two channels' ...
     ],'Save all?','Save only the good traces','Fit all the other traces and save them too',...
-    'Fit the baseline-only traces','Save only the good traces');
+    'Fit the baseline-only traces','Save only the multi-state traces');
 scale = [1E10,-1E10];
 if YN(1)=='F'
-    for j = find(niceList)'
+    for j = find(~niceList)'
         if size(allPeaks{j},1)>1 && YN(5)=='a' %if a trace has two states, set one to be low and the other high
             %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
             %states in general, use with caution. If you do save them, consider excluding these
@@ -368,9 +368,9 @@ if YN(1)=='F'
             penultimateMatrix{j} = fit1.c1*(trace1-mean(trace1))/std(trace1);
         end
     end
-    for j = find(~niceList)'
-        penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
-    end
+%     for j = find(~niceList)'
+%         penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
+%     end
     niceList = ones(size(niceList));
 % else
 %     penultimateMatrix = penultimateMatrix(niceList);

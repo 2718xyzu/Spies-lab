@@ -14,6 +14,7 @@ N = length(intensity); %number of traces; assumes a cell input
         trim = zeros(length(intensity),2);
 %         intensity2 = intensity;
         for i = 1:length(intensity)
+            helpText = '';
             if ~selectionAll(i)
                 helpText = '(Has been removed from final set)';
             end
@@ -21,7 +22,7 @@ N = length(intensity); %number of traces; assumes a cell input
             plot(intensity{i}); %show the trace
             xlabel('Time points');
             trim(i,:) = [1 length(intensity{i})];
-            title(['Trace ' num2str(i) '\n' helpText]);
+            title(['Trace ' num2str(i) newline helpText]);
             output = newEmFretUi; %display the buttons, wait until one is pushed
             if isfield(output,'baseline') %if baseline selected (photoblinking)
                 %each trace may only have one region of baseline selected

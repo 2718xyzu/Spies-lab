@@ -87,6 +87,7 @@ end
         return
     end
 end
+selectionAll = and(selectionAll,selection{end});
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
@@ -114,6 +115,6 @@ for c = 1:channels
         emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
         %realign all traces, even if they were trimmed differently earlier
     end
-    plotCut3(emFret{c}(selectionAll),length(intensity{c}{1}),timeUnit);
+    saveEmFret(emFret{c}(selectionAll),c);
 
 end

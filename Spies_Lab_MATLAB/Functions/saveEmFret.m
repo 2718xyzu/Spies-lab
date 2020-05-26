@@ -1,5 +1,5 @@
 function saveEmFret(emFret,channel)
-    blank = questdlg(['Please select a directory (or make a new one) in which to save traces in channel',...
+    blank = questdlg(['Please select a directory (or make a new one) in which to save traces in channel ',...
         num2str(channel) ], 'Select Directory','Ok','Ok');
     if ~rand; disp(blank); end
     saveDir = uigetdir;
