@@ -1,4 +1,4 @@
-function [baseline, trim, selection] = selectTracesEmFret(intensity,selectionAll)
+function [baseline, trim, selection] = selectTracesEmFret(intensity,selectionAll, fileNames)
 selection = ones(length(intensity),1,'logical');
 N = length(intensity); %number of traces; assumes a cell input
     YN = questdlg(['Would you like to view and select traces?  This is recommended ',...
@@ -13,7 +13,8 @@ N = length(intensity); %number of traces; assumes a cell input
         baseline = zeros(length(intensity),2); 
         trim = zeros(length(intensity),2);
 %         intensity2 = intensity;
-        for i = 1:length(intensity)
+        i = 1;
+        while i <= length(intensity)
             helpText = '';
             if ~selectionAll(i)
                 helpText = '(Has been removed from final set)';
@@ -22,7 +23,7 @@ N = length(intensity); %number of traces; assumes a cell input
             plot(intensity{i}); %show the trace
             xlabel('Time points');
             trim(i,:) = [1 length(intensity{i})];
-            title(['Trace ' num2str(i) newline helpText]);
+            title([fileNames{i} newline helpText]);
             output = newEmFretUi; %display the buttons, wait until one is pushed
             if isfield(output,'baseline') %if baseline selected (photoblinking)
                 %each trace may only have one region of baseline selected
@@ -38,8 +39,9 @@ N = length(intensity); %number of traces; assumes a cell input
             switch output.Value
                 case 1
                     selection(i) = 0; %Trace discarded
+                    selectionAll(i) = 0;
                     clear currentTrim;
-                    continue
+%                     continue
                 case 2 %Trace and baseline and/or trim saved
                     try %Reformat baseline selection based on trimming
                         baseline(i,:) = min(currentTrim(2),baseline(i,:));
@@ -52,7 +54,13 @@ N = length(intensity); %number of traces; assumes a cell input
                         clear currentTrim;
                     catch
                     end
-                    continue;
+%                     continue;
+                case 0 
+                    if i>1
+                        i = i-2;
+                    else
+                        i = i-1;
+                    end
                 case 6
                     YN = questdlg(['Do you want to exit and stop analysis, or do you'...
                         ' want to have the other traces in this set simply be accepted untrimmed with no '...
@@ -68,7 +76,8 @@ N = length(intensity); %number of traces; assumes a cell input
                     else
                         break %All further traces are selected untrimmed and with no baseline
                     end
-            end     
+            end  
+            i = i+1;
         end
 %         intensity = intensity(selection); %remove unselected intensities
 %         baseline = baseline(selection,:);

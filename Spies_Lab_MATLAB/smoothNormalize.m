@@ -359,19 +359,21 @@ if YN(1)=='F'
             %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
             %states in general, use with caution. If you do save them, consider excluding these
             %traces during ebFRET fitting
-            scale(1) = prctile(penultimateMatrix{j},1);
-            scale(2) = prctile(penultimateMatrix{j},99);
-            penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
+            scale(1) = prctile(matrix{j},1);
+            scale(2) = prctile(matrix{j},99);
+            penultimateMatrix{j} = (matrix{j}-scale(1))/(scale(2)-scale(1));
+            niceList(j) = 1;
         elseif size(allPeaks{j},1)==1
             %try to make the trace fit the identified baseline. 
             trace1 = penultimateMatrix{j};
             penultimateMatrix{j} = fit1.c1*(trace1-mean(trace1))/std(trace1);
+            niceList(j) = 1;
         end
     end
 %     for j = find(~niceList)'
 %         penultimateMatrix{j} = scale(2)*(matrix{j}-prctile(matrix{j},1))/(prctile(matrix{j},99)-prctile(matrix{j},1));
 %     end
-    niceList = ones(size(niceList));
+    
 % else
 %     penultimateMatrix = penultimateMatrix(niceList);
 %     matrix = matrix(1:length(penultimateMatrix));

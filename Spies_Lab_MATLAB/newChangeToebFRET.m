@@ -1,8 +1,19 @@
-addpath('Functions');
+
 %A wrapper function to guide through data input from raw intensity values;
 %contains call to "emulateFRET", which allows for trace pre-processing,
 %before calling smoothNormalize which smooths and normalizes all traces,
 %with or without baselines specified.
+
+lastwarn('');
+addpath('Functions');
+[warnMsg, warnId] = lastwarn;
+if ~isempty(warnMsg)
+    questdlg(['Functions directory not found; please select the Spies-lab '...
+        'scripts directory to add it to the search path'],'Select search dir',...
+    'Ok','Ok');
+    cd(uigetdir);
+    addpath('Functions');
+end
 
 clear intensity
 channels = 2;
@@ -24,7 +35,10 @@ if blank(2) == 't'
     else
         intensity{c} = acceptors;
     end
-
+    fileNames = cell([length(donors); 1]);
+    for i = 1:length(donors)
+        fileNames{i} = [ 'trace' num2str(i)];
+    end
 else
     blank = questdlg('Select the folder which contains all traces to normalize',...
         'Select folder','Ok','Ok');
@@ -61,6 +75,7 @@ else
 
     column = str2double(column{1});
     intensity{c} = cell(length(dir3),1);
+    fileNames = dir3;
     for q = 1:length(dir3)
         A = importdata([ path filesep dir3{q}]);
         if isstruct(A)
@@ -69,6 +84,8 @@ else
         intensity{c}(q) = {A(:,column)'};
     end
 end
+end
+for c = 1:channels
     if c == 1
         selectionAll = ones(length(intensity{c}),1,'logical');
         %keeps track of whether a trace set has passed all criteria for
@@ -82,11 +99,12 @@ end
         %make sure the corresponding traces have the same number of time points
         selectionAll = and(selectionAll,selection{c-1});
     end
-    [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(intensity{c}, selectionAll);
+    [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(intensity{c}, selectionAll, fileNames);
     if isempty(trim{c})
         return
     end
 end
+
 selectionAll = and(selectionAll,selection{end});
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
@@ -98,7 +116,7 @@ for c = 1:channels
     saveList{c} = ones(length(intensity{c}),1,'logical');
     emFret{c} = cell([1 N]);
     for i = 1:N
-        intensity{c}{i} = intensity{c}{i}(trim{c}(i,1):trim{c}(i,2));
+        intensity{c}{i} = intensity{c}{i}(trim{c}(i,1):trim{c}(i,2)); %Fix this
         finalTrim(i,1) = max(trim{c}(i,1),finalTrim(i,1));
         finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
