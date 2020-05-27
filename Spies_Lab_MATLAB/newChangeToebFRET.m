@@ -85,27 +85,23 @@ else
     end
 end
 end
+selectionAll = ones(length(intensity{c}),1,'logical');
+%keeps track of whether a trace set has passed all criteria for
+%being included in the final export:
+%must be selected during trace viewing/selection, the corresponding
+%trace in all other channels must be selected, must be selected
+%for saving during normalization, along with all corresponding traces in
+%the other channels 
 for c = 1:channels
-    if c == 1
-        selectionAll = ones(length(intensity{c}),1,'logical');
-        %keeps track of whether a trace set has passed all criteria for
-        %being included in the final export:
-        %must be selected during trace viewing/selection, the corresponding
-        %trace in all other channels must be selected, must be selected
-        %for saving during normalization, along with all corresponding traces in
-        %the other channels 
-    else
-        assert(length(selectionAll)==length(selection{c-1}),'Multichannel datasets must have same number of traces in all channels');
-        %make sure the corresponding traces have the same number of time points
-        selectionAll = and(selectionAll,selection{c-1});
-    end
-    [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(intensity{c}, selectionAll, fileNames);
+    [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames);
+    assert(length(selectionAll)==length(selection{c}),'Multichannel datasets must have same number of traces in all channels');
+    %make sure the channels have an equal number of traces
+    selectionAll = and(selectionAll,selection{c});
     if isempty(trim{c})
-        return
+        return %an exit switch for the program
     end
 end
 
-selectionAll = and(selectionAll,selection{end});
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;

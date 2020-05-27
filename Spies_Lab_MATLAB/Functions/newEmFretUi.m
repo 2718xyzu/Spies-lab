@@ -33,6 +33,7 @@ function output = newEmFretUi
             if round(x(1))==round(x(2))
                 [x(2),~] = ginput(1);
             end
+            x = sort(x);
             output.trim = max(round(x),1);
         end
         if output.Value == 4
@@ -40,6 +41,7 @@ function output = newEmFretUi
             if round(x(1))==round(x(2))
                 [x(2),~] = ginput(1);
             end
+            x = sort(x);
             output.baseline = round(x);
         end
         if output.Value <= 2
