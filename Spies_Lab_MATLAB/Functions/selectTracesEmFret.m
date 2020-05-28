@@ -24,6 +24,8 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
             end
             figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
             plot(intensity{c}{i}); %show the trace of the current channel
+            yyaxis right
+            hold on;
             for j = setdiff(1:channels, c)
                 plot(intensity{j}{i},':');
                 %plot the other corresponding traces, but make them dashed;
@@ -34,7 +36,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                 %trimming decision
             end
             xlabel('Time points');
-            trim(i,:) = [1 length(intensity{i})];
+            trim(i,:) = [1 length(intensity{c}{i})];
             title([fileNames{i} newline helpText]);
             output = newEmFretUi; %display the buttons, wait until one is pushed
             if output.Value == 1
@@ -46,7 +48,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                 %selection on the current trace:
                 if isfield(output,'trim')
                     %Each trace may only have one contiguous trimmed region
-                    trim(i,:) = [output.trim(1),min(output.trim(2),length(intensity{i}))];
+                    trim(i,:) = [output.trim(1),min(output.trim(2),length(intensity{c}{i}))];
                     %                 intensity{i} = intensity2{i}(output.trim(1):output.trim(2));
                 end
                 if isfield(output,'baseline') %if baseline selected (photoblinking)
@@ -66,7 +68,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
             end
             if output.Value == 0 %move to the previous trace
                 if i>1
-                    i = i-2;
+                    i = i-1;
                 end
             else
                 i = i+1;
@@ -95,7 +97,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
         baseline = [];
         trim = zeros(length(intensity),2);
         for i = 1:N
-            trim(i,:) = [1 length(intensity{i})];
+            trim(i,:) = [1 length(intensity{c}{i})];
         end
     else %initial prompt closed without responding
         trim = [];
