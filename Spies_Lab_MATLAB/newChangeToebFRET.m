@@ -109,7 +109,7 @@ emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
 N = length(intensity{1});
-finalTrim = zeros(N,2);
+finalTrim = [zeros(N,1) ones(N,1)*1E10];
 %each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
     saveList{c} = ones(length(intensity{c}),1,'logical');
