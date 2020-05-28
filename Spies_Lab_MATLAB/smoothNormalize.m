@@ -10,6 +10,7 @@ input = varargin{1};
 matrix = cell(size(input));
 width = 7; %width of comparison region
 N = size(input,1);
+precision = 1E-3;
 
 % v = version('-release');
 
@@ -43,7 +44,8 @@ for j = 1:N
             same = abs((mean(seg1)-mean(seg2))/sqrt(var(seg1)/length(seg1)+var(seg2)/length(seg2)))<2.179;
             if same
                 i2 = i2+1;
-                seg1 = [seg1 seg2(1)]; %Place data into one window for the next comparison
+                joinedSegment = [seg1 seg2(1)]; %Place data into one window for the next comparison
+                seg1 = joinedSegment;
                 copy = 0;
                 try
                     if regions(end,2)~=0
@@ -111,6 +113,7 @@ end
 %if version is 2017a or newer:
 else %smooth the traces, remove outliers, find contiguous regions, organize into peaks
     allPeaks = cell([N,1]);
+    allPeakIndices = cell([N,1]);
     peaksTrimmed = cell([N,1]);
     for j = 1:N
         clear regions;
@@ -129,10 +132,9 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
             segment = trace(regions(i):regions(i+1)-1);
             peaks(pk+1,:) = [mean(segment), length(segment), std(segment)];
             peakIndices(pk+1) = {regions(i):regions(i+1)-1};
+            h = zeros(1,pk);
             if pk == 0
                 h = 1;
-            else
-                h = zeros(1,pk);
             end
             for ip = 1:pk
                 %check to see if this peak is statistically similar to any
@@ -163,7 +165,7 @@ end
 
 %Find baseline for all traces, if possible:
 if length(varargin)==2 %if baseline provided
-    baselineSwitch = 1;
+%     baselineSwitch = 1;
     baseIndices = varargin{2};
     for j = 1:N
         try
@@ -175,29 +177,32 @@ if length(varargin)==2 %if baseline provided
         end
 %         meaN = mean(baseline);
 %         stD = std(baseline)/sqrt(length(baseline));
-        i = 2;
-        try
-            while ~ttest2(matrix{j}(allPeakIndices{j}{i}),baseline,'Vartype','unequal','Alpha',.05)
-                %Is this peak statistically similar to the baseline?
-                %if yes, remember it and check the next peak
-                i = i+1;
-%                 skip(j) = i;
+        if length(allPeakIndices{j})~=1
+            nonBaseline = ones([1 length(allPeakIndices{j})],'logical');
+            for i = 1:length(allPeakIndices{j})
+                if ~ttest2(matrix{j}(allPeakIndices{j}{i}),baseline,'Vartype','unequal','Alpha',.05)
+                    %Is this peak statistically similar to the baseline?
+                    %if yes, remember it and check the next peak
+                    nonBaseline(i) = 0;
+    %                 skip(j) = i;
+                end
             end
-            peaksTrimmed{j} = allPeaks{j}(i:end,:); 
+            peaksTrimmed{j} = allPeaks{j}(nonBaseline,:); 
             %record all peaks that don't look like the baseline
-        catch
+        else
             peaksTrimmed{j} = allPeaks{j}(end,:);
             %if there is only one peak
         end
     end
 else
-    baselineSwitch = 0;
+%     baselineSwitch = 0;
     peaksTrimmed = allPeaks;
 end
 
 goodMatrix = cell(size(matrix));
 mult = zeros(N,1);
 niceList = zeros(N,1,'logical');
+lengths = zeros([1 N]);
 for j = 1:N
     if size(peaksTrimmed{j},1)<3 %||length(peaksTrimmed{j})>20
         continue %skip ill-behaved traces
@@ -209,6 +214,7 @@ for j = 1:N
     mult(j) = 0.8/(range(peaksTrimmed{j}(:,1)));
     goodMatrix{j} = (trace-peaksTrimmed{j}(1,1))*mult(j);
     peaksTrimmed{j} = [(peaksTrimmed{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) peaksTrimmed{j}(:,2)];
+    allPeaks{j} = [(allPeaks{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) allPeaks{j}(:,2:3) ];
     niceList(j) = 1;
 end
 
@@ -280,7 +286,8 @@ while ~satisfied
         dist = interp1(centers, valueS, miN:.001:maX); %A vector describing population density at each level
         dist(isnan(dist))=0;
         shift = round(-1*miN*1000)+1+length(dist);
-        dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
+        paddedDist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
+        dist = paddedDist;
         %repeat the scaling and fitting process for each trace
         scoreMatrix(iteration) = 0;
         for j = find(niceList)'
@@ -323,21 +330,27 @@ end
 
 for j = find(niceList)'
     penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000;
+    allPeaks{j} = [allPeaks{j}(:,1)*mult(j)/1000 allPeaks{j}(:,2)];
 end
 
-YN = questdlg(['Would you like to select the baseline (or low-state) region and smooth it?'... 
+YN = questdlg(['Would you like to select the baseline (or low-state) region?'... 
     '  This helps to suppress low-state overfitting by ebFRET and allows an '...
     'alignment of traces which have 2 or 1 distinct states'...
     ],'Baseline');
 if YN(1)=='Y'
-          [valueS,edges] = histcounts(cell2mat(penultimateMatrix'));
-          figure; plot(valueS);
-          [~] = questdlg('Please select the region which contains the low state', 'Baseline',...
-              'Ok','Ok');
-          [x,~] = ginput(2);
-          dEdge = mean(diff(edges));
-          x = round(x);
-          fit1 = fit((edges(x(1):x(2))+dEdge/2),valueS(x(1):x(2)),'gauss1');
+        [valueS,edges] = histcounts(cell2mat(penultimateMatrix'));
+        dEdge = mean(diff(edges));
+        centerList = edges(1:end-1)+dEdge/2;
+        figure; plot(centerList,valueS);
+        [~] = questdlg('Please select the region which contains the low state', 'Baseline',...
+          'Ok','Ok');
+        [x,~] = ginput(2);
+        [~,indeX1] = min(abs(edges-x(1)));
+        [~,indeX2] = min(abs(edges-x(2)));
+        dEdge = mean(diff(edges));
+        baselineLimits = sort(x);
+        fit1 = fit(centerList(indeX1:indeX2)',valueS(indeX1:indeX2)','gauss1');
+        baselineMean = fit1.b1;
 %         newBaseLine = fit1.b1+fit1.c1*2;
 %         valueS = histcounts(emFret,[-Inf 0:.01:1 Inf]);
 %         [~,maxX] = max(valueS(1:50));
@@ -378,7 +391,23 @@ if YN(1)=='F'
 %     penultimateMatrix = penultimateMatrix(niceList);
 %     matrix = matrix(1:length(penultimateMatrix));
 end
+
+YN = questdlg(['Would you like to smooth the baseline?  This will help suppress'...
+      ' overfitting of low states by ebFRET'],'Baseline');
+  
+  switch YN
+      case 'Yes'
+          for j = find(niceList)'
+              for i = 1:size(allPeaks{j},1)
+                  if allPeaks{j}(i,1)>baselineLimits(1) && allPeaks{j}(i,1)<baselineLimits(2) 
+                      penultimateMatrix{j}(allPeakIndices{j}{i}) = baselineMean;
+                  end
+              end
+          end
+  end
+
 end
+
 scale = [1E10,-1E10];
 for j = find(niceList)'
     scale(1) = min([prctile(penultimateMatrix{j},1) scale(1)]);

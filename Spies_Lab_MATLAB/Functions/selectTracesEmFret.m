@@ -2,7 +2,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
     channels = length(intensity); %number of channels in the data
     N = length(intensity{c}); %number of traces; assumes a cell input    
     selection = ones([N 1],'logical');
-    YN = questdlg(['Would you like to view and select traces?  This is recommended ',...
+    YN = questdlg(['Would you like to view and select traces in channel ' num2str(c) '? This is recommended ',...
         'to allow you to trim the trace (removing photobleaching), and also'...
         ' to select any portions of the trace which exhibit photoblinking'...
         ' (if there is any; defining baseline values for each trace in this way is optional, but '...
@@ -86,7 +86,11 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                     trim = []; %Signal to parent function that analysis was incomplete
                     return
                 else
-                    break %All further traces are selected untrimmed and with no baseline
+                    %All further traces are selected untrimmed and with no baseline
+                        for j = i:N
+                            trim(j,:) = [1 length(intensity{c}{j})];
+                        end
+                    break
                 end
             end
         end

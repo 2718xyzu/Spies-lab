@@ -23,13 +23,16 @@ selection = cell([1 channels]);
 trim = cell([1 channels]);
 for c = 1:channels
 
-blank = questdlg('Are your traces in a .traces file or saved individually in txt, csv, or dat?',...
+blank = questdlg(['Are your traces for channel ' num2str(c) ...
+    ' in a .traces file or saved individually in txt, csv, or dat?'],...
     'Select format','.traces','Individual','Individual');
 
 
 if blank(2) == 't'
     [donors, acceptors] = extractTracesFiles();
-    blank = questdlg('Would you like to run emFRET on the donors or acceptors?','Select data','Donors', 'Acceptors', 'Donors'); 
+    blank = questdlg(['Would you like channel ' num2str(c)...
+        ' to be the donors or acceptors?'],...
+        'Select data','Donors', 'Acceptors', 'Donors'); 
     if blank(1) == 'D'
         intensity{c} = donors;
     else
@@ -40,7 +43,7 @@ if blank(2) == 't'
         fileNames{i} = [ 'trace' num2str(i)];
     end
 else
-    blank = questdlg('Select the folder which contains all traces to normalize',...
+    blank = questdlg(['Select the folder which contains all data for channel ' num2str(c)],...
         'Select folder','Ok','Ok');
 
     path = uigetdir;
@@ -70,8 +73,8 @@ else
 
     end
 
-    column = inputdlg(['Which column of the data would you like extracted?  If you want each column extracted, type "all".' ...
-        ' If it helps, the mean of each column is, in order: ' mat2str(meanA,5) ]);
+    column = inputdlg(['Which column of the data would you like to assign to channel '...
+        num2str(c) '? If it helps, the mean of each column is, in order: ' mat2str(meanA,5) ]);
 
     column = str2double(column{1});
     intensity{c} = cell(length(dir3),1);
