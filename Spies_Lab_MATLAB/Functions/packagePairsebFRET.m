@@ -1,4 +1,4 @@
-function matrix = packagePairsebFRET(channels,filetype)
+function [matrix, plotDisplay] = packagePairsebFRET(channels,filetype)
 if strcmp(filetype,'smd')
     for i = 1:channels
     output = questdlg(['Please select the SMD file for channel ',...
@@ -8,9 +8,12 @@ if strcmp(filetype,'smd')
         end
         [file, path] = uigetfile;
         smd = importdata([path file]);
+        plotDisplay = struct([size(smd.data,2) channels]);
         for j = 1:size(smd.data,2)
             longth = size(smd.data(j).values(:,4),1);
             matrix(1:longth, i+(j-1)*channels) = smd.data(j).values(:,4);
+            plotDisplay(j,i).raw = smd.data(j).values(:,3);
+            plotDisplay(j,i).discrete = smd.data(j).values(:,4);
         end
     end
 else
@@ -36,6 +39,7 @@ else
             matrix(1:longth, i+(j-1)*channels) = smd(:,j);
         end
     end
+    plotDisplay = [];
 end
 
 end

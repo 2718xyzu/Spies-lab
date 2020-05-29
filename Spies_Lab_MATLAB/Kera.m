@@ -206,6 +206,7 @@ classdef Kera < handle
 
         
         function processData(kera)
+            %DEPRECATED FUNCTION (PROCESSDATASTATES is used instead)
             kera.gui.resetError();
 
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
