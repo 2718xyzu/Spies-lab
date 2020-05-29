@@ -44,7 +44,7 @@ classdef Kera < handle
                 stateLisT = round(eval(['[' channelsAndStates{2} ']' ]));
                 if prod(~isreal(stateLisT)) || ~isreal(channelS) || prod(stateLisT < 0) || prod(channelS < 0)
                     kera.gui.errorMessage('Invalid Channel or State');
-                    kera.getChannelsAndStates()
+                    kera.setChannelState()
                     return
                 end
                 kera.channels = channelS;
@@ -61,7 +61,7 @@ classdef Kera < handle
                     return
                 end
                 kera.gui.errorMessage('Invalid Channel or State');
-                kera.getChannelsAndStates()
+                kera.setChannelState()
                 return
             end
             kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
@@ -73,7 +73,7 @@ classdef Kera < handle
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
             dir3 = {0};
-            kera.getChannelsAndStates();
+            kera.setChannelState();
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -112,7 +112,7 @@ classdef Kera < handle
             %   See also QUBANALYZE and PROCESSDATA
             kera.gui.resetError();
             if isempty(kera.channels) || isempty(kera.stateList)
-                kera.getChannelsAndStates()
+                kera.setChannelState()
             end
             if kera.gui.error
                 kera.gui.resetError();
@@ -143,7 +143,7 @@ classdef Kera < handle
             %MATLAB matrix variables
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-            kera.getChannelsAndStates()
+            kera.setChannelState()
             if kera.gui.error
                 kera.gui.resetError();
                 return

@@ -74,9 +74,10 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                 i = i+1;
             end
             if output.Value == 6
-                YN = questdlg(['Do you want to exit and stop analysis, or do you'...
+                YN = questdlg(['Do you want to exit and stop analysis? Or, do you'...
                     ' want to have the other traces in this set simply be accepted untrimmed with no '...
-                    'baseline selected?'],'Exit option','Exit program','Accept all and move on', 'Exit program');
+                    'baseline selected?  Or do you want to discard all traces not yet viewed?'],...
+                    'Exit option','Exit program','Accept all and move on','Discard all unviewed and move on', 'Exit program');
                 %The above is shown since closing the figure window
                 %is easier than manually clicking 'Next trace' many
                 %times
@@ -87,9 +88,15 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                     return
                 else
                     %All further traces are selected untrimmed and with no baseline
+                    if YN(1)=='A'
                         for j = i:N
                             trim(j,:) = [1 length(intensity{c}{j})];
                         end
+                    else
+                        for j = i:N
+                            selection(j) = 0;
+                        end
+                    end
                     break
                 end
             end

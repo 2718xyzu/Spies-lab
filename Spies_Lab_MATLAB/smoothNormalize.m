@@ -10,15 +10,17 @@ input = varargin{1};
 matrix = cell(size(input));
 width = 7; %width of comparison region
 N = size(input,1);
-precision = 1E-3;
+precision = 1E-3; %resolution of possible bins
 
 % v = version('-release');
 
 try %Check that required functions are available in the user's version
-    smoothdata(rand(1,100));
-    filloutliers(rand(1,100),'spline');
+    smoothdata(rand(1,100));                %Signal Processing Toolbox
+    filloutliers(rand(1,100),'spline');    
     findchangepts(rand(1,100));
     close(gcf)
+    [~] = fit((1:10)',(2:2:20)','poly5');   %Curve Fitting Toolbox
+    [~] = ttest2(randn([1 50]),randn([1 50]),'Alpha',.01,'Vartype','unequal'); %Stats and Machine Learning
     old_version = 0;
 catch
     old_version = 1;
@@ -26,7 +28,9 @@ end
 
 % if str2double(v(1:4))<2017
 if old_version
-msgbox('Your MATLAB version does not support smoothing techniques; performance may be affected');
+msgbox(['Function checks failed.  Troubleshooting: use the add-on' ...
+    ' manager to download the "Signal Processing Toolbox", "Curve Fitting Toolbox", '...
+    'and the "Statistics and Machine Learning Toolbox".  Version should also be newer than 2016. ']);
 for j = 1:N
     trace = input{j};
     %First, set up two sliding windows to compare regions of the trace for
@@ -225,7 +229,7 @@ originalMatrix(niceList) = goodMatrix(niceList);
 %Also matches the scaling of peaksTrimmed
 basisMatrix = originalMatrix;
 n = nnz(niceList); %n is the number of well-behaved traces
-mult = ones(1,N)*1000;
+mult = ones(1,N)/precision;
 %Make all the peaks into one big histogram to see where peaks fall
 
 [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5); 
@@ -233,9 +237,9 @@ valueS = valueS/(sum(lengths))*n*5; %A normalization based on the number of bins
 centers = edges(1:end-1) + diff(edges)/2;
 miN = round(centers(1),3); %Get beginning and end points
 maX = round(centers(end),3);
-dist = interp1(centers, valueS, miN:.001:maX); %A vector describing population density at each level
+dist = interp1(centers, valueS, miN:precision:maX); %A vector describing population density at each level
 dist(isnan(dist))=0; %remove NaN values
-shift = round(-1*miN*1000)+1+length(dist); %define the position within dist of the original starting point
+shift = round(-1*miN/precision)+1+length(dist); %define the position within dist of the original starting point
 dist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10]; 
 %extend it on both sides to enable extrapolation outside 
 
@@ -285,7 +289,7 @@ while ~satisfied
         maX = round(centers(end),3);
         dist = interp1(centers, valueS, miN:.001:maX); %A vector describing population density at each level
         dist(isnan(dist))=0;
-        shift = round(-1*miN*1000)+1+length(dist);
+        shift = round(-1*miN/precision)+1+length(dist);
         paddedDist = [mean(dist)*ones(size(dist))/10 dist mean(dist)*ones(size(dist))/10];
         dist = paddedDist;
         %repeat the scaling and fitting process for each trace
@@ -293,7 +297,7 @@ while ~satisfied
         for j = find(niceList)'
             fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
             multMatrix(iteration,j) = fminbnd(fitScore, 250, 1500);
-% % % %             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)/1000;
+% % % %             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)*precision;
             scoreMatrix(iteration) = scoreMatrix(iteration)-fitScore(multMatrix(iteration,j));
             %Fitscore returns a negative number, but a higher scoreMatrix
             %is better, so subtract.
@@ -302,7 +306,7 @@ while ~satisfied
     [bestScore,bestIteration] = max(scoreMatrix);
     displayedMatrix = cell([N,1]);
     for j = find(niceList)'
-        displayedMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000; 
+        displayedMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)*precision; 
     end
     figure; histogram(cell2mat(displayedMatrix'));
     title(['Current score: ' num2str(bestScore)]);
@@ -329,8 +333,8 @@ end
 
 
 for j = find(niceList)'
-    penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)/1000;
-    allPeaks{j} = [allPeaks{j}(:,1)*mult(j)/1000 allPeaks{j}(:,2)];
+    penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)*precision;
+    allPeaks{j} = [allPeaks{j}(:,1)*mult(j)*precision allPeaks{j}(:,2)];
 end
 
 YN = questdlg(['Would you like to select the baseline (or low-state) region?'... 
@@ -347,7 +351,6 @@ if YN(1)=='Y'
         [x,~] = ginput(2);
         [~,indeX1] = min(abs(edges-x(1)));
         [~,indeX2] = min(abs(edges-x(2)));
-        dEdge = mean(diff(edges));
         baselineLimits = sort(x);
         fit1 = fit(centerList(indeX1:indeX2)',valueS(indeX1:indeX2)','gauss1');
         baselineMean = fit1.b1;
@@ -358,25 +361,25 @@ if YN(1)=='Y'
 %         newBaseLine = fit1.b1+fit1.c1*2;
 %         emFret = max(emFret,newBaseLine);
     
-    
-YN = questdlg(['It was determined that ' num2str(n) ' out of ' num2str(N) ' traces were'...
-    ' multi-state; would you like to only save these traces or attempt to fit the others'...
-    ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
-    ' still a one-to-one correspondence of the traces in the two channels' ...
+n1 = 0;
+n2 = 0;
+for j = find(~niceList)'
+     if size(allPeaks{j},1)>1
+         n2 = n2+1;
+     elseif size(allPeaks{j},1)==1
+         n1 = n1+1;
+     end
+end
+
+if n1>0
+YN = questdlg(['It was determined that ' num2str(n1) ' traces were'...
+    ' single-state; would you like to assign these to the baseline and save them?'...
     ],'Save all?','Fit all the other traces and save them too',...
     'Fit the baseline-only traces','Save only the multi-state traces','Save only the multi-state traces');
 scale = [1E10,-1E10];
 if YN(1)=='F'
     for j = find(~niceList)'
-        if size(allPeaks{j},1)>1 && YN(5)=='a' %if a trace has two states, set one to be low and the other high
-            %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
-            %states in general, use with caution. If you do save them, consider excluding these
-            %traces during ebFRET fitting
-            scale(1) = prctile(matrix{j},1);
-            scale(2) = prctile(matrix{j},99);
-            penultimateMatrix{j} = (matrix{j}-scale(1))/(scale(2)-scale(1));
-            niceList(j) = 1;
-        elseif size(allPeaks{j},1)==1
+        if size(allPeaks{j},1)==1 %single-state trace
             %try to make the trace fit the identified baseline. 
             trace1 = penultimateMatrix{j};
             penultimateMatrix{j} = fit1.c1*(trace1-mean(trace1))/std(trace1);
@@ -390,6 +393,28 @@ if YN(1)=='F'
 % else
 %     penultimateMatrix = penultimateMatrix(niceList);
 %     matrix = matrix(1:length(penultimateMatrix));
+end
+end
+
+if n2 > 0
+    YN = questdlg(['It was determined that ' num2str(n2) ' traces were'...
+    ' two-state; would you like to assign these to the baseline and save them?'...
+    ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
+    ' still a one-to-one correspondence of the traces in the two channels' ...
+    ],'Save all?','Fit all the other traces and save them too',...
+    'Fit the baseline-only traces','Save only the multi-state traces','Save only the multi-state traces');
+scale = [1E10,-1E10];
+    for j = find(~niceList)'
+        if size(allPeaks{j},1)==2
+        %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
+        %states in general, use with caution. If you do save them, consider excluding these
+        %traces during ebFRET fitting
+        scale(1) = prctile(matrix{j},1);
+        scale(2) = prctile(matrix{j},99);
+        penultimateMatrix{j} = (matrix{j}-scale(1))/(scale(2)-scale(1));
+        niceList(j) = 1;
+        end
+    end
 end
 
 YN = questdlg(['Would you like to smooth the baseline?  This will help suppress'...
