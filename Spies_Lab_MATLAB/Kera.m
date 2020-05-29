@@ -32,8 +32,8 @@ classdef Kera < handle
             kera.gui = keraGUI();
         end
 
-        function getChannelsAndStates(kera)
-            %GETCHANNELSANDSTATES Prompts the user for the number of channels
+        function setChannelState(kera,~,~,~)
+            %SETCHANNELSTATE Prompts the user for the number of channels
             %   and the number of states their data has
             kera.gui.resetError();
 
@@ -45,6 +45,7 @@ classdef Kera < handle
                 if prod(~isreal(stateLisT)) || ~isreal(channelS) || prod(stateLisT < 0) || prod(channelS < 0)
                     kera.gui.errorMessage('Invalid Channel or State');
                     kera.getChannelsAndStates()
+                    return
                 end
                 kera.channels = channelS;
 
@@ -64,7 +65,8 @@ classdef Kera < handle
                 return
             end
             kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
-        end
+        end        
+        
 
         function qubAnalyze(kera, hObject, eventData, handles)
             %QUBANALYZE Analyzes QuB data
@@ -109,7 +111,9 @@ classdef Kera < handle
             %EBFRETANALYZE Analyzes ebFRET data
             %   See also QUBANALYZE and PROCESSDATA
             kera.gui.resetError();
-            kera.getChannelsAndStates()
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.getChannelsAndStates()
+            end
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -411,8 +415,8 @@ classdef Kera < handle
             kera.gui.resetError();
 
             if isempty(kera.savePackage)
-                kera.gui.errorMessage('Import data before analyzing');
-                return
+%                 kera.gui.errorMessage('Import data before analyzing');
+%                 return
             end
 
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
@@ -472,6 +476,7 @@ classdef Kera < handle
             if row ~= 1
                 [xList, yList] = visualizeTransition(kera.output(row).expr{:},kera.channels);
                 kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
+                ylim([min(yList,[],'all')-.2 max(yList,[],'all')+.2]);
 %                 disp(outText);
             else
                 kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
