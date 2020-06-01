@@ -26,6 +26,7 @@ classdef Kera < handle
         stateOutput
         baseState
         dataLoaded
+        plotDisplay
     end
     methods
         function kera = Kera()
@@ -109,7 +110,7 @@ classdef Kera < handle
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
-            %   See also QUBANALYZE and PROCESSDATA
+            %   See also QUBANALYZE and PROCESSDATASTATES
             kera.gui.resetError();
             if isempty(kera.channels) || isempty(kera.stateList)
                 kera.setChannelState()
@@ -118,24 +119,27 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-
-            if kera.channels == 1
-                [file, path] = kera.selectFile();
-                smdImport = load([path filesep file]);
-                for i = 1:size(smdImport.data,2)
-                    ebfretImport = smdImport.data(i).values(:,4);
-                    kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
-                end
-            else
-                kera.matrix = packagePairsebFRET(kera.channels,'smd');
-            end
-
-            kera.filenames = num2cell(1:size(kera.matrix,2))';
-            %kera.matrix(kera.matrix==0) = 1;
-            
+            [kera.matrix kera.plotDisplay, kera.filenames] = packagePairsebFRET(kera.channels,'smd');
+%             kera.filenames = num2cell(1:size(kera.matrix,2))';
+%             kera.matrix(kera.matrix==0) = 1;
 %             kera.processData();
             %new script:
             kera.processDataStates();
+        end
+        
+        
+        function haMMYAnalyze(kera,hObject, eventData, handles)
+            %EBFRETANALYZE Analyzes ebFRET data
+            %   See also QUBANALYZE and PROCESSDATASTATES
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            [kera.matrix kera.plotDisplay, kera.filenames] = packagePairsHaMMY(kera.channels);
         end
 
         function rawAnalyze(kera, hObject, eventData, handles)
