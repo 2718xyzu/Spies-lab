@@ -18,10 +18,10 @@ function [finalRaw, finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 finalRaw = raw;
 finalDiscrete = discrete;
 N = length(raw);
-if deadFrames>1
-    warning('deadTime function does not yet support event lengths longer than 1');
-    return
-end
+% if deadFrames>1
+%     warning('deadTime function does not yet support event lengths longer than 1');
+%     return
+% end
 
 discrete = reshape(discrete,[1 length(discrete)]);
 raw = reshape(discrete,[1 length(raw)]);
