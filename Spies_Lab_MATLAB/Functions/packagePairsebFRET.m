@@ -1,4 +1,5 @@
-function [matrix, plotDisplay] = packagePairsebFRET(channels,filetype)
+function [matrix, plotDisplay, fileNames] = packagePairsebFRET(channels,filetype)
+fileNames = {};
 if strcmp(filetype,'smd')
     for i = 1:channels
     output = questdlg(['Please select the SMD file for channel ',...
@@ -9,11 +10,13 @@ if strcmp(filetype,'smd')
         [file, path] = uigetfile;
         smd = importdata([path file]);
         plotDisplay = cell([size(smd.data,2) channels 2]);
+        fileNames = cell([size(smd.data,2) 1]);
         for j = 1:size(smd.data,2)
             longth = size(smd.data(j).values(:,4),1);
             matrix(1:longth, i+(j-1)*channels) = smd.data(j).values(:,4);
             plotDisplay(j,i,1) = smd.data(j).values(:,3);
             plotDisplay(j,i,2) = smd.data(j).values(:,4);
+            fileNames{j} = smd.data(j).attr.file;
         end
     end
 else

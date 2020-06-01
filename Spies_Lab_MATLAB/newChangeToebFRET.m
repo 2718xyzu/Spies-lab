@@ -132,6 +132,6 @@ for c = 1:channels
         emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
         %realign all traces, even if they were trimmed differently earlier
     end
-    saveEmFret(emFret{c}(selectionAll),c);
+    saveEmFret(emFret{c}(selectionAll),c, fileNames);
 
 end

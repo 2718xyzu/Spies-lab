@@ -1,7 +1,25 @@
-function saveEmFret(emFret,channel)
-    blank = questdlg(['Please select a directory (or make a new one) in which to save traces in channel ',...
-        num2str(channel) ], 'Select Directory','Ok','Ok');
-    if ~rand; disp(blank); end
+function saveEmFret(emFret,channel, fileNames)
+    anS = questdlg(['Would you like to save in the format for ebFRET or HaMMY or both?',...
+        ], 'Select save format','ebFRET','HaMMY','Both');
+    formatStrings = {'ebFRET', 'HaMMY'};
+    switch anS
+        case 'ebFRET'
+            format = 1;
+        case 'HaMMY'
+            format = 2;
+        case 'Both'
+            format = [1 2];
+    end
+    
+    if any(fomat==2)
+        timeStr = inputdlg('Please enter the frame rate of data in seconds (i.e. 0.1)');
+        timeUnit = str2double(timeStr);
+    end
+    
+    
+    for j = format
+    [~] = questdlg(['Please select a directory (or make a new one) in which to save traces in channel ',...
+        num2str(channel) 'in the ' formatStrings{j} ' format'], 'Select Directory','Ok','Ok');
     saveDir = uigetdir;
     if ~isfolder(saveDir)
         errordlg('Directory not found.  Using default directory');
@@ -10,7 +28,16 @@ function saveEmFret(emFret,channel)
     for i = 1:length(emFret)
         traceA = emFret{i};
         traceD = 1-traceA;
-        saveMatrix = vertcat(traceD,traceA)';
-        save(([saveDir filesep 'trace_' num2str(i,'%05u') '.dat']),'saveMatrix','-ascii');
+        switch j
+            case 1
+                saveMatrix = vertcat(traceD,traceA)';
+                save(([saveDir filesep fileNames{j} '.dat']),'saveMatrix','-ascii');
+            case 2
+                timeVector = 0:timeUnit:((length(traceD)-1)*timeUnit);
+                saveMatrix = vertcat(timeVector, traceD, traceA)';
+                save(([saveDir filesep fileNames{j} '.dat']),'saveMatrix','-ascii');
+        end
+        
+    end
     end
 end
