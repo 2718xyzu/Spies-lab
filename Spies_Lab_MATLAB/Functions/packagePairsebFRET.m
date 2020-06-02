@@ -31,8 +31,8 @@ if strcmp(filetype,'smd')
         for i = 1:size(smd.data,2)
             longth = size(smd.data(i).values(:,4),1);
             matrix(1:longth, j+(i-1)*channels) = smd.data(i).values(:,4); %discretized values
-            plotDisplay(i,j,1) = smd.data(i).values(:,3); %raw values (the "FRET" signal)
-            plotDisplay(i,j,2) = smd.data(i).values(:,4); %discretized values
+            plotDisplay{i,j,1} = smd.data(i).values(:,3); %raw values (the "FRET" signal)
+            plotDisplay{i,j,2} = smd.data(i).values(:,4); %discretized values
             fileNames{i} = smd.data(i).attr.file; %the ebFRET output structure holds the names of the original files
         end
     end

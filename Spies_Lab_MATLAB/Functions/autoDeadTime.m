@@ -1,4 +1,4 @@
-function [finalRaw, finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
+function [finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 %Function to intelligently fill events which are shorter than a length of
 %(deadFrames+1).  Mostly, this is intended to fill single-frame gaps due to
 %noise, such as [1 1 1 1 1 2 1 1 1 1 ] where it is unambiguous where the
@@ -15,9 +15,8 @@ function [finalRaw, finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 %discrete: a 1xN array of integers (the discretized data; the states)
 %deadFrames: the length of events to be eliminated (minimum: 1)
 
-finalRaw = raw;
 finalDiscrete = discrete;
-if isempty(deadFrames) || ~isinteger(deadFrames) || deadFrames<1
+if isempty(deadFrames) || deadFrames~=round(deadFrames) || deadFrames<1
     return %something is wrong
 end
 N = length(raw);
@@ -27,7 +26,7 @@ N = length(raw);
 % end
 
 discrete = reshape(discrete,[1 length(discrete)]);
-raw = reshape(discrete,[1 length(raw)]);
+raw = reshape(raw,[1 length(raw)]);
 indices = find(diff([0 discrete]));
 meanState = zeros([1 max(discrete)]);
 stdState = zeros([1 max(discrete)]);
@@ -36,7 +35,7 @@ for state = 1:max(discrete)
     stdState(state) = std(raw(discrete==state));
 end
 I = zeros(size(raw));
-for j = find(diff(indices)<=deadFrames)'
+for j = find(diff(indices)<=deadFrames)
     segment = indices(j):(indices(j+1)-1);
     add = ones([1 (2+deadFrames-length(segment))]); 
     %holds the likelihood of the solutions which append points on either
@@ -44,11 +43,11 @@ for j = find(diff(indices)<=deadFrames)'
     remove = 1; %the likelihood of the solution which assigns all
     %points in the event to nearby states
     c = discrete(segment(1)); %the current state of the short event
-    if length(segment)==1 && segment > 1 && segment < N
+    if length(segment)==1 && segment(1) > 1 && segment(1) < N
         if discrete(segment-1) == discrete(segment+1)
-            discrete(segment) = discrete(segment-1);
+            finalDiscrete(segment) = discrete(segment-1);
+            continue %if this is an obvious single-frame spike, don't bother with the Likelihood stuff
         end
-        continue %if this is an obvious single-frame spike, don't bother with the Likelihood stuff
     end
     
     

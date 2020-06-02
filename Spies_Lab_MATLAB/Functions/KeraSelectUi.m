@@ -32,6 +32,7 @@ function output = KeraSelectUi(ax1)
 
     function buttonCallback(hObject,~)
         output.Value = hObject.UserData;
+        handleClose = gcf;
         switch output.Value
             case 4
                 anS = inputdlg(['Please enter an integer number of frames; all'...
@@ -39,12 +40,12 @@ function output = KeraSelectUi(ax1)
                     ' a nearby state']);
                 try
                     deadFrames = str2double(anS{:}); %if the user closes without answering
-                    assert(isinteger(deadFrames)) %or gives something not an integer?
+                    assert(round(deadFrames)==deadFrames) %or gives something not an integer
                 catch
                     deadFrames = 0; %signal to not do the deadTime thing
                 end
                 output.deadFrames = deadFrames;
-                close(gcf);
+                close(handleClose);
             case 5
                 brush;
                 set(handles.btn,'enable','off');
@@ -63,6 +64,7 @@ function output = KeraSelectUi(ax1)
             case 8 %cancel that brushing
                 for i = 1:length(ax1)
                     output.brushing{i} = [];
+                    set(ax1{i},'BrushData',[]);
                 end
                 set(handles.btn,'enable','on');
                 set(handles.btn2,'enable','on');

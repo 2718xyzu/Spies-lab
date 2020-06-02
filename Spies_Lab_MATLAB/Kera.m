@@ -65,7 +65,11 @@ classdef Kera < handle
                 kera.setChannelState()
                 return
             end
+        end
+        
+        function importSuccessful(kera,~,~,~)
             kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
+            kera.gui.createButton('View Data', [0.05 0.04 0.2 0.05], @kera.viewTraces);
         end        
         
 
@@ -104,6 +108,7 @@ classdef Kera < handle
                 end
             end
             kera.matrix = matrix;
+            kera.importSuccessful();
 %             kera.processData();
 %             kera.processDataStates();
         end
@@ -127,10 +132,12 @@ classdef Kera < handle
 %             kera.matrix(kera.matrix==0) = 1;
 %             kera.processData();
             %new scripts:
-            kera.plotDisplay = kera.plotdisplayKera(kera.plotDisplay, kera.filenames, kera.timeInterval);
-            kera.processDataStates();
+            kera.importSuccessful();
         end
         
+        function viewTraces(kera,~,~,~)
+            kera.plotDisplay = plotdisplayKera(kera.plotDisplay, kera.filenames, kera.timeInterval);
+        end
         
         function haMMYAnalyze(kera,hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
@@ -166,8 +173,7 @@ classdef Kera < handle
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
-            kera.processData();
-            kera.processDataStates();
+            kera.importSuccessful();
         end
         
         
@@ -564,7 +570,7 @@ classdef Kera < handle
             path = dir;
         end
         
-        function setTimeStep(kera)
+        function setTimeStep(kera,~,~,~)
             timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
             kera.timeInterval = eval(timeIntervalCell{1});
             try

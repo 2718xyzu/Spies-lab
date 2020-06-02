@@ -19,27 +19,31 @@ while i <= N
     for j = 1:size(plotCell2,2)
         n = length(plotCell2{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
+        meanState = 1:max(plotCell2{i,j,2});
         if n>0
+            for state = 1:max(plotCell2{i,j,2})
+                meanState(j,state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
+            end
             plot(((1:n)*timeInterval)-timeInterval,plotCell2{i,j,1}+shift);
             legendList(l) = {['Channel ' num2str(j) ' raw']};
             l=l+1;
         else
             n = length(plotCell2{i,j,2});
         end
-        plot(((1:n)*timeInterval)-timeInterval,plotCell2{i,j,2}+shift,'o','Color',color1);
+        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState(plotCell2{i,j,2})+shift,'o','Color',color1);
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
         shift = shift+0.1;
     end
     legend(legendList);
-    output = KeraSelectUi(ax);
+    output = KeraSelectUi(ax1);
     switch output.Value
         
         case 6 %closed without selecting anything (probably want to get out)
             return
         case 4 
             for j = 1:size(plotCell2,2)
-                plotCell2(i,j,2) = autoDeadTime(plotCell2{i,j,1}, plotCell2{i,j,2}, output.deadFrames);
+                plotCell2{i,j,2} = autoDeadTime(plotCell2{i,j,1}, plotCell2{i,j,2}, output.deadFrames);
             end
             maxStates = getMaxStates(plotCell2);
         case 5 %I guess they closed it while brushing?  
@@ -70,7 +74,7 @@ while i <= N
                 channelEdit = inputdlg('Which channel are you editing?');
                 try
                     channelEdit = str2double(channelEdit{:}); %if the user closes without answering
-                    assert(isinteger(channelEdit)) %or gives something not an integer?
+                    assert(round(channelEdit)==channelEdit) %or gives something not an integer?
                     assert(channelEdit<=size(plotCell2,2)); %or something which is not a valid channel
                 catch
                     continue %skip it and re-open the trace
@@ -83,10 +87,10 @@ while i <= N
                 ' channel is ' num2str(maxStates(channelEdit)) ]);
             try
                 stateEdit = str2double(stateEdit{:}); %if the user closes without answering
-                assert(isinteger(stateEdit)) %or gives something not an integer?
+                assert(round(stateEdit)==stateEdit) %or gives something not an integer?
 
                 assert(length(output.brushing{channelEdit})==length(plotCell2{i,channelEdit,2}));
-                plotCell2{i,channelEdit,2}(output.brushing{channelEdit}) = stateEdit;
+                plotCell2{i,channelEdit,2}(logical(output.brushing{channelEdit})) = stateEdit;
                 maxStates = getMaxStates(plotCell2);
             catch
                 continue %skip it and re-open the trace
