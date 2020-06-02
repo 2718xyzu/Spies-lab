@@ -17,6 +17,9 @@ function [finalRaw, finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 
 finalRaw = raw;
 finalDiscrete = discrete;
+if isempty(deadFrames) || ~isinteger(deadFrames) || deadFrames<1
+    return %something is wrong
+end
 N = length(raw);
 % if deadFrames>1
 %     warning('deadTime function does not yet support event lengths longer than 1');

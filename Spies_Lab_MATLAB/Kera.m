@@ -115,6 +115,9 @@ classdef Kera < handle
             if isempty(kera.channels) || isempty(kera.stateList)
                 kera.setChannelState()
             end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -123,7 +126,8 @@ classdef Kera < handle
 %             kera.filenames = num2cell(1:size(kera.matrix,2))';
 %             kera.matrix(kera.matrix==0) = 1;
 %             kera.processData();
-            %new script:
+            %new scripts:
+            kera.plotDisplay = kera.plotdisplayKera(kera.plotDisplay, kera.filenames, kera.timeInterval);
             kera.processDataStates();
         end
         
@@ -560,7 +564,7 @@ classdef Kera < handle
             path = dir;
         end
         
-        function setTimeStep(kera, ~, ~, ~)
+        function setTimeStep(kera)
             timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
             kera.timeInterval = eval(timeIntervalCell{1});
             try
