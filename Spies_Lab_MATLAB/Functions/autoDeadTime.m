@@ -62,18 +62,20 @@ for j = find(diff(indices)<=deadFrames)
         for addJ = (segment(1)-length(add)+addI):(segment(end)-1+addI)
             if addJ < 1 || addJ >= N
                 add(addI) = 0; %we'd be adding a point that doesn't exist
-            else
+            elseif ~any(addJ==segment) %ignore points already in the event
                 L = 1/(stdState(c))*exp(-.5*((raw(addJ)-meanState(c))/stdState(c))^2);
-                add(addI) = add(addI)*L; %a point already in the event or to be added
+                add(addI) = add(addI)*L; %a point to be added to the event
             end
         end
     end
     if all(remove>add)
-        finalDiscrete(segment) = I(segment); %assign that event's values to nearby states
+        finalDiscrete(segment) = I(segment); 
+        %assign that event's values to nearby states
     else                             %OR
+        %fill nearby time points with same state to make the event longer
         [~,addI] = max(add);
         finalDiscrete((segment(1)-length(add)+addI):(segment(end)-1+addI)) = c;
-        %fill nearby time points with same state to make the event longer
+        
     end
 
 end
