@@ -2,7 +2,7 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
     channels = length(intensity); %number of channels in the data
     N = length(intensity{c}); %number of traces; assumes a cell input    
     selection = ones([N 1],'logical');
-    YN = questdlg(['Would you like to view and select traces?  This is recommended ',...
+    YN = questdlg(['Would you like to view and select traces in channel ' num2str(c) '? This is recommended ',...
         'to allow you to trim the trace (removing photobleaching), and also'...
         ' to select any portions of the trace which exhibit photoblinking'...
         ' (if there is any; defining baseline values for each trace in this way is optional, but '...
@@ -74,9 +74,10 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                 i = i+1;
             end
             if output.Value == 6
-                YN = questdlg(['Do you want to exit and stop analysis, or do you'...
+                YN = questdlg(['Do you want to exit and stop analysis? Or, do you'...
                     ' want to have the other traces in this set simply be accepted untrimmed with no '...
-                    'baseline selected?'],'Exit option','Exit program','Accept all and move on', 'Exit program');
+                    'baseline selected?  Or do you want to discard all traces not yet viewed?'],...
+                    'Exit option','Exit program','Accept all and move on','Discard all unviewed and move on', 'Exit program');
                 %The above is shown since closing the figure window
                 %is easier than manually clicking 'Next trace' many
                 %times
@@ -86,7 +87,17 @@ function [baseline, trim, selection] = selectTracesEmFret(c,intensity,selectionA
                     trim = []; %Signal to parent function that analysis was incomplete
                     return
                 else
-                    break %All further traces are selected untrimmed and with no baseline
+                    %All further traces are selected untrimmed and with no baseline
+                    if YN(1)=='A'
+                        for j = i:N
+                            trim(j,:) = [1 length(intensity{c}{j})];
+                        end
+                    else
+                        for j = i:N
+                            selection(j) = 0;
+                        end
+                    end
+                    break
                 end
             end
         end

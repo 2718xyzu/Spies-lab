@@ -26,14 +26,15 @@ classdef Kera < handle
         stateOutput
         baseState
         dataLoaded
+        plotDisplay
     end
     methods
         function kera = Kera()
             kera.gui = keraGUI();
         end
 
-        function getChannelsAndStates(kera)
-            %GETCHANNELSANDSTATES Prompts the user for the number of channels
+        function setChannelState(kera,~,~,~)
+            %SETCHANNELSTATE Prompts the user for the number of channels
             %   and the number of states their data has
             kera.gui.resetError();
 
@@ -44,7 +45,8 @@ classdef Kera < handle
                 stateLisT = round(eval(['[' channelsAndStates{2} ']' ]));
                 if prod(~isreal(stateLisT)) || ~isreal(channelS) || prod(stateLisT < 0) || prod(channelS < 0)
                     kera.gui.errorMessage('Invalid Channel or State');
-                    kera.getChannelsAndStates()
+                    kera.setChannelState()
+                    return
                 end
                 kera.channels = channelS;
 
@@ -60,18 +62,23 @@ classdef Kera < handle
                     return
                 end
                 kera.gui.errorMessage('Invalid Channel or State');
-                kera.getChannelsAndStates()
+                kera.setChannelState()
                 return
             end
-            kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
         end
+        
+        function importSuccessful(kera,~,~,~)
+            kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
+            kera.gui.createButton('View Data', [0.05 0.04 0.2 0.05], @kera.viewTraces);
+        end        
+        
 
         function qubAnalyze(kera, hObject, eventData, handles)
             %QUBANALYZE Analyzes QuB data
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
             dir3 = {0};
-            kera.getChannelsAndStates();
+            kera.setChannelState();
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -101,37 +108,49 @@ classdef Kera < handle
                 end
             end
             kera.matrix = matrix;
+            kera.importSuccessful();
 %             kera.processData();
 %             kera.processDataStates();
         end
 
         function ebfretAnalyze(kera, hObject, eventData, handles)
             %EBFRETANALYZE Analyzes ebFRET data
-            %   See also QUBANALYZE and PROCESSDATA
+            %   See also QUBANALYZE and PROCESSDATASTATES
             kera.gui.resetError();
-            kera.getChannelsAndStates()
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
             if kera.gui.error
                 kera.gui.resetError();
                 return
             end
-
-            if kera.channels == 1
-                [file, path] = kera.selectFile();
-                smdImport = load([path filesep file]);
-                for i = 1:size(smdImport.data,2)
-                    ebfretImport = smdImport.data(i).values(:,4);
-                    kera.matrix(1:length(ebfretImport),i) = smdImport.data(i).values(:,4);
-                end
-            else
-                kera.matrix = packagePairsebFRET(kera.channels,'smd');
-            end
-
-            kera.filenames = num2cell(1:size(kera.matrix,2))';
-            %kera.matrix(kera.matrix==0) = 1;
-            
+            [kera.matrix kera.plotDisplay, kera.filenames] = packagePairsebFRET(kera.channels,'smd');
+%             kera.filenames = num2cell(1:size(kera.matrix,2))';
+%             kera.matrix(kera.matrix==0) = 1;
 %             kera.processData();
-            %new script:
-            kera.processDataStates();
+            %new scripts:
+            kera.importSuccessful();
+        end
+        
+        function viewTraces(kera,~,~,~)
+            kera.plotDisplay = plotdisplayKera(kera.plotDisplay, kera.filenames, kera.timeInterval);
+        end
+        
+        function haMMYAnalyze(kera,hObject, eventData, handles)
+            %EBFRETANALYZE Analyzes ebFRET data
+            %   See also QUBANALYZE and PROCESSDATASTATES
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            [kera.matrix kera.plotDisplay, kera.filenames] = packagePairsHaMMY(kera.channels);
         end
 
         function rawAnalyze(kera, hObject, eventData, handles)
@@ -139,7 +158,7 @@ classdef Kera < handle
             %MATLAB matrix variables
             %   See also EBFRETANALYZE and PROCESSDATA
             kera.gui.resetError();
-            kera.getChannelsAndStates()
+            kera.setChannelState()
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -154,8 +173,7 @@ classdef Kera < handle
 
             kera.filenames = num2cell(1:size(kera.matrix,2))';
             %kera.matrix(kera.matrix==0) = 1;
-            kera.processData();
-            kera.processDataStates();
+            kera.importSuccessful();
         end
         
         
@@ -202,6 +220,7 @@ classdef Kera < handle
 
         
         function processData(kera)
+            %DEPRECATED FUNCTION (PROCESSDATASTATES is used instead)
             kera.gui.resetError();
 
             kera.stateDwellSummary = dwellSummary(kera.matrix, kera.timeInterval, kera.channels);
@@ -411,8 +430,8 @@ classdef Kera < handle
             kera.gui.resetError();
 
             if isempty(kera.savePackage)
-                kera.gui.errorMessage('Import data before analyzing');
-                return
+%                 kera.gui.errorMessage('Import data before analyzing');
+%                 return
             end
 
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
@@ -472,6 +491,7 @@ classdef Kera < handle
             if row ~= 1
                 [xList, yList] = visualizeTransition(kera.output(row).expr{:},kera.channels);
                 kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
+                ylim([min(yList,[],'all')-.2 max(yList,[],'all')+.2]);
 %                 disp(outText);
             else
                 kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
@@ -550,7 +570,7 @@ classdef Kera < handle
             path = dir;
         end
         
-        function setTimeStep(kera, ~, ~, ~)
+        function setTimeStep(kera,~,~,~)
             timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
             kera.timeInterval = eval(timeIntervalCell{1});
             try

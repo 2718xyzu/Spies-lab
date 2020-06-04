@@ -14,7 +14,9 @@ kera.gui.createSecondaryMenu('Export', 'State Dwell Summary');
 kera.gui.createSecondaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwellSummary);
 
 kera.gui.createPrimaryMenu('Settings');
+kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
 kera.gui.createSecondaryMenu('Settings','Set time step', @kera.setTimeStep);
 kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineState);
+
 
 kera.gui.disable('Export');
