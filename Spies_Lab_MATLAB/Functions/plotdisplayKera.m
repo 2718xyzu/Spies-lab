@@ -19,7 +19,7 @@ while i <= N
     for j = 1:size(plotCell2,2)
         n = length(plotCell2{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
-        meanState = 1:max(plotCell2{i,j,2});
+        meanState(j,:) = 1:max(plotCell2{i,j,2});
         if n>0
             for state = 1:max(plotCell2{i,j,2})
                 meanState(j,state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
@@ -30,11 +30,12 @@ while i <= N
         else
             n = length(plotCell2{i,j,2});
         end
-        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState(plotCell2{i,j,2})+shift,'o','Color',color1);
+        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState(j,plotCell2{i,j,2})+shift,'o','Color',color1);
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
         shift = shift+0.1;
     end
+    legendList = legendList(1:(l-1));
     legend(legendList);
     output = KeraSelectUi(ax1);
     switch output.Value
@@ -65,7 +66,7 @@ while i <= N
             end
         case 0 %brushed some data
             try
-                assert(any(~isempty(output.brushing{:})));
+                assert(sum(cat(2,output.brushing{:}))>0);
             catch
                 [~] = questdlg('No data selected; drag the brush tool to select data','Brushing help','Ok','Ok');
                 continue

@@ -1,4 +1,13 @@
-addpath('Functions')
+lastwarn('');
+addpath('Functions');
+[warnMsg, warnId] = lastwarn;
+if ~isempty(warnMsg)
+    questdlg(['Functions directory not found; please select the Spies-lab '...
+        'scripts directory to add it to the search path'],'Select search dir',...
+    'Ok','Ok');
+    cd(uigetdir);
+    addpath('Functions');
+end
 
 kera = Kera();
 kera.gui.createPrimaryMenu('Import');
