@@ -131,8 +131,8 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
         peaks = zeros(length(regions),3);
         peakIndices = cell(length(regions),1);
         for i = 1:length(regions)-1
-            trace(regions(i):regions(i+1)-1) = filloutliers(trace(regions(i):regions(i+1)-1),'spline','movmean',7);
-            trace(regions(i):regions(i+1)-1) = smoothdata(trace(regions(i):regions(i+1)-1),'movmean',11);
+            trace(regions(i):regions(i+1)-1) = filloutliers(trace(regions(i):regions(i+1)-1),'spline','rloess',7);
+            trace(regions(i):regions(i+1)-1) = smoothdata(trace(regions(i):regions(i+1)-1),'rloess',11);
             segment = trace(regions(i):regions(i+1)-1);
             peaks(pk+1,:) = [mean(segment), length(segment), std(segment)];
             peakIndices(pk+1) = {regions(i):regions(i+1)-1};
@@ -167,10 +167,7 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
 end
 
 
-%Find baseline for all traces, if possible:
-if length(varargin)==2 %if baseline provided
-%     baselineSwitch = 1;
-    baseIndices = varargin{2};
+%Find low state for all traces:
     for j = 1:N
         try
             clear baseline
@@ -198,10 +195,7 @@ if length(varargin)==2 %if baseline provided
             %if there is only one peak
         end
     end
-else
-%     baselineSwitch = 0;
-    peaksTrimmed = allPeaks;
-end
+
 
 goodMatrix = cell(size(matrix));
 mult = zeros(N,1);
