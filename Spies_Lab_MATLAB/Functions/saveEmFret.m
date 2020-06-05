@@ -1,4 +1,5 @@
 function saveEmFret(emFret,channel, fileNames)
+%comment
     anS = questdlg(['Would you like to save in the format for ebFRET or HaMMY or both?',...
         ], 'Select save format','ebFRET','HaMMY','Both');
     formatStrings = {'ebFRET', 'HaMMY'};
