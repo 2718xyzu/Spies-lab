@@ -18,7 +18,8 @@ end
 clear intensity
 channels = 2;
 intensity = cell([1 channels]);
-baseline = cell([1 channels]);
+low = cell([1 channels]);
+high = cell([1 channels]);
 selection = cell([1 channels]);
 trim = cell([1 channels]);
 for c = 1:channels
@@ -96,7 +97,7 @@ selectionAll = ones(length(intensity{c}),1,'logical');
 %for saving during normalization, along with all corresponding traces in
 %the other channels 
 for c = 1:channels
-    [baseline{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames);
+    [low{c}, high{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames);
     assert(length(selectionAll)==length(selection{c}),'Multichannel datasets must have same number of traces in all channels');
     %make sure the channels have an equal number of traces
     selectionAll = and(selectionAll,selection{c});
@@ -119,10 +120,10 @@ for c = 1:channels
         finalTrim(i,1) = max(trim{c}(i,1),finalTrim(i,1));
         finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
-    if isempty(baseline{c})
+    if isempty(low{c})
         [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}));
     else
-        [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}),baseline{c}(selection{c},:)); %normalize selected traces
+        [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}),low{c}(selection{c},:)); %normalize selected traces
     end
     selectionAll = and(selectionAll,saveList{c});
 end

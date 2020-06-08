@@ -11,7 +11,12 @@ matrix = cell(size(input));
 width = 7; %width of comparison region
 N = size(input,1);
 precision = 1E-3; %resolution of possible bins
-
+twoState = 0;
+anS = questdlg('Would you like to assume a two-state model for these traces?','Model select', 'Two-state',...
+    'Do not assume two-state', 'Two-state');
+if strcmp(anS(1),'T')
+    twoState = 1;
+end
 % v = version('-release');
 
 try %Check that required functions are available in the user's version
@@ -122,7 +127,8 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
     for j = 1:N
         clear regions;
         trace = input{j};
-        trace = filloutliers(trace,'spline','movmean',7);
+%         trace = filloutliers(trace,'spline','movmean',7); 
+%         uncomment if you would like to fill single-frame noise spikes
         trace = trace/(max(trace));
         regions = [1 findchangepts(trace, 'MinDistance',5,'MinThreshold',.25) length(trace)+1];
         %Find locations within the trace which are good candidates for
@@ -131,8 +137,13 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
         peaks = zeros(length(regions),3);
         peakIndices = cell(length(regions),1);
         for i = 1:length(regions)-1
-            trace(regions(i):regions(i+1)-1) = filloutliers(trace(regions(i):regions(i+1)-1),'spline','rloess',7);
-            trace(regions(i):regions(i+1)-1) = smoothdata(trace(regions(i):regions(i+1)-1),'rloess',11);
+            if regions(i+1)-regions(i)>5 %a continguous region without spikes
+%                 trace(regions(i):regions(i+1)-1) = filloutliers(trace(regions(i):regions(i+1)-1),'spline','rloess',7);
+        %         uncomment if you would like to fill single-frame noise spikes
+                trace(regions(i):regions(i+1)-1) = smoothdata(trace(regions(i):regions(i+1)-1),'rloess',11);
+                % we should only use smoothing on regions without spikes,
+                % to avoid artificial intermediate states
+            end
             segment = trace(regions(i):regions(i+1)-1);
             peaks(pk+1,:) = [mean(segment), length(segment), std(segment)];
             peakIndices(pk+1) = {regions(i):regions(i+1)-1};
@@ -145,7 +156,7 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
                 %of the ones we have already found in this trace (compare:
                 %mean via t test; standard deviation via simple comparison)
                 h(ip) = ttest2(segment,trace(peakIndices{ip}),'Alpha',.01,'Vartype','unequal') || ...
-                    peaks(ip,3)>3*peaks(pk+1,3) || peaks(ip,3)*3<peaks(pk+1,3);
+                    peaks(ip,3)>2*peaks(pk+1,3) || peaks(ip,3)*2<peaks(pk+1,3);
                 %h will equal 1 if the two regions are distinct
             end
             if h %if distinct from all other peaks
@@ -166,54 +177,147 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
     end
 end
 
-
-%Find low state for all traces:
+lowSpecified = zeros([N 1],'logical');
+lowValues = cell([N 1]);
+highSpecified = zeros([N 1],'logical');
+highValues = cell([N 1]);
+%Find low and/or high state for all traces:
     for j = 1:N
-        try
-            clear baseline
-            baseline = smoothTrace(matrix{j}(baseIndices(j,1):baseIndices(j,2)));
-        catch
+        if low(j,2)>low(j,1) %these indices would both be zero if no low state were selected
+            lowSpecified(j) = 1;
+            lowValues{j} = smoothTrace(matrix{j}(low(j,1):low(j,2)));
+        end
+        if high(j,2)>high(j,1)
+            highSpecified(j) = 1;
+            highValues{j} = smoothTrace(matrix{j}(low(j,1):low(j,2)));
+        end
             peaksTrimmed{j} = allPeaks{j};
-            continue
-        end
-%         meaN = mean(baseline);
-%         stD = std(baseline)/sqrt(length(baseline));
-        if length(allPeakIndices{j})~=1
-            nonBaseline = ones([1 length(allPeakIndices{j})],'logical');
-            for i = 1:length(allPeakIndices{j})
-                if ~ttest2(matrix{j}(allPeakIndices{j}{i}),baseline,'Vartype','unequal','Alpha',.05)
-                    %Is this peak statistically similar to the baseline?
-                    %if yes, remember it and check the next peak
-                    nonBaseline(i) = 0;
-    %                 skip(j) = i;
-                end
-            end
-            peaksTrimmed{j} = allPeaks{j}(nonBaseline,:); 
-            %record all peaks that don't look like the baseline
-        else
-            peaksTrimmed{j} = allPeaks{j}(end,:);
-            %if there is only one peak
-        end
+        
+% 
+% %         meaN = mean(baseline);
+% %         stD = std(baseline)/sqrt(length(baseline));
+%         if length(allPeakIndices{j})~=1
+%             nonBaseline = ones([1 length(allPeakIndices{j})],'logical');
+%             for i = 1:length(allPeakIndices{j})
+%                 if ~ttest2(matrix{j}(allPeakIndices{j}{i}),baseline,'Vartype','unequal','Alpha',.05)
+%                     %Is this peak statistically similar to the baseline?
+%                     %if yes, remember it and check the next peak
+%                     nonBaseline(i) = 0;
+%     %                 skip(j) = i;
+%                 end
+%             end
+%             peaksTrimmed{j} = allPeaks{j}(nonBaseline,:); 
+%             %record all peaks that don't look like the baseline
+%         else
+%             peaksTrimmed{j} = allPeaks{j}(end,:);
+%             %if there is only one peak
+%         end
     end
 
 
 goodMatrix = cell(size(matrix));
-mult = zeros(N,1);
-niceList = zeros(N,1,'logical');
+mult = zeros(N,1); %mult is the scaling factor between the original traces
+%(in 'matrix') the fitted traces (in 'goodMatrix')
+niceList = ones(N,1,'logical');
+fixedList = zeros(N,1,'logical');
+toFitList = zeros(N,1,'logical');
 lengths = zeros([1 N]);
-for j = 1:N
-    if size(peaksTrimmed{j},1)<3 %||length(peaksTrimmed{j})>20
-        continue %skip ill-behaved traces
-    end
+
+varLow = 0;
+nLow = 0;
+varHigh = 0;
+nHigh = 0;
+
+for j = find(and(lowSpecified, highSpecified)) 
+    %user helpfully indicated both a low and a high region in this trace
     trace = matrix{j};
-    lengths(j) = length(trace);
+    meanHigh = mean(highValues{j});
+    meanLow = mean(lowValues{j});
+    mult(j) = 1/(meanHigh-meanLow);
+    goodMatrix{j} = (trace-meanLow)*mult(j);
+    lowValues{j} = (lowValues{j}-meanLow)*mult(j);
+    highValues{j} = (highValues{j}-meanHigh)*mult(j);
+    varLow = (var(lowValues{j})*length(lowValues{j})+varLow*nLow)/(length(lowValues{j})+nLow);
+    varHigh = (var(highValues{j})*length(highValues{j})+varHigh*nHigh)/(length(highValues{j})+nHigh);
+    fixedList(j) = 1;
+end
+
+for j = find(and(lowSpecified, ~highSpecified)) 
+    %user indicated only a low region in this trace
+    trace = matrix{j};
+    meanLow = mean(lowValues{j});
+    if range(allPeaks{j}(:,1))>2*std(lowValues{j})
+        mult(j) = 0.8/(prctile(trace,98)-meanLow);
+        %multi-state trace with just the low state filled in, guess a fit
+        %at 0.8, keep it in the pool of traces that need fitting
+        toFitList(j) = 1;
+    elseif varLow
+        mult(j) = sqrt(varLow)/std(lowValues{j});
+        %A single-state trace (peaks are all within 2 standard deviations of
+        %each other) so we use the low states already fit to estimate the
+        %scale of the new fit
+        fixedList(j) = 1;
+    else
+        mult(j) - 0.05/std(lowValues{j});
+        %If it's really just a low state trace, the best guess is to scale
+        %it to have a small standard deviation around the baseline
+        fixedList(j) = 1;
+    end
+    goodMatrix{j} = (trace-meanLow)*mult(j);
+end
+
+for j = find(and(~lowSpecified, highSpecified)) 
+    %user indicated only a high region in this trace
+    
+    %current fitting methods scale about 0, whereas for these traces the
+    %fixed point is at 1.  This situation should not happen very often, as
+    %there is almost always some baseline within the trace.
+    trace = matrix{j};
+    meanHigh = mean(highValues{j});
+    if range(allPeaks{j}(:,1))>2*std(highValues{j})
+        %cannot support a scaling about 1
+        niceList(j) = 0;
+    elseif varHigh
+        mult(j) = sqrt(varLow)/std(lowValues{j});
+        %A single-state trace (peaks are all within 2 standard deviations of
+        %each other) so we use the low states already fit to estimate the
+        %scale of the new fit
+        niceList(j) = 0;
+    else
+        mult(j) = 0.05/std(lowValues{j});
+        %If it's really just a low state trace, the best guess is to scale
+        %it to have a small standard deviation around the baseline
+        niceList(j) = 0;
+    end
+    
+end
+
+
+
+for j = find(~or(lowSpecified, highSpecified)) 
+    %completely flying blind on these traces
+    trace = matrix{j};
+    if size(allPeaks{j},1)<(3-twoState) 
+        %a trace with only one state (in a two-state model) or only two
+        %states (in a multistate model) must be treated specially, at the
+        %end
+        niceList(j) = 0;
+        continue 
+    end
     %Set lowest state at 0 for now (can always change), and squeeze to fit
     %together (approximately)
-    mult(j) = 0.8/(range(peaksTrimmed{j}(:,1)));
+    mult(j) = 1/(range(peaksTrimmed{j}(:,1)));
     goodMatrix{j} = (trace-peaksTrimmed{j}(1,1))*mult(j);
     peaksTrimmed{j} = [(peaksTrimmed{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) peaksTrimmed{j}(:,2)];
     allPeaks{j} = [(allPeaks{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) allPeaks{j}(:,2:3) ];
-    niceList(j) = 1;
+end
+
+for j = 1:N %all of the traces need to have this done:
+    trace = matrix{j};
+    lengths(j) = length(trace);
+end
+for j = find(niceList) %all of the traces with an initial fitting need to have their peak list updated
+    allPeaks{j} = [(allPeaks{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j) ]; 
 end
 
 originalMatrix = cell(size(goodMatrix));
@@ -227,7 +331,7 @@ mult = ones(1,N)/precision;
 %Make all the peaks into one big histogram to see where peaks fall
 
 [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5); 
-valueS = valueS/(sum(lengths))*n*5; %A normalization based on the number of bins and number of data points
+valueS = valueS/(sum(lengths(niceList)))*n*5; %A normalization based on the number of bins and number of data points
 centers = edges(1:end-1) + diff(edges)/2;
 miN = round(centers(1),3); %Get beginning and end points
 maX = round(centers(end),3);
