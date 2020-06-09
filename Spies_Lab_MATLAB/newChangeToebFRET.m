@@ -102,7 +102,8 @@ for c = 1:channels
     %make sure the channels have an equal number of traces
     selectionAll = and(selectionAll,selection{c});
     if isempty(trim{c})
-        return %an exit switch for the program
+        return %an exit switch for the program, accessible by closing out the selection window 
+               %and selecting the quit option
     end
 end
 
@@ -123,7 +124,7 @@ for c = 1:channels
     if isempty(low{c})
         [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}));
     else
-        [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}),low{c}(selection{c},:)); %normalize selected traces
+        [emFret{c}(selection{c}),saveList{c}(selection{c})] = normalizeSelection(intensity{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
     end
     selectionAll = and(selectionAll,saveList{c});
 end
