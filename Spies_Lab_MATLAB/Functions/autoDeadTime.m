@@ -6,7 +6,7 @@ function [finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 %conceivable that an event such as [1 1 1 2 2 3 3 3 3 ] could become [1 1 1 1
 %3 3 3 3 3].  In the cases where a short event is nearly the length of
 %(deadFrames+1), it is fair to ask whether it should in fact be lengthened;
-%In that case, [1 1 1 2 2 3 3 3 ] might become [1 1 1 2 2 2 3 3 3].
+%In that case, [1 1 1 1 2 2 3 3 3 ] might become [1 1 1 2 2 2 3 3 3].
 %Gaussian priors for each state based on the individual trace are used to
 %create a maximum-likelihood estimate for the solution which eliminates
 %short events

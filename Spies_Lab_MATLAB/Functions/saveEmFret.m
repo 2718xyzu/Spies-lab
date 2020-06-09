@@ -1,7 +1,7 @@
 function saveEmFret(emFret,channel, fileNames)
 %comment
     anS = questdlg(['Would you like to save in the format for ebFRET or HaMMY or both?',...
-        ], 'Select save format','ebFRET','HaMMY','Both');
+        ], 'Select save format','ebFRET','HaMMY','Both','Both');
     formatStrings = {'ebFRET', 'HaMMY'};
     switch anS
         case 'ebFRET'
@@ -12,7 +12,7 @@ function saveEmFret(emFret,channel, fileNames)
             format = [1 2];
     end
     
-    if any(fomat==2)
+    if any(format==2)
         timeStr = inputdlg('Please enter the frame rate of data in seconds (i.e. 0.1)');
         timeUnit = str2double(timeStr);
     end
@@ -32,11 +32,11 @@ function saveEmFret(emFret,channel, fileNames)
         switch j
             case 1
                 saveMatrix = vertcat(traceD,traceA)';
-                save(([saveDir filesep fileNames{j} '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep fileNames{i} '.dat']),'saveMatrix','-ascii');
             case 2
                 timeVector = 0:timeUnit:((length(traceD)-1)*timeUnit);
                 saveMatrix = vertcat(timeVector, traceD, traceA)';
-                save(([saveDir filesep fileNames{j} '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep fileNames{i} '.dat']),'saveMatrix','-ascii');
         end
         
     end
