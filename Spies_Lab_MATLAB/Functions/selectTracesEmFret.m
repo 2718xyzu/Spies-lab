@@ -18,7 +18,7 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
         while i <= N
             helpText = '';
             if ~selectionAll(i)
-%                helpText = '(Has been removed from final set)';
+                helpText = '(Has been removed from final set)';
                 %If, for whatever reason, a trace has been excluded, it
                 %might be nice for the user to know that so they don't
                 %waste time trimming it. 

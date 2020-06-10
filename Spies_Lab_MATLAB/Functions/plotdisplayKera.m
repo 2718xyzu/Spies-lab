@@ -1,4 +1,5 @@
 function [plotCell2] = plotdisplayKera(plotCell, fileNames, timeInterval)
+%a function called when the user clicks the "view data" button
 plotCell2 = plotCell; %keep the original plotCell untouched in case we need it again
 maxStates = getMaxStates(plotCell);
 N = size(plotCell,1);
@@ -96,6 +97,10 @@ while i <= N
             catch
                 continue %skip it and re-open the trace
             end
+        case 9
+            figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
+            hold on;
+            
     end
 end
 

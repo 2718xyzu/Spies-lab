@@ -13,6 +13,7 @@ kera = Kera();
 kera.gui.createPrimaryMenu('Import');
 kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretAnalyze);
 kera.gui.createSecondaryMenu('Import', 'QuB', @kera.qubAnalyze);
+kera.gui.createSecondaryMenu('Import', 'Hammy', @kera.HammyAnalyze);
 kera.gui.createSecondaryMenu('Import', 'spkg', @kera.importSPKG);
 
 kera.gui.createPrimaryMenu('Export');

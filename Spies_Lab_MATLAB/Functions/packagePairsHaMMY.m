@@ -1,5 +1,5 @@
 function [matrix, plotDisplay, fileNames] = packagePairsHaMMY(channels)
-
+%created but left in a broken state
 fileNames = {};
 for i = 1:channels
     output = questdlg(['Please select the folder which contains HaMMY ',...
