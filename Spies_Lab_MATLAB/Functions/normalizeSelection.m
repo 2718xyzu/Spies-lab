@@ -252,6 +252,7 @@ for j = find(and(lowSpecified, ~highSpecified))'
         %at 0.8, keep it in the pool of traces that need fitting
         toFitList(j) = 1;
     elseif varLow
+        %if we have some low states already identified:
         mult(j) = sqrt(varLow)/std(lowValues{j});
         %A single-state trace (peaks are all within 2 standard deviations of
         %each other) so we use the low states already fit to estimate the
@@ -278,22 +279,26 @@ for j = find(and(~lowSpecified, highSpecified))'
     meanHigh = mean(highValues{j});
     if range(allPeaks{j}(:,1))>2*std(highValues{j})
         %cannot support a scaling about 1
-        niceList(j) = 0;
+        %for a multistate trace with no baseline
+        mult(j) = sqrt(varHigh)/std(highValues{j});
+        niceList(j) = 0; 
+        %will have the option to fit later, but filter out for now as being ill-behaved
     elseif varHigh
-        mult(j) = sqrt(varLow)/std(lowValues{j});
+        %if we have some high states already identified:
+        mult(j) = sqrt(varHigh)/std(highValues{j});
         %A single-state trace (peaks are all within 2 standard deviations of
-        %each other) so we use the low states already fit to estimate the
+        %each other) so we use the high states already fit to estimate the
         %scale of the new fit
-        niceList(j) = 0;
+        fixedList(j) = 1;
     else
-        mult(j) = 0.05/std(lowValues{j});
-        %If it's really just a low state trace, the best guess is to scale
-        %it to have a small standard deviation around the baseline
-        niceList(j) = 0;
+        mult(j) = 0.05/std(highValues{j});
+        %If it's really just a high state trace, the best guess is to scale
+        %it to have a small standard deviation around the high state line
+        fixedList(j) = 1;
     end
     goodMatrix{j} = (trace-meanHigh)*mult(j)+1;
     highValues{j} = goodMatrix{j}(high(j,1):high(j,2));
-    
+    allPeaks{j} = [(allPeaks{j}(:,1)-meanHigh)*mult(j)+1 allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j)  ];
 end
 
 for j = find(~or(lowSpecified, highSpecified))'
@@ -311,27 +316,25 @@ for j = find(~or(lowSpecified, highSpecified))'
     mult(j) = 1/(range(peaksTrimmed{j}(:,1)));
     goodMatrix{j} = (trace-peaksTrimmed{j}(1,1))*mult(j);
     peaksTrimmed{j} = [(peaksTrimmed{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) peaksTrimmed{j}(:,2)];
-    allPeaks{j} = [(allPeaks{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j)  ];
+    allPeaks{j} = [(allPeaks{j}(:,1)-allPeaks{j}(1,1))*mult(j) allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j)  ];
+    toFitList(j) = 1;
 end
 
 for j = 1:N %all of the traces need to have this done:
     trace = matrix{j};
     lengths(j) = length(trace);
 end
-for j = find(niceList)' %all of the traces with an initial fitting need to have their peak list updated
-    allPeaks{j} = [(allPeaks{j}(:,1)-peaksTrimmed{j}(1,1))*mult(j) allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j) ];
-end
-if any(~fixedList)
+
+if any(toFitList) %if there are any that still need to be fit
     originalMatrix = cell(size(goodMatrix));
     originalMatrix(niceList) = goodMatrix(niceList);
     %Every trace in originalMatrix is scaled down and well-behaved, but has an
     %index which matches its position in the peaksTrimmed list
-    %Also matches the scaling of peaksTrimmed
+    %Also matches the scaling of allPeaks
     basisMatrix = originalMatrix;
     n = nnz(niceList); %n is the number of well-behaved traces
     mult = ones(1,N)/precision;
-    %Make all the peaks into one big histogram to see where peaks fall
-    
+    %Make all the peaks into one big histogram to see where peaks fall:
     [valueS,edges] = histcounts(cell2mat(basisMatrix'),n*5);
     valueS = valueS/(sum(lengths(niceList)))*n*5; %A normalization based on the number of bins and number of data points
     centers = edges(1:end-1) + diff(edges)/2;
@@ -394,13 +397,16 @@ if any(~fixedList)
             dist = paddedDist;
             %repeat the scaling and fitting process for each trace
             scoreMatrix(iteration) = 0;
-            for j = find(niceList)'
+            for j = find(toFitList)'
                 fitScore = @(x)sum(-peaksTrimmed{j}(:,2)'.*(dist(shift+round(x*peaksTrimmed{j}(:,1)))));
-                multMatrix(iteration,j) = fminbnd(fitScore, 250, 1500);
+                multMatrix(iteration,j) = fminbnd(fitScore, .25/precision, 1.5/precision);
                 % % % %             basisMatrix(j,:) = basisMatrix(j,:)*mult(j)*precision;
                 scoreMatrix(iteration) = scoreMatrix(iteration)-fitScore(multMatrix(iteration,j));
                 %Fitscore returns a negative number, but a higher scoreMatrix
                 %is better, so subtract.
+            end
+            for j = find(fixedList)'
+                multMatrix(iteration, j) = 1/precision; %don't change these
             end
         end
         [bestScore,bestIteration] = max(scoreMatrix);
@@ -480,8 +486,8 @@ if YN(1)=='Y'
     if n1>0
         YN = questdlg(['It was determined that ' num2str(n1) ' traces were'...
             ' single-state; would you like to assign these to the baseline and save them?'...
-            ],'Save all?','Fit all the other traces and save them too',...
-            'Fit the baseline-only traces','Save only the multi-state traces','Save only the multi-state traces');
+            ],'Save all?','Fit them',...
+            'Ignore them','Fit them');
         scale = [1E10,-1E10];
         if YN(1)=='F'
             for j = find(~niceList)'
@@ -504,17 +510,13 @@ if YN(1)=='Y'
     
     if n2 > 0
         YN = questdlg(['It was determined that ' num2str(n2) ' traces were'...
-            ' two-state; would you like to assign these to the baseline and save them?'...
-            ' in as well?  If your data is multi-channel, you should save all the traces so that there is' ...
-            ' still a one-to-one correspondence of the traces in the two channels' ...
-            ],'Save all?','Fit all the other traces and save them too',...
-            'Fit the baseline-only traces','Save only the multi-state traces','Save only the multi-state traces');
+            ' two-state; would you like to try to fit these to the baseline and save them?'...
+            ],'Save all?','Fit them', 'Ignore them','Fit them');
         scale = [1E10,-1E10];
         for j = find(~niceList)'
             if size(allPeaks{j},1)==2
                 %Fitting these ill-behaved traces is not recommended if you expect your model to have more than two
-                %states in general, use with caution. If you do save them, consider excluding these
-                %traces during ebFRET fitting
+                %states in general, use with caution.
                 scale(1) = prctile(matrix{j},1);
                 scale(2) = prctile(matrix{j},99);
                 penultimateMatrix{j} = (matrix{j}-scale(1))/(scale(2)-scale(1));
