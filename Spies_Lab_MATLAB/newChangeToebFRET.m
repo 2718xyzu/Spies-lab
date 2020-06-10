@@ -122,15 +122,15 @@ for c = 1:channels
         finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
     if isempty(low{c})
-        [emFret{c}(selection{c}),saveList{c}(selection{c})] = smoothNormalize(intensity{c}(selection{c}));
+        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = smoothNormalize(intensity{c}(selectionAll));
     else
-        [emFret{c}(selection{c}),saveList{c}(selection{c})] = normalizeSelection(intensity{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
+        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = normalizeSelection(intensity{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
     end
     selectionAll = and(selectionAll,saveList{c});
 end
 
 for c = 1:channels
-    for i = 1:N
+    for i = find(selectionAll)'
         emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
         %realign all traces, even if they were trimmed differently earlier
     end
