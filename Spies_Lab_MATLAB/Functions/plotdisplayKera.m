@@ -17,13 +17,14 @@ while i <= N
     shift = 0;
     legendList = cell([1 2*size(plotCell,2)]);
     l = 1;
+    meanState = cell([1 size(plotCell2,2)]);
     for j = 1:size(plotCell2,2)
         n = length(plotCell2{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
-        meanState(j,:) = 1:max(plotCell2{i,j,2});
+        meanState{j} = 1:max(plotCell2{i,j,2});
         if n>0
             for state = 1:max(plotCell2{i,j,2})
-                meanState(j,state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
+                meanState{j}(state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
             end
             plot(((1:n)*timeInterval)-timeInterval,plotCell2{i,j,1}+shift);
             legendList(l) = {['Channel ' num2str(j) ' raw']};
@@ -31,7 +32,7 @@ while i <= N
         else
             n = length(plotCell2{i,j,2});
         end
-        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState(j,plotCell2{i,j,2})+shift,'o','Color',color1);
+        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(plotCell2{i,j,2})+shift,'o','Color',color1);
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
         shift = shift+0.1;
