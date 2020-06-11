@@ -1,4 +1,4 @@
-function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selectionAll, fileNames)
+function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selectionAll, fileNames, low, high, trim)
     channels = length(intensity); %number of channels in the data
     N = length(intensity{c}); %number of traces; assumes a cell input    
     selection = ones([N 1],'logical');
@@ -11,9 +11,7 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
     %model, and trimming to remove photobleaching regions is preferable
     %to suppress low-state identification
     if YN(1) == 'Y'
-        low = cell([N 1]);
-        high = cell([N 1]);
-        trim = zeros([N 2]);
+        
         i = 1;
         while i <= N
             helpText = '';
@@ -57,7 +55,7 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
                     %(subsequent selections from the same trace will overwrite
                     %this selection)
                     output.low(1) = max(output.low(1),1);
-                    output.low(2) = min(output.low(1),length(intensity{c}{i}));
+                    output.low(2) = min(output.low(2),length(intensity{c}{i}));
                     low{i} = intensity{c}{i}(output.low(1):output.low(2));
                 end
                 if isfield(output,'high') %if low selected (photoblinking)
@@ -65,7 +63,7 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
                     %(subsequent selections from the same trace will overwrite
                     %this selection)
                     output.high(1) = max(output.high(1),1);
-                    output.high(2) = min(output.high(1),length(intensity{c}{i}));
+                    output.high(2) = min(output.high(2),length(intensity{c}{i}));
                     high{i} = intensity{c}{i}(output.high(1):output.high(2));
                 end
             end
@@ -108,12 +106,7 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
         %         baseline = baseline(selection,:);
         %         emFret = smoothNormalize(intensity,baseline); %normalize traces
     elseif YN(1) == 'N' %normalize without viewing
-        low = cell([N 1]);
-        high = cell([N 1]);
-        trim = zeros(length(intensity),2);
-        for i = 1:N
-            trim(i,:) = [1 length(intensity{c}{i})];
-        end
+
     else %initial prompt closed without responding
         trim = [];
         return

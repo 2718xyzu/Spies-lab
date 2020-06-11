@@ -15,6 +15,9 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
+importOldSession = 0; %set this to 1, open up your old saved analysis, and run the code
+
+if ~importOldSession
 clear intensity
 channels = 2;
 intensity = cell([1 channels]);
@@ -89,15 +92,23 @@ else
     end
 end
 end
-selectionAll = ones(length(intensity{c}),1,'logical');
+N = length(intensity{c});
+selectionAll = ones(N,1,'logical');
 %keeps track of whether a trace set has passed all criteria for
 %being included in the final export:
 %must be selected during trace viewing/selection, the corresponding
 %trace in all other channels must be selected, must be selected
 %for saving during normalization, along with all corresponding traces in
-%the other channels 
+%the other channels
 for c = 1:channels
-    [low{c}, high{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames);
+    low{c} = cell([N 1]);
+    high{c} = cell([N 1]);
+    trim{c} = zeros([N 2]);
+end
+end
+%if you imported old data, this is where you can start:
+for c = 1:channels
+    [low{c}, high{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames, low{c}, high{c}, trim{c});
     assert(length(selectionAll)==length(selection{c}),'Multichannel datasets must have same number of traces in all channels');
     %make sure the channels have an equal number of traces
     selectionAll = and(selectionAll,selection{c});
@@ -108,6 +119,7 @@ for c = 1:channels
 end
 save(['Analysis_Save_' mat2str(fix(clock)) ], 'low', 'high', 'trim', 'selection', 'selectionAll', 'intensity','fileNames','channels');
 %in case we need to come back to this point and make different decisions
+
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;

@@ -295,7 +295,6 @@ for j = find(~or(lowSpecified, highSpecified))'
     %together (approximately)
     mult(j) = 1/(range(allPeaks{j}(:,1)));
     goodMatrix{j} = (trace-allPeaks{j}(1,1))*mult(j);
-    allPeaks{j} = [(allPeaks{j}(:,1)-allPeaks{j}(1,1))*mult(j) allPeaks{j}(:,2)];
     allPeaks{j} = [(allPeaks{j}(:,1)-allPeaks{j}(1,1))*mult(j) allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j)  ];
     toFitList(j) = 1;
 end
@@ -420,7 +419,7 @@ if any(toFitList) %if there are any that still need to be fit
     
     for j = find(niceList)'
         penultimateMatrix{j} = originalMatrix{j}*multMatrix(bestIteration,j)*precision;
-        allPeaks{j} = [allPeaks{j}(:,1)*mult(j)*precision allPeaks{j}(:,2)];
+        allPeaks{j} = [allPeaks{j}(:,1)*mult(j)*precision allPeaks{j}(:,2) allPeaks{j}(:,3)*mult(j)*precision];
     end
     
 else
