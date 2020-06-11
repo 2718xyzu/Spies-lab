@@ -11,8 +11,8 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
     %model, and trimming to remove photobleaching regions is preferable
     %to suppress low-state identification
     if YN(1) == 'Y'
-        low = zeros([N 2]);
-        high = zeros([N 2]);
+        low = cell([N 1]);
+        high = cell([N 1]);
         trim = zeros([N 2]);
         i = 1;
         while i <= N
@@ -56,27 +56,17 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
                     %each trace may only have one region of low selected
                     %(subsequent selections from the same trace will overwrite
                     %this selection)
-                    low(i,:) = output.low;
-                    low(i,:) = min(trim(i,2),low(i,:));
-                    low(i,:) = max(0,low(i,:)-trim(i,1))+1;
-                    if range(low(i,:))<5 %if low is too short
-                        disp(['It helps the analysis if you ensure that '...
-                            'state selections are contained within trimmed '...
-                            'region, and that they are long enough. ']);
-                    end
+                    output.low(1) = max(output.low(1),1);
+                    output.low(2) = min(output.low(1),length(intensity{c}{i}));
+                    low{i} = intensity{c}{i}(output.low(1):output.low(2));
                 end
                 if isfield(output,'high') %if low selected (photoblinking)
                     %each trace may only have one region of low selected
                     %(subsequent selections from the same trace will overwrite
                     %this selection)
-                    high(i,:) = output.high;
-                    high(i,:) = min(trim(i,2),high(i,:));
-                    high(i,:) = max(0,high(i,:)-trim(i,1))+1;
-                    if range(high(i,:))<5 %if low is too short
-                        disp(['It helps the analysis if you ensure that '...
-                            'state selections are contained within trimmed '...
-                            'region, and that they are long enough. ']);
-                    end
+                    output.high(1) = max(output.high(1),1);
+                    output.high(2) = min(output.high(1),length(intensity{c}{i}));
+                    high{i} = intensity{c}{i}(output.high(1):output.high(2));
                 end
             end
             if output.Value == 0 %move to the previous trace
@@ -118,8 +108,8 @@ function [low, high, trim, selection] = selectTracesEmFret(c,intensity,selection
         %         baseline = baseline(selection,:);
         %         emFret = smoothNormalize(intensity,baseline); %normalize traces
     elseif YN(1) == 'N' %normalize without viewing
-        low = [];
-        high = [];
+        low = cell([N 1]);
+        high = cell([N 1]);
         trim = zeros(length(intensity),2);
         for i = 1:N
             trim(i,:) = [1 length(intensity{c}{i})];

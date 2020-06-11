@@ -106,7 +106,8 @@ for c = 1:channels
                %and selecting the quit option
     end
 end
-
+save(['Analysis_Save_' mat2str(fix(clock)) ], 'low', 'high', 'trim', 'selection', 'selectionAll', 'intensity','fileNames','channels');
+%in case we need to come back to this point and make different decisions
 emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
@@ -114,13 +115,20 @@ N = length(intensity{1});
 finalTrim = [zeros(N,1) ones(N,1)*1E10];
 %each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
-    saveList{c} = ones(length(intensity{c}),1,'logical');
-    emFret{c} = cell([1 N]);
     for i = 1:N
-        intensity{c}{i} = intensity{c}{i}(trim{c}(i,1):trim{c}(i,2)); %Fix this
         finalTrim(i,1) = max(trim{c}(i,1),finalTrim(i,1));
         finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
+end
+for c = 1:channels
+    for i = 1:N
+        intensity{c}{i} = intensity{c}{i}(finalTrim(i,1):finalTrim(i,2));
+    end
+end
+
+for c = 1:channels
+    saveList{c} = ones(length(intensity{c}),1,'logical');
+    emFret{c} = cell([1 N]);
     if isempty(low{c})
         [emFret{c}(selectionAll),saveList{c}(selectionAll)] = smoothNormalize(intensity{c}(selectionAll));
     else
@@ -129,11 +137,13 @@ for c = 1:channels
     selectionAll = and(selectionAll,saveList{c});
 end
 
-for c = 1:channels
-    for i = find(selectionAll)'
-        emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
-        %realign all traces, even if they were trimmed differently earlier
-    end
-    saveEmFret(emFret{c}(selectionAll),c, fileNames);
+% for c = 1:channels
+%     for i = find(selectionAll)'
+% %         emFret{c}{i} = emFret{c}{i}((finalTrim(i,1)-trim{c}(i,1)+1):(finalTrim(i,2)-trim{c}(i,1)+1));
+%         %realign all traces, even if they were trimmed differently earlier
+%     end
+% end
 
+for c = 1:channels
+    saveEmFret(emFret{c}(selectionAll),c, fileNames);
 end

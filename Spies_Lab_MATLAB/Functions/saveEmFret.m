@@ -32,11 +32,11 @@ function saveEmFret(emFret,channel, fileNames)
         switch j
             case 1
                 saveMatrix = vertcat(traceD,traceA)';
-                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
             case 2
                 timeVector = 0:timeUnit:((length(traceD)-1)*timeUnit);
                 saveMatrix = vertcat(timeVector, traceD, traceA)';
-                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
         end
         
     end
