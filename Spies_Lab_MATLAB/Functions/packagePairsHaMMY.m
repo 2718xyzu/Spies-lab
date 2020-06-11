@@ -10,24 +10,25 @@ for i = 1:channels
     path = uigetdir;
     dir2 = dir([path filesep '*path.dat']);
     clear dir3;
+    for i = length(dir2):-1:1
+        if dir2(i).name(1) == '.' %must ignore files which begin with a period (MacOS)
+            dir2(i) = [];
+        end
+    end
     dir3 = { dir2.name };
     plotDisplay = cell([size(dir2,1) channels 2]);
     fileNames = cell([size(dir2,1) 1]);
     for j = 1:size(dir2,1)
-        
         A = importdata([ path filesep dir3{j}]);
         if isstruct(A)
             A = A.data;
         end
-        intensity{c}(q) = {A(:,column)'};
-        
-        
-        
-        
-        longth = size(smd.data(j).values(:,4),1);
-        matrix(1:longth, i+(j-1)*channels) = smd.data(j).values(:,4);
-        plotDisplay(j,i,1) = smd.data(j).values(:,3);
-        plotDisplay(j,i,2) = smd.data(j).values(:,4);
+        longth = size(A,1);
+        matrix(1:longth, i+(j-1)*channels) = A(:,4);
+        levels = sort(unique(A(:,5)));
+        levelArray = arrayfun(@(x) find(x==levels),A(:,5));
+        plotDisplay{j,i,1} = levelArray;
+        plotDisplay{j,i,2} = A(:,4);
         fileNames{j} = dir3{j}(1:end-8);
     end
 

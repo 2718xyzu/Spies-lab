@@ -434,7 +434,7 @@ YN = questdlg(['Would you like to select the baseline (or low-state) region?'...
     ],'Baseline');
 if YN(1)=='Y'
     dataPoints = cell2mat(penultimateMatrix');
-    [valueS,edges] = histcounts(dataPoints,min(50,round(sqrt(numel(dataPoints)))));
+    [valueS,edges] = histcounts(dataPoints,max(50,round(sqrt(numel(dataPoints)))));
     dEdge = mean(diff(edges));
     centerList = edges(1:end-1)+dEdge/2;
     figure; plot(centerList,valueS);
