@@ -4,8 +4,10 @@ plotCell2 = plotCell; %keep the original plotCell untouched in case we need it a
 maxStates = getMaxStates(plotCell);
 N = size(plotCell,1);
 selection = ones([1 N],'logical');
+channels = size(plotCell2,2);
 i = 1;
 while i <= N
+    rawAvailable = 0; %becomes 1 if a trace has raw data in addition to the discrete data
     figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
     ax = axes;
     hold on;
@@ -15,14 +17,15 @@ while i <= N
     end
     title([fileNames{i} newline helptext]);
     shift = 0;
-    legendList = cell([1 2*size(plotCell,2)]);
+    legendList = cell([1 2*channels]);
     l = 1;
-    meanState = cell([1 size(plotCell2,2)]);
-    for j = 1:size(plotCell2,2)
+    meanState = cell([1 channels]);
+    for j = 1:channels
         n = length(plotCell2{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
         meanState{j} = 1:max(plotCell2{i,j,2});
         if n>0
+            rawAvailable = 1;
             for state = 1:max(plotCell2{i,j,2})
                 meanState{j}(state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
             end
@@ -39,13 +42,13 @@ while i <= N
     end
     legendList = legendList(1:(l-1));
     legend(legendList);
-    output = KeraSelectUi(ax1);
+    output = KeraSelectUi(ax1,rawAvailable);
     switch output.Value
         
         case 6 %closed without selecting anything (probably want to get out)
             return
         case 4 
-            for j = 1:size(plotCell2,2)
+            for j = 1:channels
                 plotCell2{i,j,2} = autoDeadTime(plotCell2{i,j,1}, plotCell2{i,j,2}, output.deadFrames);
             end
             maxStates = getMaxStates(plotCell2);
@@ -63,9 +66,10 @@ while i <= N
                 i = i-1; %go back
             end
         case 7 %reset everything back to how it was
-            for j = 1:size(plotCell2,2)
+            for j = 1:channels
                 plotCell2(i,j,2) = plotCell(i,j,2);
             end
+            selection(i) = 1;
         case 0 %brushed some data
             try
                 assert(sum(cat(2,output.brushing{:}))>0);
@@ -73,7 +77,7 @@ while i <= N
                 [~] = questdlg('No data selected; drag the brush tool to select data','Brushing help','Ok','Ok');
                 continue
             end
-            if size(plotCell2,2)>1
+            if channels>1
                 channelEdit = inputdlg('Which channel are you editing?');
                 try
                     channelEdit = str2double(channelEdit{:}); %if the user closes without answering
@@ -99,9 +103,14 @@ while i <= N
                 continue %skip it and re-open the trace
             end
         case 9
-            figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
-            hold on;
-            
+            histVal = cell([channels 2]);
+            edgeVal = cell([channels 2]);
+            for j = 1:channels
+                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(plotCell(:,j,1)));
+                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1));
+                [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
+            end
+            [threshold, method] = thresholdKeraTraces(histVal, edgeVal, channels);
     end
 end
 

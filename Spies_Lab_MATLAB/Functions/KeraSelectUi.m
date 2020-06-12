@@ -1,4 +1,4 @@
-function output = KeraSelectUi(ax1)
+function output = KeraSelectUi(ax1, rawAvailable)
 %A function called by plotdisplayKera
     handles = struct;
     handles.btn = uicontrol('Style', 'pushbutton', 'String', 'Discard & Next',...
@@ -25,9 +25,11 @@ function output = KeraSelectUi(ax1)
         'Position', [570 5 80 20],...
         'UserData', 7, 'Callback', @buttonCallback); 
     
-    handles.btn7 = uicontrol('Style', 'pushbutton', 'String', 'Threshold',...
-        'Position', [660 5 95 20],...
-        'UserData', 9, 'Callback', @buttonCallback);
+    if rawAvailable
+        handles.btn7 = uicontrol('Style', 'pushbutton', 'String', 'Threshold',...
+            'Position', [660 5 95 20],...
+            'UserData', 9, 'Callback', @buttonCallback);
+    end
  
     fig = gcf;
     uiwait(fig);
