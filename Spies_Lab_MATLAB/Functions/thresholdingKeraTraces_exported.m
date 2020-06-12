@@ -1,4 +1,4 @@
-classdef tresholdingKeraTraces_exported < matlab.apps.AppBase
+classdef thresholdingKeraTraces_exported < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -118,7 +118,7 @@ classdef tresholdingKeraTraces_exported < matlab.apps.AppBase
         % Close request function: UIFigure
         function UIFigureCloseRequest(app, event)
 
-            
+            delete(app);
             
         end
 

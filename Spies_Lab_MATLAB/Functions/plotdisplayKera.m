@@ -110,7 +110,7 @@ while i <= N
                 normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1),'UniformOutput',false);
                 [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
             end
-            tresholdingKeraTraces_exported(histVal, edgeVal, channels);
+            thresholdingKeraTraces_exported(histVal, edgeVal, channels);
     end
 end
 
