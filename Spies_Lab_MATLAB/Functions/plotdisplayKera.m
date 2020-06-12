@@ -107,10 +107,10 @@ while i <= N
             edgeVal = cell([channels 2]);
             for j = 1:channels
                 [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(plotCell(:,j,1)));
-                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1));
+                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1),'UniformOutput',false);
                 [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
             end
-            [threshold, method] = thresholdKeraTraces(histVal, edgeVal, channels);
+            tresholdingKeraTraces_exported(histVal, edgeVal, channels);
     end
 end
 

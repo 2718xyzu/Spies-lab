@@ -1,4 +1,4 @@
-function [threshold, method] = thresholdKeraTraces(histVal, edgeVal, channels)
+function [threshold, method, stateSet] = thresholdKeraTraces(histVal, edgeVal, channels)
 
 figure('Units', 'Normalized','Position',[.25 .4 .5 .5]);
 hold on;
