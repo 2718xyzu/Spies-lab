@@ -38,7 +38,7 @@ classdef thresholdingKeraTraces_exported < matlab.apps.AppBase
                 % relative values within each trace
         threshold %the threshold value(s) eventually chosen
         boundDirection % 1 if "above", 2 if "below", 3 if "between"
-        stateSet %Integer, state which the 
+        stateSet %Integer, state which the thresholded values should be set to
     end
     
     methods (Access = private)
@@ -117,7 +117,14 @@ classdef thresholdingKeraTraces_exported < matlab.apps.AppBase
 
         % Close request function: UIFigure
         function UIFigureCloseRequest(app, event)
-
+            %I'm so sorry
+            %OUTPUT VARIABLES ARE NOT SUPPORTED BY APP DESIGNER
+            %So in order to pass the results out of this function, the only
+            %method is to use truly awful methods like the following lines:
+            evalin('caller','assignin("caller",stateSet,app.stateSet)');
+            
+            %if output variables are ever supported from an app, please fix
+            %this
             delete(app);
             
         end
@@ -270,7 +277,7 @@ classdef thresholdingKeraTraces_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = tresholdingKeraTraces_exported(varargin)
+        function app = tresholdingKeraTraces_exported(app, varargin)
 
             % Create UIFigure and components
             createComponents(app)

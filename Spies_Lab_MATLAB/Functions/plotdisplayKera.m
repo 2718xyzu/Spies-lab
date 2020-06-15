@@ -110,7 +110,27 @@ while i <= N
                 normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1),'UniformOutput',false);
                 [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
             end
-            thresholdingKeraTraces_exported(histVal, edgeVal, channels);
+            %NOTE: assignin is being used to set the following three
+            %variables:
+            threshold = NaN;
+            boundDirection = NaN;
+            stateSet = NaN;
+            %the app designer platform does not currently support output
+            %variables.  If it ever does, PLEASE fix this to set the above
+            %three variables using a more elegant syntax.
+            app = tresholdingKeraTraces(histVal, edgeVal, channels);
+            pause(1); %I'm sorry
+            while isvalid(app)
+                threshold = app.threshold;
+                stateSet = app.stateSet;
+                boundDirection = app.boundDirection;
+                pause(0.1);
+            end
+%             thresholdingKeraTraces_exported(histVal, edgeVal, channels);
+            %the three variables should be set now, if the above function
+            %has executed properly
+            disp(stateSet);
+            pause(1);
     end
 end
 
