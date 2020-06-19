@@ -102,7 +102,7 @@ while ~optimalBin
             bin2 = round(range(x,'all')/dt(minI));
             [ordinate, edges] = histcounts(x,bin2);
             abscissa = edges(1:end-1)+dt(minI)/2;
-            ordinate = ordinate/sum(ordinate);
+            ordinate = sqrt(ordinate);
             fit2 = fit(abscissa',ordinate',model,'Lower',fitLower,'StartPoint',repmat([mean(x) max(ordinate)],[1 order]));
             optimalBin = 1;
         end
