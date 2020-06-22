@@ -1,10 +1,10 @@
-function [plotCell2] = plotdisplayKera(plotCell, fileNames, timeInterval)
+function [dataCellEdited] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval)
 %a function called when the user clicks the "view data" button
-plotCell2 = plotCell; %keep the original plotCell untouched in case we need it again
-maxStates = getMaxStates(plotCell);
-N = size(plotCell,1);
+
+maxStates = getMaxStates(dataCell);
+N = size(dataCell,1);
 selection = ones([1 N],'logical');
-channels = size(plotCell2,2);
+channels = size(dataCellEdited,2);
 i = 1;
 while i <= N
     rawAvailable = 0; %becomes 1 if a trace has raw data in addition to the discrete data
@@ -21,21 +21,21 @@ while i <= N
     l = 1;
     meanState = cell([1 channels]);
     for j = 1:channels
-        n = length(plotCell2{i,j,1});
+        n = length(dataCellEdited{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
-        meanState{j} = 1:max(plotCell2{i,j,2});
+        meanState{j} = 1:max(dataCellEdited{i,j,2});
         if n>0
             rawAvailable = 1;
-            for state = 1:max(plotCell2{i,j,2})
-                meanState{j}(state) = mean(plotCell2{i,j,1}(plotCell2{i,j,2}==state));
+            for state = 1:max(dataCellEdited{i,j,2})
+                meanState{j}(state) = mean(dataCellEdited{i,j,1}(dataCellEdited{i,j,2}==state));
             end
-            plot(((1:n)*timeInterval)-timeInterval,plotCell2{i,j,1}+shift);
+            plot(((1:n)*timeInterval)-timeInterval,dataCellEdited{i,j,1}+shift);
             legendList(l) = {['Channel ' num2str(j) ' raw']};
             l=l+1;
         else
-            n = length(plotCell2{i,j,2});
+            n = length(dataCellEdited{i,j,2});
         end
-        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(plotCell2{i,j,2})+shift,'o','Color',color1);
+        ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
         shift = shift+0.1;
@@ -49,9 +49,9 @@ while i <= N
             return
         case 4 
             for j = 1:channels
-                plotCell2{i,j,2} = autoDeadTime(plotCell2{i,j,1}, plotCell2{i,j,2}, output.deadFrames);
+                dataCellEdited{i,j,2} = autoDeadTime(dataCellEdited{i,j,1}, dataCellEdited{i,j,2}, output.deadFrames);
             end
-            maxStates = getMaxStates(plotCell2);
+            maxStates = getMaxStates(dataCellEdited);
         case 5 %I guess they closed it while brushing?  
             %In that case do nothing and re-open the trace
         case 8 %same thing
@@ -67,7 +67,7 @@ while i <= N
             end
         case 7 %reset everything back to how it was
             for j = 1:channels
-                plotCell2(i,j,2) = plotCell(i,j,2);
+                dataCellEdited(i,j,2) = dataCell(i,j,2);
             end
             selection(i) = 1;
         case 0 %brushed some data
@@ -82,7 +82,7 @@ while i <= N
                 try
                     channelEdit = str2double(channelEdit{:}); %if the user closes without answering
                     assert(round(channelEdit)==channelEdit) %or gives something not an integer?
-                    assert(channelEdit<=size(plotCell2,2)); %or something which is not a valid channel
+                    assert(channelEdit<=size(dataCellEdited,2)); %or something which is not a valid channel
                 catch
                     continue %skip it and re-open the trace
                 end
@@ -96,9 +96,9 @@ while i <= N
                 stateEdit = str2double(stateEdit{:}); %if the user closes without answering
                 assert(round(stateEdit)==stateEdit) %or gives something not an integer?
 
-                assert(length(output.brushing{channelEdit})==length(plotCell2{i,channelEdit,2}));
-                plotCell2{i,channelEdit,2}(logical(output.brushing{channelEdit})) = stateEdit;
-                maxStates = getMaxStates(plotCell2);
+                assert(length(output.brushing{channelEdit})==length(dataCellEdited{i,channelEdit,2}));
+                dataCellEdited{i,channelEdit,2}(logical(output.brushing{channelEdit})) = stateEdit;
+                maxStates = getMaxStates(dataCellEdited);
             catch
                 continue %skip it and re-open the trace
             end
@@ -106,8 +106,8 @@ while i <= N
             histVal = cell([channels 2]);
             edgeVal = cell([channels 2]);
             for j = 1:channels
-                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(plotCell(:,j,1)));
-                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), plotCell(:,j,1),'UniformOutput',false);
+                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(dataCell(:,j,1)));
+                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), dataCell(:,j,1),'UniformOutput',false);
                 [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
             end
             %NOTE: assignin is being used to set the following three
@@ -115,6 +115,7 @@ while i <= N
             threshold = NaN;
             boundDirection = NaN;
             stateSet = NaN;
+            channel = NaN;
             %the app designer platform does not currently support output
             %variables.  If it ever does, PLEASE fix this to set the above
             %three variables using a more elegant syntax.
@@ -124,13 +125,19 @@ while i <= N
                 threshold = app.threshold;
                 stateSet = app.stateSet;
                 boundDirection = app.boundDirection;
+                channel = app.channel;
+                method = app.method;
                 pause(0.1);
             end
 %             thresholdingKeraTraces_exported(histVal, edgeVal, channels);
             %the three variables should be set now, if the above function
             %has executed properly
-            disp(stateSet);
-            pause(1);
+            if isnan(threshold)
+                %Something prevented the variables from being set
+                continue
+            end
+            %otherwise
+            dataCellEdited = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, dataCellEdited);
     end
 end
 

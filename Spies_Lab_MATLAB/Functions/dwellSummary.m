@@ -1,52 +1,55 @@
-function out = dwellSummary(matrix,timeInterval,channels)
-    for k = 1:channels %initialize the fields; each row corresponds to a channel
-        out(k).timeBeforeFirst(1) = 0; %the time at ground before the first event
-        out(k).timeBeforeFirst(1) = [];
-        out(k).timeAfterLast(1) = 0;%the time spent at ground after last event
-        out(k).timeAfterLast(1) = [];
-        out(k).dwellTimes(1,:) = zeros([1,max(matrix(:))]); 
+function out = dwellSummary(dataCell,timeInterval,channels,baseState)
+    out = struct();
+    %baseState is passed in as a string of space-separated numbers
+    baseState = eval(['[' baseState ']']);
+    for j = 1:channels %initialize the fields; each row corresponds to a channel
+        out(j).timeBeforeFirst(1) = 0; %the time at ground before the first event
+        out(j).timeBeforeFirst(1) = [];
+        out(j).timeAfterLast(1) = 0;%the time spent at ground after last event
+        out(j).timeAfterLast(1) = [];
+        out(j).dwellTimes(1,:) = zeros([1,max(dataCell{1,j,:})]); 
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
     end
 
-    for j = 1:size(matrix,2)
-        tempList = matrix(1:nnz(matrix(:,j)),j); %extract column, truncate trailing zeros
-        if sum(tempList) ~= length(tempList) %if the trajectory is not all ones
-            k = mod(j-1,channels)+1; %assign this data to the proper channel
-            i = 1;
-            state = tempList(i);
-
-            while state == 1 && i<length(tempList)
-                i = i+1;
-                state = tempList(i);
+    for i = 1:size(matrix,2)
+        for j = 1:channels
+        tempList = dataCell{i,j,2}; %extract column, truncate trailing zeros
+        if any(tempList ~= baseState(j)) %if the trajectory is not all base
+            i0 = 1; %get ready to step over the whole length of the trace
+            state = tempList(i0);
+            while state == baseState(j) && i0<length(tempList)
+                i0 = i0+1;
+                state = tempList(i0);
             end
 
-            if i>1 && i~=tempList(i)
-                out(k).timeBeforeFirst(end+1) = i-1; %time spent at ground before first event
+            if i0>1 && i0~=tempList(i0)
+                out(j).timeBeforeFirst(end+1) = i0-1; %time spent at ground before first event
             end
 
-            iLast = i-1;
-            while i<length(tempList)
-                state = tempList(i);
-                stateNext = tempList(i+1);
+            iLast = i0-1;
+            while i0<length(tempList) %this block of code is the reason no state can be named "0" or any negative number
+                state = tempList(i0);
+                stateNext = tempList(i0+1);
                 if state~=stateNext
-                    longth = i - iLast; %time spent at this state; append to list in appropriate col
-                    out(k).dwellTimes(nnz(out(k).dwellTimes(:,state))+1,state) = longth;
-                    iLast = i;
+                    longth = i0 - iLast; %time spent at this state; append to list in appropriate col
+                    out(j).dwellTimes(nnz(out(j).dwellTimes(:,state))+1,state) = longth;
+                    iLast = i0;
                 end
                 
-                i = i+1;
+                i0 = i0+1;
             end
 
-            if tempList(end) == 1
-                longth = i - iLast;
-                out(k).timeAfterLast(end+1) = longth; %time after last event spent at ground (if any)
+            if tempList(end) == baseState(j)
+                longth = i0 - iLast;
+                out(j).timeAfterLast(end+1) = longth; %time after last event spent at ground (if any)
             end
         end
+        end
     end
-    for k = 1:channels %scale by factor of time interval (converts to seconds)
-        out(k).timeBeforeFirst = (out(k).timeBeforeFirst').*timeInterval;
-        out(k).timeAfterLast = (out(k).timeAfterLast').*timeInterval;
-        out(k).dwellTimes = out(k).dwellTimes.*timeInterval;
+    for j = 1:channels %scale by factor of time interval (converts to seconds, generally)
+        out(j).timeBeforeFirst = (out(j).timeBeforeFirst').*timeInterval;
+        out(j).timeAfterLast = (out(j).timeAfterLast').*timeInterval;
+        out(j).dwellTimes = out(j).dwellTimes.*timeInterval;
     end
 end
