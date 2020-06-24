@@ -81,8 +81,9 @@ classdef Kera < handle
             %variable formats
             %   See also ebfretImport and PROCESSDATA
             kera.gui.resetError();
-            dir3 = {0};
-            kera.setChannelState();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -95,7 +96,7 @@ classdef Kera < handle
 
             kera.filenames = names;
             k = 1;
-            dataCell = cell([size(data,4) kera.channels 2]);
+            kera.dataCell = cell([size(data,4) kera.channels 2]);
             for i = 1:size(data,4) %number of colocalized trace sets
                 clear binM;
                 binM = zeros([sum(data(:,1,1,i)) 1]);
@@ -103,14 +104,14 @@ classdef Kera < handle
                     timeM = squeeze(data(:,:,j,i));
                     count = 1;
                     for i0 = 1:size(timeM,1) %number of distinct dwells
-                        binM(count:count+timeM(i0,2)) = timeM(i0,1)+1;
-                        count = count + timeM(i0,2);
+                        binM(count:count+timeM(i0,2)) = timeM(i0,1);
+                        count = count + timeM(i0,2) + 1;
                     end
-                    dataCell{i,j,2} = binM(1:end-1);
+                    kera.dataCell{i,j,2} = binM(1:end-1);
                     k = k+1;
                 end
             end
-            kera.dataCell = dataCell;
+%             kera.dataCell = dataCell;
             kera.importSuccessful();
 %             kera.processData();
 %             kera.processDataStates();
@@ -139,7 +140,7 @@ classdef Kera < handle
             kera.dataCellEdited = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval);
         end
         
-        function haMMYAnalyze(kera,hObject, eventData, handles)
+        function haMMYImport(kera,hObject, eventData, handles)
             %imports HaMMY data then calls the analysis function
             %   See also qubImport and PROCESSDATASTATES
             kera.gui.resetError();
@@ -164,15 +165,15 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-
-
             kera.importSuccessful();
         end
         
         
         function processDataStates(kera, ~, ~, ~)
+            if isempty(kera.baseState)
+                kera.baseState = repmat(' 1 ',[1,kera.channels]);
+            end
             kera.stateDwellSummary = dwellSummary(kera.dataCell, kera.timeInterval, kera.channels, kera.baseState);
-            c = kera.channels;
             %dataCell should contain only column vectors, and the vectors
             %for colocalized sets should be the same length
             for i = 1:size(kera.dataCell,1)
@@ -200,9 +201,7 @@ classdef Kera < handle
             kera.stateText = regexprep(kera.stateText,';',' ; ');
             kera.stateText = regexprep(kera.stateText,'[','[ ');
             kera.stateText = regexprep(kera.stateText,']',' ]');
-            if isempty(kera.baseState)
-                kera.baseState = repmat(' 1 ',[1,kera.channels]);
-            end
+
 
             
             kera.output = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
@@ -217,24 +216,20 @@ classdef Kera < handle
         function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
             kera.gui.resetError();
 
-            [filename, path] = uigetfile('*.spkg');
+            [filename, path] = uigetfile('*.kera');
             if filename
-                kera.savePackage = jsondecode(char(load([path filesep filename])));
-                kera.channels = kera.savePackage.channels;
-                kera.stateList = kera.savePackage.stateList;
-                kera.output = kera.savePackage.output;
-                kera.stateDwellSummary = kera.savePackage.stateDwellSummary;
-                assignin('base', 'analyzedData', kera.output);
-                assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
-                kera.postProcessing();
+                tempGui = kera.gui;
+                kera = load([path filesep filename]);
+                kera.gui = tempGui;
             else
-                kera.gui.errorMessage('Failed to import Save Package file');
+                kera.gui.errorMessage('Failed to import saved session file');
             end
         end
 
         function postProcessing(kera)
             % kera.gui.alert('Processing is done!');
             kera.gui.enable('Export');
+            
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
             delete(kera.histogram);
@@ -248,14 +243,16 @@ classdef Kera < handle
         function exportSPKG(kera, hObject, eventData, handles)
             kera.gui.resetError();
 
-            savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'lettersR', 'timeDataR', 'nonZerosR', 'stateDwellSummary', 'output'};
-            savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
-                kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR,...
-                kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
-
-            savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); 
-            [filename, path] = uiputfile('savePackage.spkg');
-            save([path filesep filename], 'savePackage', '-ascii', '-double');
+%             savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'lettersR', 'timeDataR', 'nonZerosR', 'stateDwellSummary', 'output'};
+%             savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
+%                 kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR,...
+%                 kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
+% 
+%             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); 
+%             [filename, path] = uiputfile('savePackage.spkg');
+%             save([path filesep filename], 'savePackage', '-ascii', '-double');
+            [filename, path] = uiputfile('savedSession.kera');
+            save([path filesep filename], 'kera');
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
@@ -454,10 +451,11 @@ classdef Kera < handle
             
             h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
             try
-                fitModel = getFitHistogram(kera.histogram,out.fitType,out.order);
+                [fitModel, rateText] = getFitHistogram(kera.histogram,out.fitType,out.order);
                 xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
                 yList = fitModel(xList);
                 kera.histogramFit = plot(xList, yList);
+                text(mean(xList),prctile(yList,90),['k = ' rateText]);
             catch
                 disp('Fitting failed due to insufficient data');
                 kera.histogramFit = plot([0 0],[0 0]);

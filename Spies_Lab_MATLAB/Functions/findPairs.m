@@ -14,7 +14,7 @@ function [data,names] = findPairs(kera)
         return
     end
 
-    dir2 = dir([path '/' '*.dwt']);
+    dir2 = dir([path filesep '*.dwt']);
 
     if isempty(dir2)
         kera.gui.errorMessage('Choose a folder with dwt files within it')
@@ -50,7 +50,8 @@ function [data,names] = findPairs(kera)
     end
     u = unique(lower(suffixes));
 
-    %if not all files have all pairs in set
+    %if not all files have all pairs in set -- note, this needs to be fixed
+    if mod(numel(dir3),kera.channels)
     missingPair = questdlg(['There are files without matching pairs.  Would you '...
         'like to assume that corresponding files had no events, and remained '...
         'constant in the lowest state (state 1), constant in a user-defined state '...
@@ -69,6 +70,7 @@ function [data,names] = findPairs(kera)
     else
         ignore = 0;
         constantState = 0;
+    end
     end
 
     if length(u) < 20
@@ -119,8 +121,12 @@ function [data,names] = findPairs(kera)
                 for j= 1:size(pairFriends,2)
                     name = strjoin(dir3(pairFriends(i,j)));
                     fileID = fopen([path '/' name]);
-                    tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                     tempData = textscan(fileID,'%f %f');
+                    if isempty(tempData{1})
+                        fileID = fopen([path '/' name]);
+                        [~] = textscan(fileID,'%s',1,'Delimiter','\t');
+                        tempData = textscan(fileID,'%f %f');
+                    end
                     tempData = cat(2,tempData{1}, tempData{2});
                     fclose(fileID);
                     data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;
@@ -131,7 +137,7 @@ function [data,names] = findPairs(kera)
                 for j= 1:size(pairFriends,2)
                     if pairFriends(i,j)>0
                         name = strjoin(dir3(pairFriends(i,j)));
-                        fileID = fopen([path '/' name]);
+                        fileID = fopen([path filesep name]);
                         tempData = textscan(fileID,'%s',1,'Delimiter','\t');
                         tempData = textscan(fileID,'%f %f');
                         tempData = cat(2,tempData{1}, tempData{2});

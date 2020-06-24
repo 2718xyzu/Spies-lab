@@ -59,16 +59,6 @@ end
 
 %logarithmic histogram
 
-switch order
-    case 1
-        fitLower = [eps, eps];
-        model = fittype(@(a1,k1,x) (a1*exp(x+log(k1)-exp(x+log(k1)))));
-    case 2
-        fitLower = [eps, eps];
-        model = fittype(@(a1,k1,a2,k2,x) (a1*exp(x+log(k1)-exp(x+log(k1)))+...
-            a2*exp(x+log(k2)-exp(x+log(k2)))));
-end
-
 x(x<=0)=[];
 x = log(x);
 dt = zeros([2 1]);
@@ -79,6 +69,15 @@ optimalBin = 0;
 minX = min(x);
 maxX = max(x);
 while ~optimalBin
+    switch order
+    case 1
+        fitLower = [eps, eps];
+        model = fittype(@(a1,k1,x) (a1*exp(x+log(k1)+dt(i)/2-exp(x+log(k1)+dt(i)/2))));
+    case 2
+        fitLower = [eps, eps];
+        model = fittype(@(a1,k1,a2,k2,x) (a1*exp(x+log(k1)+dt(i)/2-exp(x+log(k1)+dt(i)/2))+...
+            a2*exp(x+log(k2)+dt(i)/2-exp(x+log(k2)+dt(i)/2))));
+    end
     [ordinate, edges] = histcounts(x,minX:dt(i):(maxX+dt(i)));
     abscissa = edges(1:end-1)+dt(i)/2;
     ordinate = sqrt(ordinate);

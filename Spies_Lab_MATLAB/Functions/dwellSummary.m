@@ -7,12 +7,12 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
         out(j).timeBeforeFirst(1) = [];
         out(j).timeAfterLast(1) = 0;%the time spent at ground after last event
         out(j).timeAfterLast(1) = [];
-        out(j).dwellTimes(1,:) = zeros([1,max(dataCell{1,j,:})]); 
+        out(j).dwellTimes(1,:) = zeros([1,max(dataCell{1,j,2})]); 
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
     end
 
-    for i = 1:size(matrix,2)
+    for i = 1:size(dataCell,1)
         for j = 1:channels
         tempList = dataCell{i,j,2}; %extract column, truncate trailing zeros
         if any(tempList ~= baseState(j)) %if the trajectory is not all base
