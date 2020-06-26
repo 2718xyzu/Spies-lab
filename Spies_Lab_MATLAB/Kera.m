@@ -27,6 +27,7 @@ classdef Kera < handle
         dataLoaded
         dataCell
         dataCellEdited
+        importedData
     end
     methods
         function kera = Kera()
@@ -70,10 +71,27 @@ classdef Kera < handle
         
         function importSuccessful(kera,~,~,~)
             %keep track of the original data entered vs any changes which are subsequently made
-            kera.dataCellEdited  = kera.dataCell; 
-            kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
-            kera.gui.createButton('View Data', [0.05 0.04 0.2 0.05], @kera.viewTraces);
-        end        
+%             kera.dataCellEdited  = kera.dataCell; 
+              if isempty(kera.dataCell)
+                  kera.dataCell = kera.importedData;
+                  kera.importedData = [];
+                  kera.dataCellEdited  = kera.dataCell;
+              else
+                  anS = questdlg(['You already have data loaded; do you want'...
+                      'to overwrite it or append to it with the newly-loaded data?'],...
+                      'Overwrite','Append','Overwrite');
+                  switch ans
+                      case 'Overwrite'
+                          kera.dataCell = kera.importedData;
+                          kera.dataCellEdited  = kera.dataCell;
+                          kera.importedData = [];
+                      case 'Append'
+                          kera.dataCell = cat(1,kera.dataCell,kera.importedData);
+                          kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
+                          kera.importedData = [];
+                  end
+              end
+        end
         
 
         function qubImport(kera, hObject, eventData, handles)
@@ -96,7 +114,7 @@ classdef Kera < handle
 
             kera.filenames = names;
             k = 1;
-            kera.dataCell = cell([size(data,4) kera.channels 2]);
+            kera.importedData = cell([size(data,4) kera.channels 2]);
             for i = 1:size(data,4) %number of colocalized trace sets
                 clear binM;
                 binM = zeros([sum(data(:,1,1,i)) 1]);
@@ -107,7 +125,7 @@ classdef Kera < handle
                         binM(count:count+timeM(i0,2)) = timeM(i0,1);
                         count = count + timeM(i0,2) + 1;
                     end
-                    kera.dataCell{i,j,2} = binM(1:end-1);
+                    kera.importedData{i,j,2} = binM(1:end-1);
                     k = k+1;
                 end
             end
@@ -131,7 +149,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.dataCell, kera.filenames] = packagePairsebFRET(kera.channels);
+            [kera.importedData, kera.filenames] = packagePairsebFRET(kera.channels);
             %new scripts:
             kera.importSuccessful();
         end
@@ -151,7 +169,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.dataCell, kera.filenames] = packagePairsHaMMY(kera.channels);
+            [kera.importedData, kera.filenames] = packagePairsHaMMY(kera.channels);
             kera.importSuccessful();
         end
 
@@ -203,10 +221,12 @@ classdef Kera < handle
 %             kera.stateText = regexprep(kera.stateText,'[','[ ');
 %             kera.stateText = regexprep(kera.stateText,']',' ]');
 % 
-
+            if isempty(kera.output)
+                kera.output = struct();
+            end
             
-            kera.output = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
-                kera.stateTimes, kera.filenames, kera.baseState);
+            kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
+                kera.timeData, kera.filenames, kera.baseState);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
@@ -310,7 +330,6 @@ classdef Kera < handle
             kera.gui.createButton('<', [0.1 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
-            kera.gui.createButton('Custom Event Search', [0.1 0.04 0.2 0.05], @kera.customSearch);
             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 

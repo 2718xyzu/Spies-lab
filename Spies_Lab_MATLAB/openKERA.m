@@ -23,6 +23,11 @@ kera.gui.createSecondaryMenu('Analyzed Data', 'csv', @kera.exportAnalyzed);
 kera.gui.createSecondaryMenu('Export', 'State Dwell Summary');
 kera.gui.createSecondaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwellSummary);
 
+kera.createPrimaryMenu('Analyze');
+kera.gui.createSecondaryMenu('Analyze', 'View Data', @kera.viewTraces);
+kera.gui.createSecondaryMenu('Analyze', 'Run Analysis', @kera.processDataStates);
+kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
+
 kera.gui.createPrimaryMenu('Settings');
 kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
 kera.gui.createSecondaryMenu('Settings','Set time step', @kera.setTimeStep);
