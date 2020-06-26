@@ -18,7 +18,6 @@ classdef Kera < handle
         histogramFit
         histogramRow = 1
         visualizeTrans
-        %added in state update:
         stateText
         condensedStates
         stateTimes
