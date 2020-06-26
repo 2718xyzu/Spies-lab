@@ -5,7 +5,7 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
 %     defaultString = ['(?<=' baseState(1:end-1) ')[^\]]+?(?=' baseState(2:end) ')'];
 %     expr2{1} = defaultString;
 %     out = regExAnalyzer3(defaultString, condensedStates, stateText, timeLong, posLong, rowLong, filenames);
-    out = findCompletedEvents(baseState, condensedStates, timeData, filenames);
+    out = findCompletedEvents(baseState, condensedStates);
     %the above line searches the transition matrix (nonZeros) for all
     %events matching the 'default' description (typically, all events which
     %are surrounded by state 1 in all channels, which may be interpreted as
@@ -31,6 +31,6 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     rows = size(output,2);
 
     for i = 1:rows
-        output = fillRowState(output, i, searchExpr{i}, condensedStates, filenames);
+        output = fillRowState(output, i, searchExpr{i}, condensedStates, timeData, filenames);
     end
 end

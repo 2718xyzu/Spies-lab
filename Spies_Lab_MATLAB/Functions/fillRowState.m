@@ -1,4 +1,4 @@
-function output = fillRowState(output, i, expr, condensedStates, filenames)
+function output = fillRowState(output, i, expr, condensedStates, timeData, filenames)
         
         output(i).expr = expr;
         searchMatrix = eval(expr);

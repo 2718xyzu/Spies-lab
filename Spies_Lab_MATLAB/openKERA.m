@@ -23,7 +23,7 @@ kera.gui.createSecondaryMenu('Analyzed Data', 'csv', @kera.exportAnalyzed);
 kera.gui.createSecondaryMenu('Export', 'State Dwell Summary');
 kera.gui.createSecondaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwellSummary);
 
-kera.createPrimaryMenu('Analyze');
+kera.gui.createPrimaryMenu('Analyze');
 kera.gui.createSecondaryMenu('Analyze', 'View Data', @kera.viewTraces);
 kera.gui.createSecondaryMenu('Analyze', 'Run Analysis', @kera.processDataStates);
 kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
@@ -35,3 +35,4 @@ kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineS
 
 
 kera.gui.disable('Export');
+kera.gui.disable('Analyze');

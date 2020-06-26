@@ -1,4 +1,4 @@
-function out = findCompletedEvents(baseState, condensedStates, timeData, filenames)
+function out = findCompletedEvents(baseState, condensedStates)
 
 starts = zeros([100 2]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);

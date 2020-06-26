@@ -27,6 +27,7 @@ classdef Kera < handle
         dataCell
         dataCellEdited
         importedData
+        h2
     end
     methods
         function kera = Kera()
@@ -71,6 +72,7 @@ classdef Kera < handle
         function importSuccessful(kera,~,~,~)
             %keep track of the original data entered vs any changes which are subsequently made
 %             kera.dataCellEdited  = kera.dataCell; 
+              kera.gui.enable('Analyze');
               if isempty(kera.dataCell)
                   kera.dataCell = kera.importedData;
                   kera.importedData = [];
@@ -78,16 +80,18 @@ classdef Kera < handle
               else
                   anS = questdlg(['You already have data loaded; do you want'...
                       'to overwrite it or append to it with the newly-loaded data?'],...
-                      'Overwrite','Append','Overwrite');
-                  switch ans
+                      'New data','Overwrite','Append','Overwrite');
+                  switch anS
                       case 'Overwrite'
                           kera.dataCell = kera.importedData;
                           kera.dataCellEdited  = kera.dataCell;
                           kera.importedData = [];
+                          disp('Data overwritten');
                       case 'Append'
                           kera.dataCell = cat(1,kera.dataCell,kera.importedData);
                           kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
                           kera.importedData = [];
+                          disp('Data appended');
                   end
               end
         end
@@ -467,17 +471,19 @@ classdef Kera < handle
             delete(kera.histogramFit);
             hold on;
             out.handle = gcf;
-            
-            h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            if isempty(kera.h2)
+                kera.h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            end
+            cla(kera.h2);
             try
                 [fitModel, rateText] = getFitHistogram(kera.histogram,out.fitType,out.order);
                 xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
                 yList = fitModel(xList);
-                kera.histogramFit = plot(xList, yList);
-                text(mean(xList),prctile(yList,90),['k = ' rateText]);
+                kera.histogramFit = plot(kera.h2, xList, yList);
+                text(kera.h2, mean(xList),prctile(yList,90),['k = ' rateText]);
             catch
                 disp('Fitting failed due to insufficient data');
-                kera.histogramFit = plot([0 0],[0 0]);
+                kera.histogramFit = plot(kera.h2,[0 0],[0 0]);
             end
            
         end
