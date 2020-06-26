@@ -1,4 +1,6 @@
 function output = defaultAnalyze2(channels, stateList, nonZeros, timeData, letters, filenames)
+    %deprecated function
+
     [timeLong, posLong, rowLong] = timeLengthen(timeData,letters);
     out = regExAnalyzer2('_[^_,]{3,}_', nonZeros, letters, timeData, timeLong, posLong, rowLong, filenames);
     %the above line searches the transition matrix (nonZeros) for all

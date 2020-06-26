@@ -1,4 +1,4 @@
-N = 3000; %number of traces to create
+N = 3; %number of traces to create
 lengthTrace = 6000; %length of each trace in time points
 cy3Final = cell([N 1]);
 cy5Final = cell([N 1]);
