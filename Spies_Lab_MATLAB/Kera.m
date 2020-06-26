@@ -181,7 +181,7 @@ classdef Kera < handle
                 changeStates = diff(workingStates);
                 changeStates = logical([1; sum(abs(changeStates),2)]);
                 kera.condensedStates{i} = workingStates(changeStates,:);
-                %condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
+                %Each cell of condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
                 % with 'channels' columns, and one row for each transition
                 %in other words, list the system's state over time with one
                 %entry per state.  The original cell has a row for every
@@ -189,23 +189,24 @@ classdef Kera < handle
                 %given state for a long time, it's easier to make a set of
                 %matrices which just list the state achieved in order,
                 %and then record the time at which they happen here:
-                kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
-                %the time point of each change in state (transition)
+                kera.stateTimes{i} = [find(changeStates); size(workingStates,1)+1].*kera.timeInterval;
+                %the time point of each change in state (transition) as
+                %well as the time point occurrig after the end of the trace
             end
-            kera.stateText = '';
-            for i = 1:length(kera.condensedStates)
-                tempText = mat2str(kera.condensedStates{i});
-                kera.stateText = [kera.stateText tempText];
-            end
-            kera.stateText = regexprep(kera.stateText,' ','  ');
-            kera.stateText = regexprep(kera.stateText,';',' ; ');
-            kera.stateText = regexprep(kera.stateText,'[','[ ');
-            kera.stateText = regexprep(kera.stateText,']',' ]');
-
+%             kera.stateText = '';
+%             for i = 1:length(kera.condensedStates)
+%                 tempText = mat2str(kera.condensedStates{i});
+%                 kera.stateText = [kera.stateText tempText];
+%             end
+%             kera.stateText = regexprep(kera.stateText,' ','  ');
+%             kera.stateText = regexprep(kera.stateText,';',' ; ');
+%             kera.stateText = regexprep(kera.stateText,'[','[ ');
+%             kera.stateText = regexprep(kera.stateText,']',' ]');
+% 
 
             
             kera.output = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
-                kera.stateTimes, kera.stateText, kera.filenames, kera.baseState);
+                kera.stateTimes, kera.filenames, kera.baseState);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
