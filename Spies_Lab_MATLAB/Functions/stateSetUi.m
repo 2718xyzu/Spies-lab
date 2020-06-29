@@ -1,4 +1,4 @@
-function [stateText] = stateSetUi(channels,stateList)
+function [outputText] = stateSetUi(channels,stateList)
     %This interface allows users to specify a sequence of states they would 
     %like to search for within the data
     %
@@ -11,7 +11,7 @@ function [stateText] = stateSetUi(channels,stateList)
     dropDowns = cell([1 channels]);
     searchText = 'Baseline state: ';
     for i = 1:channels
-        dropDownOpt{i}{1} = 'any';
+        dropDownOpt{i}{1} = 'Any';
         for j = 1:stateList(i)
             dropDownOpt{i}{j+1} = num2str(j);
         end
@@ -51,12 +51,13 @@ function [stateText] = stateSetUi(channels,stateList)
         stateText = [];
         for k = 1:channels
             stateSearch(k) = get(dropDowns{k},'Value')-1;
-            stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' ' ];
+            stateText = ['  ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' ' ];
             %puts stateText as a string of the format ' \d  \d  \d ... \d '
             %The number of spaces is important
         end
         set(searchString, 'String', [searchText stateText ]);
-        stateText = regexprep(stateText, 'any', '\\d+');
+        stateSearch(stateSearch == 0) = NaN;
+        outputText = mat2str(stateSearch);
     end
 
    

@@ -10,7 +10,7 @@ function [searchText] = stateSearchUi(channels,stateList)
     searchText = {'Search text'};
     lengtH = 0;
     for i = 1:channels
-        dropDownOpt{i}{1} = 'any';
+        dropDownOpt{i}{1} = 'Any';
         for j = 1:stateList(i)
             dropDownOpt{i}{j+1} = num2str(j);
         end
@@ -76,7 +76,8 @@ function [searchText] = stateSearchUi(channels,stateList)
         try
             stateCell = searchText(2:end);
             searchText = strjoin(stateCell,';');
-            searchText = regexprep(searchText,'any', '\\d+');
+            searchText = regexprep(searchText,'Any', 'NaN');
+            searchText = ['[' searchText ']'];
             delete(instructions);
             delete(btn);
             delete(btn2);

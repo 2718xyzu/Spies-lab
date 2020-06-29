@@ -1,4 +1,5 @@
 function out = findStateEvents(stateSearch, condensedStates, timeData, filenames)
+%stateSearch is a numerical array
 starts = zeros([100 2]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);
 traceId = zeros([100 1]);
@@ -56,13 +57,28 @@ for i = 1:numEv
     startTimes(i) = timeData{traceId(i)}(starts(i));
     endTimes(i) = timeData{traceId(i)}(ends(i));
     out.timeLengths(i) = timeData{traceId(i)}(ends(i))-timeData{traceId(i)}(starts(i)+1); 
-    % ^the time length spent away from the base state
+    % ^the time length spent away from the base state (the time of the
+    % event excluding the first and last state of the specified search
     tempTime = timeData{traceId(i)}(starts(i):(ends(i)+1));
     out.timeList{i} = tempTime;
     out.timeDiff{i} = diff(tempTime);
     out.begin(i) = tempTime(2)-tempTime(1);
     out.last(i) = tempTime(end)-tempTime(end-1);
     out.eventList = condensedStates{traceId(i)}(starts(i):ends(i),:);
+    %convention: timeLengths should not include, in the total event time,
+    %the length of the beginning or ending state, since they could be at
+    %the beginning or end of the trace (and therefore be of indeterminate
+    %length).  Therefore, when doing a default search, the amount of time
+    %noted by timeLengths is only the time spent away from the default
+    %state.  When doing a custom search, it is best practice to specify an
+    %unknown system state at the beginning and end of the search: 
+%   [any any; 1 2 ; 2 2; any any] 
+    %would provide a timeLengths variable that only contained the length of
+    %time spent at the [1 2] state and [2 2] state; this also guarantees that
+    %the states searched for do not occur at the beginning or end of a
+    %trace.  However, timeList and timeDiff do include the time points for 
+    %the edge events, because that information might still be useful to the
+    %user.
 end
 
 

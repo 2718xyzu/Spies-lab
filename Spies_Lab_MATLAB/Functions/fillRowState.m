@@ -1,5 +1,6 @@
 function output = fillRowState(output, i, expr, condensedStates, timeData, filenames)
-        
+        %expr is a text search string which, when eval(expr) is called,
+        %creates a numerical matrix
         output(i).expr = expr;
         searchMatrix = eval(expr);
         output(i).searchMatrix = eval(expr);      

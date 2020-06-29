@@ -118,15 +118,15 @@ classdef Kera < handle
             kera.filenames = names;
             k = 1;
             kera.importedData = cell([size(data,4) kera.channels 2]);
-            for i = 1:size(data,4) %number of colocalized trace sets
+            for i = 1:size(data,1) %number of colocalized trace sets
                 clear binM;
-                binM = zeros([sum(data(:,1,1,i)) 1]);
+                binM = zeros([sum(data{i,1}(:,2)) 1]);
                 for j = 1:kera.channels %number of channels
-                    timeM = squeeze(data(:,:,j,i));
+                    timeM = data{i,j};
                     count = 1;
                     for i0 = 1:size(timeM,1) %number of distinct dwells
-                        binM(count:count+timeM(i0,2)) = timeM(i0,1);
-                        count = count + timeM(i0,2) + 1;
+                        binM(count:count+timeM(i0,2)-1) = timeM(i0,1);
+                        count = count + timeM(i0,2);
                     end
                     kera.importedData{i,j,2} = binM(1:end-1);
                     k = k+1;
@@ -229,7 +229,7 @@ classdef Kera < handle
             end
             
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
-                kera.timeData, kera.filenames, kera.baseState);
+                kera.stateTimes, kera.filenames, kera.baseState);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
