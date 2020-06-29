@@ -15,7 +15,7 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
-importOldSession = 0; %set this to 1, open up your old saved analysis, and run the code
+importOldSession = 1; %set this to 1, open up your old saved analysis, and run the code
 
 if ~importOldSession
 clear intensity
@@ -117,7 +117,15 @@ for c = 1:channels
                %and selecting the quit option
     end
 end
-save(['Analysis_Save_' mat2str(fix(clock)) ], 'low', 'high', 'trim', 'selection', 'selectionAll', 'intensity','fileNames','channels');
+
+[~] = questdlg(['Please select a directory (or make a new one) in'...
+    'which to save the backup file'], 'Select Directory','Ok','Ok');
+saveDir = uigetdir;
+if ~isfolder(saveDir)
+    errordlg('Directory not found.  Using default directory');
+    saveDir = [];
+end
+save([saveDir filesep 'Analysis_Save_' mat2str(fix(clock)) ], 'low', 'high', 'trim', 'selection', 'selectionAll', 'intensity','fileNames','channels');
 %in case we need to come back to this point and make different decisions
 
 emFret = cell([1 channels]);
@@ -125,6 +133,7 @@ saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
 N = length(intensity{1});
 finalTrim = [zeros(N,1) ones(N,1)*1E10];
+intensityTrimmed = cell(size(intensity));
 %each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
     for i = 1:N
@@ -134,17 +143,17 @@ for c = 1:channels
 end
 for c = 1:channels
     for i = 1:N
-        intensity{c}{i} = intensity{c}{i}(finalTrim(i,1):finalTrim(i,2));
+        intensityTrimmed{c}{i} = intensity{c}{i}(finalTrim(i,1):finalTrim(i,2));
     end
 end
 
 for c = 1:channels
-    saveList{c} = ones(length(intensity{c}),1,'logical');
+    saveList{c} = ones(length(intensityTrimmed{c}),1,'logical');
     emFret{c} = cell([1 N]);
     if isempty(low{c})
-        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = smoothNormalize(intensity{c}(selectionAll));
+        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = smoothNormalize(intensityTrimmed{c}(selectionAll));
     else
-        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = normalizeSelection(intensity{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
+        [emFret{c}(selectionAll),saveList{c}(selectionAll)] = normalizeSelection(intensityTrimmed{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
     end
     selectionAll = and(selectionAll,saveList{c});
 end
