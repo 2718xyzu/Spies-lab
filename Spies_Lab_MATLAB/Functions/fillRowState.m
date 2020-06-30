@@ -1,14 +1,14 @@
-function output = fillRowState(output, i, expr, condensedStates, timeData, filenames)
-        %expr is a text search string which, when eval(expr) is called,
-        %creates a numerical matrix
-        output(i).expr = expr;
-        searchMatrix = eval(expr);
-        output(i).searchMatrix = eval(expr);      
+function output = fillRowState(output, i, searchMatrix, condensedStates, timeData, filenames)
+        %searchMatrix is a numerical array; see findStateEvents for
+        %conventions
+        output(i).searchMatrix = searchMatrix;
+        output(i).expr = mat2str(searchMatrix);
+              
         out = findStateEvents(searchMatrix, condensedStates, timeData, filenames); %function which does the searching
-%         [~,output(i).interpretation] = parseTransitionState(expr, channels, stateList);
+
         try
 %             [output(i).statesSummary,~] = parseTransition(expr, channels, stateList);
-            output(i).searchState = eval(expr);
+%             output(i).searchState = eval(searchMatrix);
         catch
         end
         output(i).count = out.numEvents;

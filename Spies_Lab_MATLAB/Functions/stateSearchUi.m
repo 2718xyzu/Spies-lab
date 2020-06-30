@@ -1,4 +1,4 @@
-function [searchText] = stateSearchUi(channels,stateList)
+function [searchArray] = stateSearchUi(channels,stateList)
     %This interface allows users to specify a sequence of states they would 
     %like to search for within the data
     %
@@ -6,7 +6,7 @@ function [searchText] = stateSearchUi(channels,stateList)
     dropDownOpt = cell([1 channels]);
     dropDowns = cell([1 channels]);
     stateCell = {};
-    searchArray = {};
+    searchArray = [];
     searchText = {'Search text'};
     lengtH = 0;
     for i = 1:channels
@@ -51,7 +51,7 @@ function [searchText] = stateSearchUi(channels,stateList)
             stateSearch(k) = get(dropDowns{k},'Value')-1;
             stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' '];
         end
-        searchArray{lengtH+1} = stateSearch;
+        searchArray(lengtH+1,:) = stateSearch;
         searchText{lengtH+2} = stateText;
         set(searchString, 'String', strjoin(searchText,';'));
     end
@@ -64,9 +64,9 @@ function [searchText] = stateSearchUi(channels,stateList)
     
     function removeCallback(hObject,~)
         searchText(end) = [];
-        searchArray(end) = [];
+        searchArray(end,:) = [];
         set(searchString, 'String', strjoin(searchText,' ;'));
-        lengtH = length(searchArray);
+        lengtH = size(searchArray,1);
         if lengtH == 0
             set(hObject,'Enable','off');
         end
@@ -78,6 +78,7 @@ function [searchText] = stateSearchUi(channels,stateList)
             searchText = strjoin(stateCell,';');
             searchText = regexprep(searchText,'Any', 'NaN');
             searchText = ['[' searchText ']'];
+            searchArray(searchArray==0) = NaN;
             delete(instructions);
             delete(btn);
             delete(btn2);

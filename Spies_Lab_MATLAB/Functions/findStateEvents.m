@@ -1,6 +1,15 @@
 function out = findStateEvents(stateSearch, condensedStates, timeData, filenames)
-%stateSearch is a numerical array
-starts = zeros([100 2]); %pre-allocating, but of course there may be more or fewer than 100 events
+%stateSearch is a numerical array, with each row being a system state (the
+%number of columns equals the number of channels)
+%the wildcard "NaN" can appear in that array and stand in for any state,
+%and a row of "Inf" means a multi-line wildcard; i.e.
+
+%[ 1  1 ]    matches both  [ 1  1 ]   and   [ 1  1 ]
+%[ Inf Inf ]               [ 1  2 ]         [ 2  1 ]
+%[ 1  1 ]                  [ 1  1 ]         [ 2  2 ]
+%                                           [ 1  2 ] 
+%                                           [ 1  1 ]
+starts = zeros([100 1]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);
 traceId = zeros([100 1]);
 numEv = 0;
@@ -33,6 +42,10 @@ for i0 = 1:N
                         ends(numEv+1) = i2; %ending position of the event
                         numEv = numEv + 1;
                     end
+                    i2 = i2+1;
+                    if i2>size(states,1)
+                        break
+                    end
                 end
             end
         end
@@ -43,6 +56,7 @@ starts = starts(1:numEv,:);
 ends = ends(1:numEv,:);
 
 out.filenames = arrayfun(@(x) filenames(x),starts(:,1))';
+out.filenames = reshape(out.filenames,[length(out.filenames) 1]);
 startTimes = zeros([numEv 1]);
 endTimes = zeros([numEv 1]);
 out.timeLengths = zeros([numEv 1]);
@@ -64,7 +78,7 @@ for i = 1:numEv
     out.timeDiff{i} = diff(tempTime);
     out.begin(i) = tempTime(2)-tempTime(1);
     out.last(i) = tempTime(end)-tempTime(end-1);
-    out.eventList = condensedStates{traceId(i)}(starts(i):ends(i),:);
+    out.eventList{i} = condensedStates{traceId(i)}(starts(i):ends(i),:);
     %convention: timeLengths should not include, in the total event time,
     %the length of the beginning or ending state, since they could be at
     %the beginning or end of the trace (and therefore be of indeterminate

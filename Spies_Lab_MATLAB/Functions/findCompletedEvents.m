@@ -1,6 +1,10 @@
 function out = findCompletedEvents(baseState, condensedStates)
-
-starts = zeros([100 2]); %pre-allocating, but of course there may be more or fewer than 100 events
+%baseState is a vector of numbers, one for each channel, which describes
+%where the "default" state of the system is.  This is nice because, often
+%the events you're interested in, are the ways in which the system departs
+%from and then returns to that state, which is what this function searches
+%for.
+starts = zeros([100 1]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);
 traceId = zeros([100 1]);
 numEv = 0;
@@ -30,7 +34,7 @@ out.eventList = cell([numEv 1]);
 out.numEvents = numEv;
 
 for i = 1:numEv
-    out.eventList = condensedStates{traceId(i)}(starts(i):ends(i),:); 
+    out.eventList{i} = condensedStates{traceId(i)}(starts(i):ends(i),:); 
     %output just the event classifications (including the base state on
     %either side)
 end

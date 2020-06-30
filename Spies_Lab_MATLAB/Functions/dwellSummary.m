@@ -1,7 +1,7 @@
 function out = dwellSummary(dataCell,timeInterval,channels,baseState)
     out = struct();
     %baseState is passed in as a string of space-separated numbers
-    baseState = eval(['[' baseState ']']);
+%     baseState = eval(['[' baseState ']']);
     for j = 1:channels %initialize the fields; each row corresponds to a channel
         out(j).timeBeforeFirst(1) = 0; %the time at ground before the first event
         out(j).timeBeforeFirst(1) = [];

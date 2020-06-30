@@ -67,6 +67,7 @@ classdef Kera < handle
                 kera.setChannelState()
                 return
             end
+            kera.gui.enable('Set baseline state');
         end
         
         function importSuccessful(kera,~,~,~)
@@ -225,7 +226,7 @@ classdef Kera < handle
 %             kera.stateText = regexprep(kera.stateText,']',' ]');
 % 
             if isempty(kera.output)
-                kera.output = struct();
+                kera.output = struct([]);
             end
             
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
@@ -423,7 +424,7 @@ classdef Kera < handle
             set(gca, 'ColorOrderIndex', 1);
 
             if row ~= 1
-                [xList, yList] = visualizeTransition(kera.output(row).expr{:},kera.channels);
+                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
                 kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
                 ylim([min(yList,[],'all')-.2 max(yList,[],'all')+.2]);
 %                 disp(outText);

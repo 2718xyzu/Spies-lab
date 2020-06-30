@@ -28,9 +28,9 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     end
     searchExpr = unique(searchExpr);
     
-    rows = size(output,2);
+    rows = length(searchExpr);
 
     for i = 1:rows
-        output = fillRowState(output, i, searchExpr{i}, condensedStates, timeData, filenames);
+        output = fillRowState(output, i, eval(searchExpr{i}), condensedStates, timeData, filenames);
     end
 end

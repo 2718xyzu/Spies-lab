@@ -1,4 +1,4 @@
-function [outputText] = stateSetUi(channels,stateList)
+function [baseState] = stateSetUi(channels,stateList)
     %This interface allows users to specify a sequence of states they would 
     %like to search for within the data
     %
@@ -57,7 +57,7 @@ function [outputText] = stateSetUi(channels,stateList)
         end
         set(searchString, 'String', [searchText stateText ]);
         stateSearch(stateSearch == 0) = NaN;
-        outputText = mat2str(stateSearch);
+        baseState = stateSearch;
     end
 
    

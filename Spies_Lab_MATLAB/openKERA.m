@@ -36,3 +36,4 @@ kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineS
 
 kera.gui.disable('Export');
 kera.gui.disable('Analyze');
+kera.gui.disable('Set baseline state');
