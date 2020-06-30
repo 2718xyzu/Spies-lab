@@ -341,22 +341,14 @@ classdef Kera < handle
             searchWindow = figure('Visible','on','Position',[400 400 300 200]);
             searchWindow.MenuBar = 'none';
             searchWindow.ToolBar = 'none'; 
-            searchExpr = stateSearchUi(kera.channels, kera.stateList);
+            searchMatrix = stateSearchUi(kera.channels, kera.stateList);
             
 %             searchExpr = states2search(kera.stateList, channel, transitionList);
             row2fill = size(kera.output,2)+1;
-            kera.output(row2fill).expr = {searchExpr};
-            firstState = regexp(searchExpr,'^.+?(?= ;)');
-            lastState = regexp(searchExpr,'(?<=; ).+?$');
-            if strcmp(firstState(1:end-1),lastState(2:end))
-                searchExpr = regexprep(searchExpr, '^.+?(?= ;)', ['(?<=' firstState ')']); %to allow overlap of results at the edge states
-            end
-            kera.output(row2fill).expr2 = {searchExpr};
-            [timeLong, posLong, rowLong] = timeLengthenState(kera.stateTimes,kera.stateText);
-            kera.output = fillRowState(kera.output, row2fill, searchExpr, kera.condensedStates, kera.channels, ...
-                kera.stateList, kera.stateText, timeLong, posLong, rowLong, kera.filenames);
+            kera.output(row2fill).searchMatrix = searchMatrix;
+            kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
+                kera.condensedStates, kera.timeData, kera.filenames);
             %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
-            clear timeLong posLong rowLong row2fill searchExpr channel transitionList
             assignin('base','analyzedData',kera.output);
 %             kera.savePackage.output = kera.output;
         end
