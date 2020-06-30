@@ -141,7 +141,12 @@ else %smooth the traces, remove outliers, find contiguous regions, organize into
         trace = input{j};
         %         trace = filloutliers(trace,'spline','movmean',7);
         %         uncomment if you would like to fill single-frame noise spikes
-        trace = trace/(max(trace));
+        normalizationConstant = max(trace(:)); 
+        %do a quick rescale to make sure everything running through this is
+        %roughly of the same scale
+        trace = trace/(normalizationConstant);
+        low{j} = low{j}/normalizationConstant;
+        high{j} = high{j}/normalizationConstant;
         regions = [1 findchangepts(trace, 'MinDistance',5,'MinThreshold',.25) length(trace)+1];
         %Find locations within the trace which are good candidates for
         %state boundaries
