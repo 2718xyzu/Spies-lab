@@ -52,10 +52,11 @@ for i0 = 1:N
     end
 end
 
-starts = starts(1:numEv,:);
-ends = ends(1:numEv,:);
+starts = starts(1:numEv);
+ends = ends(1:numEv);
+traceId = traceId(1:numEv);
 
-out.filenames = arrayfun(@(x) filenames(x),starts(:,1))';
+out.filenames = arrayfun(@(x) filenames(x),traceId)';
 out.filenames = reshape(out.filenames,[length(out.filenames) 1]);
 startTimes = zeros([numEv 1]);
 endTimes = zeros([numEv 1]);

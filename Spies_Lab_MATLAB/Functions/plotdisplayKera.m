@@ -1,7 +1,7 @@
 function [dataCellEdited] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval)
 %a function called when the user clicks the "view data" button
 
-maxStates = getMaxStates(dataCell);
+maxStates = getMaxStates(dataCellEdited);
 N = size(dataCell,1);
 selection = ones([1 N],'logical');
 channels = size(dataCellEdited,2);
@@ -38,7 +38,9 @@ while i <= N
         ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
-        shift = shift+0.1;
+        if ~rawAvailable
+            shift = shift+0.1;
+        end
     end
     legendList = legendList(1:(l-1));
     legend(legendList);
@@ -106,8 +108,8 @@ while i <= N
             histVal = cell([channels 2]);
             edgeVal = cell([channels 2]);
             for j = 1:channels
-                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(dataCell(:,j,1)));
-                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), dataCell(:,j,1),'UniformOutput',false);
+                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(dataCellEdited(:,j,1)));
+                normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), dataCellEdited(:,j,1),'UniformOutput',false);
                 [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
             end
             %NOTE: assignin is being used to set the following three

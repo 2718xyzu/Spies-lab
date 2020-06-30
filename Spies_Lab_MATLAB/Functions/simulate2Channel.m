@@ -1,4 +1,4 @@
-N = 3; %number of traces to create
+N = 300; %number of traces to create
 lengthTrace = 6000; %length of each trace in time points
 cy3Final = cell([N 1]);
 cy5Final = cell([N 1]);
@@ -6,8 +6,8 @@ cy3QuB = cell([N 1]);
 cy5QuB = cell([N 1]);
 s3 = 3; %the number of states in the cy3 model
 s5 = 2; %the number of states in the cy5 model
-t = 30/6000; %some parameters to control how fast events tend to happen
-t2 = 50/6000;
+t = 1/30; %some parameters to control how fast events tend to happen
+t2 = 1/50;
 transition_matrix3 = cat(3, [ 1-t, t, 0; t, 1-2*t, t ; 0, t, 1-t],...   %the transition matrix of cy3 iff cy5 is in state 1
                             [ 1-2*t t t; .5*t  1-2*t 1.5*t ; 0 t 1-t]); % "     " iff cy5 is in state 2
 transition_matrix5 = cat(3, [ 1-t2 t2; t2 1-t2], ... %the transition matrix of cy5 iff cy3 is in state 1
@@ -77,13 +77,13 @@ for i = 1:N
     filenames{i} = num2str(i);
 end
 
-saveebFRET = 0;
+saveebFRET = 1;
 if saveebFRET
     saveEmFret(cy3Final,1, filenames); %save the cy3 traces
     saveEmFret(cy5Final,2, filenames); %save the cy5 traces
 end
 
-saveQuB = 1;
+saveQuB = 0;
 if saveQuB
     
     for channel = 1:2

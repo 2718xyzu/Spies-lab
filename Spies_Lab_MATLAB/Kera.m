@@ -193,7 +193,7 @@ classdef Kera < handle
         
         function processDataStates(kera, ~, ~, ~)
             if isempty(kera.baseState)
-                kera.baseState = repmat(' 1 ',[1,kera.channels]);
+                kera.baseState = ones([1,kera.channels]);
             end
             kera.stateDwellSummary = dwellSummary(kera.dataCell, kera.timeInterval, kera.channels, kera.baseState);
             %dataCell should contain only column vectors, and the vectors
@@ -241,7 +241,7 @@ classdef Kera < handle
         function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
             kera.gui.resetError();
 
-            [filename, path] = uigetfile('*.kera');
+            [filename, path] = uigetfile('*.mat');
             if filename
                 tempGui = kera.gui;
                 kera = load([path filesep filename]);
