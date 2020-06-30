@@ -18,7 +18,6 @@ classdef Kera < handle
         histogramFit
         histogramRow = 1
         visualizeTrans
-        %added in state update:
         stateText
         condensedStates
         stateTimes
@@ -27,6 +26,8 @@ classdef Kera < handle
         dataLoaded
         dataCell
         dataCellEdited
+        importedData
+        h2
     end
     methods
         function kera = Kera()
@@ -66,14 +67,35 @@ classdef Kera < handle
                 kera.setChannelState()
                 return
             end
+            kera.gui.enable('Set baseline state');
         end
         
         function importSuccessful(kera,~,~,~)
             %keep track of the original data entered vs any changes which are subsequently made
-            kera.dataCellEdited  = kera.dataCell; 
-            kera.gui.createButton('Default Analyze', [0.35 0.04 0.2 0.05], @kera.processDataStates);
-            kera.gui.createButton('View Data', [0.05 0.04 0.2 0.05], @kera.viewTraces);
-        end        
+%             kera.dataCellEdited  = kera.dataCell; 
+              kera.gui.enable('Analyze');
+              if isempty(kera.dataCell)
+                  kera.dataCell = kera.importedData;
+                  kera.importedData = [];
+                  kera.dataCellEdited  = kera.dataCell;
+              else
+                  anS = questdlg(['You already have data loaded; do you want'...
+                      'to overwrite it or append to it with the newly-loaded data?'],...
+                      'New data','Overwrite','Append','Overwrite');
+                  switch anS
+                      case 'Overwrite'
+                          kera.dataCell = kera.importedData;
+                          kera.dataCellEdited  = kera.dataCell;
+                          kera.importedData = [];
+                          disp('Data overwritten');
+                      case 'Append'
+                          kera.dataCell = cat(1,kera.dataCell,kera.importedData);
+                          kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
+                          kera.importedData = [];
+                          disp('Data appended');
+                  end
+              end
+        end
         
 
         function qubImport(kera, hObject, eventData, handles)
@@ -96,18 +118,18 @@ classdef Kera < handle
 
             kera.filenames = names;
             k = 1;
-            kera.dataCell = cell([size(data,4) kera.channels 2]);
-            for i = 1:size(data,4) %number of colocalized trace sets
+            kera.importedData = cell([size(data,4) kera.channels 2]);
+            for i = 1:size(data,1) %number of colocalized trace sets
                 clear binM;
-                binM = zeros([sum(data(:,1,1,i)) 1]);
+                binM = zeros([sum(data{i,1}(:,2)) 1]);
                 for j = 1:kera.channels %number of channels
-                    timeM = squeeze(data(:,:,j,i));
+                    timeM = data{i,j};
                     count = 1;
                     for i0 = 1:size(timeM,1) %number of distinct dwells
-                        binM(count:count+timeM(i0,2)) = timeM(i0,1);
-                        count = count + timeM(i0,2) + 1;
+                        binM(count:count+timeM(i0,2)-1) = timeM(i0,1);
+                        count = count + timeM(i0,2);
                     end
-                    kera.dataCell{i,j,2} = binM(1:end-1);
+                    kera.importedData{i,j,2} = binM(1:end-1);
                     k = k+1;
                 end
             end
@@ -131,7 +153,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.dataCell, kera.filenames] = packagePairsebFRET(kera.channels);
+            [kera.importedData, kera.filenames] = packagePairsebFRET(kera.channels);
             %new scripts:
             kera.importSuccessful();
         end
@@ -151,7 +173,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.dataCell, kera.filenames] = packagePairsHaMMY(kera.channels);
+            [kera.importedData, kera.filenames] = packagePairsHaMMY(kera.channels);
             kera.importSuccessful();
         end
 
@@ -181,7 +203,7 @@ classdef Kera < handle
                 changeStates = diff(workingStates);
                 changeStates = logical([1; sum(abs(changeStates),2)]);
                 kera.condensedStates{i} = workingStates(changeStates,:);
-                %condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
+                %Each cell of condensedStates is of the form [ 0 1 0 ; 1 1 0 ; 1 1 1 ...
                 % with 'channels' columns, and one row for each transition
                 %in other words, list the system's state over time with one
                 %entry per state.  The original cell has a row for every
@@ -189,23 +211,26 @@ classdef Kera < handle
                 %given state for a long time, it's easier to make a set of
                 %matrices which just list the state achieved in order,
                 %and then record the time at which they happen here:
-                kera.stateTimes{i} = find(changeStates).*kera.timeInterval;
-                %the time point of each change in state (transition)
+                kera.stateTimes{i} = [find(changeStates); size(workingStates,1)+1].*kera.timeInterval;
+                %the time point of each change in state (transition) as
+                %well as the time point occurrig after the end of the trace
             end
-            kera.stateText = '';
-            for i = 1:length(kera.condensedStates)
-                tempText = mat2str(kera.condensedStates{i});
-                kera.stateText = [kera.stateText tempText];
+%             kera.stateText = '';
+%             for i = 1:length(kera.condensedStates)
+%                 tempText = mat2str(kera.condensedStates{i});
+%                 kera.stateText = [kera.stateText tempText];
+%             end
+%             kera.stateText = regexprep(kera.stateText,' ','  ');
+%             kera.stateText = regexprep(kera.stateText,';',' ; ');
+%             kera.stateText = regexprep(kera.stateText,'[','[ ');
+%             kera.stateText = regexprep(kera.stateText,']',' ]');
+% 
+            if isempty(kera.output)
+                kera.output = struct([]);
             end
-            kera.stateText = regexprep(kera.stateText,' ','  ');
-            kera.stateText = regexprep(kera.stateText,';',' ; ');
-            kera.stateText = regexprep(kera.stateText,'[','[ ');
-            kera.stateText = regexprep(kera.stateText,']',' ]');
-
-
             
-            kera.output = defaultStateAnalysis(kera.channels, kera.stateList, kera.condensedStates, ...
-                kera.stateTimes, kera.stateText, kera.filenames, kera.baseState);
+            kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
+                kera.stateTimes, kera.filenames, kera.baseState);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
@@ -309,7 +334,6 @@ classdef Kera < handle
             kera.gui.createButton('<', [0.1 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
-            kera.gui.createButton('Custom Event Search', [0.1 0.04 0.2 0.05], @kera.customSearch);
             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
@@ -400,7 +424,7 @@ classdef Kera < handle
             set(gca, 'ColorOrderIndex', 1);
 
             if row ~= 1
-                [xList, yList] = visualizeTransition(kera.output(row).expr{:},kera.channels);
+                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
                 kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
                 ylim([min(yList,[],'all')-.2 max(yList,[],'all')+.2]);
 %                 disp(outText);
@@ -448,17 +472,19 @@ classdef Kera < handle
             delete(kera.histogramFit);
             hold on;
             out.handle = gcf;
-            
-            h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            if isempty(kera.h2)
+                kera.h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
+            end
+            cla(kera.h2);
             try
                 [fitModel, rateText] = getFitHistogram(kera.histogram,out.fitType,out.order);
                 xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
                 yList = fitModel(xList);
-                kera.histogramFit = plot(xList, yList);
-                text(mean(xList),prctile(yList,90),['k = ' rateText]);
+                kera.histogramFit = plot(kera.h2, xList, yList);
+                text(kera.h2, mean(xList),prctile(yList,90),['k = ' rateText]);
             catch
                 disp('Fitting failed due to insufficient data');
-                kera.histogramFit = plot([0 0],[0 0]);
+                kera.histogramFit = plot(kera.h2,[0 0],[0 0]);
             end
            
         end

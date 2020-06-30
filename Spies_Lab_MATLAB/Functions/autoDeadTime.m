@@ -20,14 +20,14 @@ if isempty(deadFrames) || deadFrames~=round(deadFrames) || deadFrames<1
     return %something is wrong
 end
 N = length(raw);
-if N = 0 %if the raw trace has not been provided
+if N == 0 %if the raw trace has not been provided
     %Really all we can do is snap events which are short but which depart
     %from and return to the same state: 1 1 2 2 1 1 becomes 1 1 1 1 1 1
     discrete = reshape(discrete,[1 length(discrete)]);
     indices = find(diff([0 discrete]));
     for j = find(diff(indices)<=deadFrames)
         segment = indices(j):(indices(j+1)-1);
-        if length(segment)<=deadFrames && segment(1) > 1 && segment(1) < N
+        if length(segment)<=deadFrames && segment(1) > 1 && segment(1) < length(discrete)
             if discrete(segment(1)-1) == discrete(segment(1)+1)
                 finalDiscrete(segment) = discrete(segment(1)-1);
             end

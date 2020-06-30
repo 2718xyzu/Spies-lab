@@ -1,6 +1,7 @@
-function [x, y] = visualizeTransition(transition, channels)
-    transition = regexprep(transition, '[^\d ;]+','0');
-    stateRecord = eval(['[' transition ']']);
+function [x, y] = visualizeTransition(stateRecord, channels)
+%     transition = regexprep(transition, '[^\d ;]+','0');
+%     stateRecord = eval(['[' transition ']']);
+    
 %     stateRecord = stateRecord';
 %     [stateRecord, text] = parseTransition(transition, channels, stateList);
     y = reshape(repmat(reshape(stateRecord,[1 numel(stateRecord)]),[2 1]),[2*size(stateRecord,1) channels]);
