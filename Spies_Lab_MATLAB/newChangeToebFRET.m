@@ -133,7 +133,7 @@ saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
 N = length(intensity{1});
 finalTrim = [zeros(N,1) ones(N,1)*1E10];
-intensityTrimmed = cell(size(intensity));
+intensityTrimmed = intensity;
 %each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
     for i = 1:N
