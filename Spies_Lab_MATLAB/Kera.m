@@ -276,7 +276,7 @@ classdef Kera < handle
 %             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); 
 %             [filename, path] = uiputfile('savePackage.spkg');
 %             save([path filesep filename], 'savePackage', '-ascii', '-double');
-            [filename, path] = uiputfile('savedSession.kera');
+            [filename, path] = uiputfile('savedSession.mat');
             save([path filesep filename], 'kera');
         end
 
