@@ -15,7 +15,7 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
-importOldSession = 1; %set this to 1, open up your old saved analysis, and run the code
+importOldSession = 0; %set this to 1, open up your old saved analysis, and run the code (don't forget to change it back later)
 
 if ~importOldSession
 clear intensity
@@ -107,16 +107,12 @@ for c = 1:channels
 end
 end
 %if you imported old data, this is where you can start:
-for c = 1:channels
-    [low{c}, high{c}, trim{c}, selection{c}] = selectTracesEmFret(c,intensity, selectionAll, fileNames, low{c}, high{c}, trim{c});
-    assert(length(selectionAll)==length(selection{c}),'Multichannel datasets must have same number of traces in all channels');
-    %make sure the channels have an equal number of traces
-    selectionAll = and(selectionAll,selection{c});
-    if isempty(trim{c})
-        return %an exit switch for the program, accessible by closing out the selection window 
-               %and selecting the quit option
-    end
+[low, high, trim, selectionAll] = selectTracesEmFret(channels, intensity, selectionAll, fileNames, low, high, trim);
+if isempty(trim)
+    return %an exit switch for the program, accessible by closing out the selection window 
+           %and selecting the quit option
 end
+
 
 [~] = questdlg(['Please select a directory (or make a new one) in'...
     'which to save the backup file'], 'Select Directory','Ok','Ok');
