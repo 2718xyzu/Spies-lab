@@ -58,7 +58,7 @@ while ~optimalBin
 end
 
 %logarithmic histogram
-
+originalx = x;
 x(x<=0)=[];
 x = log(x);
 dt = zeros([2 1]);
@@ -74,14 +74,14 @@ while ~optimalBin
         fitLower = [eps, eps];
         model = fittype(@(a1,k1,x) (a1*exp(x+log(k1)+dt(i)/2-exp(x+log(k1)+dt(i)/2))));
     case 2
-        fitLower = [eps, eps];
+        fitLower = [eps, eps, eps, eps];
         model = fittype(@(a1,k1,a2,k2,x) (a1*exp(x+log(k1)+dt(i)/2-exp(x+log(k1)+dt(i)/2))+...
             a2*exp(x+log(k2)+dt(i)/2-exp(x+log(k2)+dt(i)/2))));
     end
     [ordinate, edges] = histcounts(x,minX:dt(i):(maxX+dt(i)));
     abscissa = edges(1:end-1)+dt(i)/2;
     ordinate = sqrt(ordinate);
-    f = fit(abscissa',ordinate',model,'Lower',fitLower,'StartPoint',repmat([mean(x) max(ordinate)],[1 order]));
+    f = fit(abscissa',ordinate',model,'Lower',fitLower,'StartPoint',repmat([mean(originalx) max(ordinate)],[1 order]));
     sigma = .5;
     chiR(i) = reducedChi(abscissa, ordinate, f, sigma, order);
     dt(i+1) = dt(i)*1.05;

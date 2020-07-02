@@ -28,6 +28,7 @@ classdef Kera < handle
         dataCellEdited
         importedData
         h2
+        dataDisplayed
     end
     methods
         function kera = Kera()
@@ -319,7 +320,7 @@ classdef Kera < handle
 
         function histogramDataSetup(kera)
             kera.gui.createText('Data Type:', [0.60 0.2 0.2 0.1]);
-            kera.gui.createDropdown('dataType', {'Dwell Times', 'Off Times'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
+            kera.gui.createDropdown('dataType', {'Histogram', 'Cumulative dist.'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
             kera.dataType = 1;
 
             kera.gui.createText('Fit Type:', [0.60 0.1 0.2 0.1]);
@@ -331,8 +332,10 @@ classdef Kera < handle
             kera.order = 1;
 
             kera.gui.createText(int2str(kera.histogramRow), [0.2 0.10 0.05 0.07]);
-            kera.gui.createButton('<', [0.1 0.11 0.1 0.07], @kera.histogramData);
-            kera.gui.createButton('>', [0.25 0.11 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('>', [0.25 0.09 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('>>', [0.36 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
@@ -370,10 +373,14 @@ classdef Kera < handle
             end
 
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
-                if hObject.String == '<' && kera.histogramRow > 1
+                if strcmp(hObject.String,'<') && kera.histogramRow > 1
                     kera.histogramRow = kera.histogramRow - 1;
-                elseif hObject.String == '>' && kera.histogramRow < length(kera.output)
+                elseif strcmp(hObject.String,'>') && kera.histogramRow < length(kera.output)
                     kera.histogramRow = kera.histogramRow + 1;
+                elseif strcmp(hObject.String,'>>')
+                    kera.histogramRow = length(kera.output);
+                elseif strcmp(hObject.String,'<<')
+                    kera.histogramRow = 1;    
                 end
             end
 
@@ -381,37 +388,24 @@ classdef Kera < handle
             row = kera.histogramRow;
             set(kera.gui.elements('Total'), 'String', ['Total: ' int2str(kera.output(kera.histogramRow).count)]);
 
-            if kera.dataType == 1
-                out.dataType = 1;
-                rawData = kera.output(row).timeLengths;
-                out.rawData = rawData;
-            else
-                out.dataType = 2;
-                rawData = kera.output(row).timeLengths_Gaps;
-                out.rawData = rawData;
-            end
-
-            if kera.fitType == 1
-                out.fitType = 1;
-                out.data = rawData;
-            else
-                out.fitType = 2;
-                out.data = log(rawData);
-            end
-
-            if kera.order == 1
-                out.order = 1;
-            else
-                out.order = 2;
-            end
-
+            out.dataType = kera.dataType; %1 = normal histogram, 2 = cumulative distribution fit
+            out.fitType = kera.fitType;
+            out.order = kera.order;
+            out.data = kera.output(row).timeLengths;
+            
             delete(kera.histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
             hold on;
 %             out.handle = gcf;
             h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
-            kera.histogram = histogram(h1,out.data);
+            kera.dataDisplayed = out.data;
+            switch kera.dataType
+                case 1
+                    kera.histogram = histogram(h1,out.data);
+                case 2
+                    kera.histogram = plot(h1,sort(out.data),linspace(0,1,length(out.data)));
+            end
             h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
             set(gca, 'ColorOrderIndex', 1);
 
@@ -436,29 +430,10 @@ classdef Kera < handle
 
             row = kera.histogramRow;
 
-            if kera.dataType == 1
-                out.dataType = 1;
-                rawData = kera.output(row).timeLengths;
-                out.rawData = rawData;
-            else
-                out.dataType = 2;
-                rawData = kera.output(row).timeLengths_Gaps;
-                out.rawData = rawData;
-            end
-
-            if kera.fitType == 1
-                out.fitType = 1;
-                out.data = rawData;
-            else
-                out.fitType = 2;
-                out.data = log(rawData);
-            end
-
-            if kera.order == 1
-                out.order = 1;
-            else
-                out.order = 2;
-            end
+            out.dataType = kera.dataType; %1 = normal histogram, 2 = cumulative distribution fit
+            out.fitType = kera.fitType;
+            out.order = kera.order;
+            out.data = kera.output(row).timeLengths;
 
             delete(kera.histogramFit);
             hold on;
@@ -468,8 +443,8 @@ classdef Kera < handle
             end
             cla(kera.h2);
             try
-                [fitModel, rateText] = getFitHistogram(kera.histogram,out.fitType,out.order);
-                xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
+                [fitModel, rateText, out.data] = getFitHistogram(out.data,out.dataType,out.fitType,out.order, kera.timeInterval);
+                xList = linspace(min(out.data),max(out.data),500);
                 yList = fitModel(xList);
                 kera.histogramFit = plot(kera.h2, xList, yList);
                 text(kera.h2, mean(xList),prctile(yList,90),rateText);
