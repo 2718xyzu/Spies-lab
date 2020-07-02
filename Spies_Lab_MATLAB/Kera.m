@@ -230,7 +230,7 @@ classdef Kera < handle
             end
             
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
-                kera.stateTimes, kera.filenames, kera.baseState);
+                kera.stateTimes, kera.filenames, kera.baseState, kera.stateList);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
@@ -347,7 +347,7 @@ classdef Kera < handle
             row2fill = size(kera.output,2)+1;
             kera.output(row2fill).searchMatrix = searchMatrix;
             kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
-                kera.condensedStates, kera.timeData, kera.filenames);
+                kera.condensedStates, kera.stateTimes, kera.filenames);
             %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
             assignin('base','analyzedData',kera.output);
 %             kera.savePackage.output = kera.output;
@@ -409,21 +409,20 @@ classdef Kera < handle
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
             hold on;
-            out.handle = gcf;
+%             out.handle = gcf;
             h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
-            kera.histogram = histogram(out.data);
+            kera.histogram = histogram(h1,out.data);
             h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
             set(gca, 'ColorOrderIndex', 1);
 
-            if row ~= 1
-                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
-                kera.visualizeTrans = plot(xList, yList, 'LineWidth', 2);
-                ylim([min(yList,[],'all')-.2 max(yList,[],'all')+.2]);
-%                 disp(outText);
-            else
-                kera.visualizeTrans = plot([1 2 3 4], [0 0 0 0]);
-                disp('Wildcard: any event beginning and ending at baseline');
+            [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
+            for j = 2:size(yList,2)
+                yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
+            kera.visualizeTrans = plot(h3,xList, yList, 'LineWidth', 2);
+            ylim([min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
+            xlim([min(xList,[],'all') max(xList,[],'all')]);
+%                 disp(outText);
         end
             
         function generateFits(kera, hObject, eventData, handles)
@@ -463,7 +462,7 @@ classdef Kera < handle
 
             delete(kera.histogramFit);
             hold on;
-            out.handle = gcf;
+%             out.handle = gcf;
             if isempty(kera.h2)
                 kera.h2 = subplot('Position', [0.55 0.35 0.4 0.45]);
             end
@@ -473,7 +472,7 @@ classdef Kera < handle
                 xList = linspace(kera.histogram.BinEdges(1),kera.histogram.BinEdges(end),500);
                 yList = fitModel(xList);
                 kera.histogramFit = plot(kera.h2, xList, yList);
-                text(kera.h2, mean(xList),prctile(yList,90),['k = ' rateText]);
+                text(kera.h2, mean(xList),prctile(yList,90),rateText);
             catch
                 disp('Fitting failed due to insufficient data');
                 kera.histogramFit = plot(kera.h2,[0 0],[0 0]);

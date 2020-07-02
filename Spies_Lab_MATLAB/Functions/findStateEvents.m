@@ -28,7 +28,15 @@ for i0 = 1:N
                 if stateSearch(row-1,1) == Inf   
                     while i2<=n
                         if compareStates(stateSearch(row,:),states(i2,:))
-                            break
+                            if row == size(stateSearch,1)
+                                %we found a segment which matches the search pattern through the end
+                                traceId(numEv+1) = i0; %keeps track of the trace number
+                                starts(numEv+1) = i1;  %starting position of the event
+                                ends(numEv+1) = i2; %ending position of the event
+                                numEv = numEv + 1;
+                            else
+                                break %get out of the Inf-directed loop to check the next search term
+                            end
                         end
                         i2 = i2+1;
                     end
