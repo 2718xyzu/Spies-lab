@@ -5,6 +5,7 @@ maxStates = getMaxStates(dataCellEdited);
 N = size(dataCell,1);
 selection = ones([1 N],'logical');
 channels = size(dataCellEdited,2);
+thresholded = 0;
 i = 1;
 while i <= N
     rawAvailable = 0; %becomes 1 if a trace has raw data in addition to the discrete data
@@ -20,6 +21,7 @@ while i <= N
     legendList = cell([1 2*channels]);
     l = 1;
     meanState = cell([1 channels]);
+    ax1 = cell([1 1]);
     for j = 1:channels
         n = length(dataCellEdited{i,j,1});
         color1 = ax.ColorOrder(ax.ColorOrderIndex, :);
@@ -44,7 +46,7 @@ while i <= N
     end
     legendList = legendList(1:(l-1));
     legend(legendList);
-    output = KeraSelectUi(ax1,rawAvailable);
+    output = KeraSelectUi(ax1,rawAvailable, thresholded);
     switch output.Value
         
         case 6 %closed without selecting anything (probably want to get out)
@@ -105,23 +107,32 @@ while i <= N
                 continue %skip it and re-open the trace
             end
         case 9
-            histVal = cell([channels 2]);
-            edgeVal = cell([channels 2]);
+            maxStates = getMaxStates(dataCellEdited);
+            histVal = cell([channels max(maxStates) 2]);
+            edgeVal = cell([channels max(maxStates) 2]);
             for j = 1:channels
-                [histVal{j,1}, edgeVal{j,1}] = histcounts(cell2mat(dataCellEdited(:,j,1)));
                 normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), dataCellEdited(:,j,1),'UniformOutput',false);
-                [histVal{j,2}, edgeVal{j,2}] = histcounts(cell2mat(normalizedTraces));
+                bigRawMat = cell2mat(dataCellEdited(:,j,1));
+                bigDiscMat = cell2mat(dataCellEdited(:,j,2));
+                bigNormalizedMat = cell2mat(normalizedTraces);
+                for i0 = 1:maxStates(j)
+                    [histVal{j,i0,1}, edgeVal{j,i0,1}] = histcounts(bigRawMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))));
+                    [histVal{j,i0,2}, edgeVal{j,i0,2}] = histcounts(bigNormalizedMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))));
+                end %these variables are stored so that less data has to be passed into the app
             end
+            clear bigRawMat bigDiscMat bigNormalizedMat normalizedTraces
             %NOTE: assignin is being used to set the following three
             %variables:
             threshold = NaN;
             boundDirection = NaN;
             stateSet = NaN;
             channel = NaN;
+            states2Set = NaN;
+            method = NaN;
             %the app designer platform does not currently support output
             %variables.  If it ever does, PLEASE fix this to set the above
             %three variables using a more elegant syntax.
-            app = tresholdingKeraTraces(histVal, edgeVal, channels);
+            app = tresholdingKeraTraces(histVal, edgeVal, channels, maxStates);
             pause(1); %I'm sorry
             while isvalid(app)
                 threshold = app.threshold;
@@ -129,6 +140,7 @@ while i <= N
                 boundDirection = app.boundDirection;
                 channel = app.channel;
                 method = app.method;
+                states2Set = app.state2ChangeFrom;
                 pause(0.1);
             end
 %             thresholdingKeraTraces_exported(histVal, edgeVal, channels);
@@ -139,7 +151,14 @@ while i <= N
                 continue
             end
             %otherwise
-            dataCellEdited = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, dataCellEdited);
+            dataCellBeforeLastThreshold = dataCellEdited; %thresholding needs a quick 'undo' button
+            dataCellEdited = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, states2Set, dataCellEdited);
+            thresholded = 1;
+        case 10
+            dataCellEdited = dataCellBeforeLastThreshold;
+        case 11
+            dataCellEdited = dataCell; %the big reset button
+            return
     end
 end
 

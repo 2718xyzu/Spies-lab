@@ -1,4 +1,4 @@
-function plotCell = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, plotCell)
+function plotCell = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, states2Set, plotCell)
 j = channel;
 for i = 1:size(plotCell,1)
     rawTrace = plotCell{i,j,1};
@@ -12,23 +12,26 @@ for i = 1:size(plotCell,1)
     foundChanges = [1 reshape(find(diffDisc),[1 length(find(diffDisc))]) length(diffDisc)];
     for index = 1:length(foundChanges)-1 %split the trace into the discrete segments corresponding with each
                                          %state dwell
+        if discTrace(index) == states2Set || states2Set == 0
         meanSegment = mean(rawTrace(foundChanges(index):foundChanges(index+1)-1));
-        switch boundDirection
-            case 1
-                if meanSegment>threshold(1)
-                    discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
-                end
-            case 2
-                if meanSegment<threshold(1)
-                    discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
-                end
-            case 3
-                if meanSegment>threshold(1) && meanSegment<threshold(1)
-                    discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
-                end
+            switch boundDirection
+                case 1
+                    if meanSegment>threshold(1)
+                        discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
+                    end
+                case 2
+                    if meanSegment<threshold(1)
+                        discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
+                    end
+                case 3
+                    if meanSegment>threshold(1) && meanSegment<threshold(1)
+                        discTrace(foundChanges(index):foundChanges(index+1)-1) = stateSet;
+                    end
+            end
         end
+        plotCell{i,j,2} = discTrace;
     end
-    plotCell{i,j,2} = discTrace;
+    
 end
 
 

@@ -338,7 +338,7 @@ classdef Kera < handle
         end
 
         function customSearch(kera, hObject, eventData, handles)
-            searchWindow = figure('Visible','on','Position',[400 400 300 200]);
+            searchWindow = figure('Visible','on','Position',[400 400 500 350]);
             searchWindow.MenuBar = 'none';
             searchWindow.ToolBar = 'none'; 
             searchMatrix = stateSearchUi(kera.channels, kera.stateList);

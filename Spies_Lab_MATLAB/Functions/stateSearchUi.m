@@ -17,7 +17,7 @@ function [searchArray] = stateSearchUi(channels,stateList)
     end
 
     btn = uicontrol('Style', 'pushbutton', 'String', 'Search',...
-            'Position', [230 10 40 30],...
+            'Position', [380 10 50 30],...
             'UserData', 1,'Callback', @searchCallback); 
         
     btn2 = uicontrol('Style', 'pushbutton', 'String', 'Add to Search',...
@@ -25,8 +25,12 @@ function [searchArray] = stateSearchUi(channels,stateList)
             'UserData', 2,'Callback', @addCallback); 
         
     btn3 = uicontrol('Style', 'pushbutton', 'String', 'Remove Previous',...
-            'Position', [50 10 80 30],...
+            'Position', [50 10 90 30],...
             'UserData', 3,'Callback', @removeCallback,'Enable','off'); 
+        
+    btn4 = uicontrol('Style', 'pushbutton', 'String', 'Add N-state wildcard',...
+            'Position', [230 10 140 30],...
+            'UserData', 4,'Callback', @nStateCallback);
     
     for dd = 1:channels
         dropDowns{dd} = uicontrol('Style', 'popupmenu', 'String', dropDownOpt{dd},  ...
@@ -49,7 +53,8 @@ function [searchArray] = stateSearchUi(channels,stateList)
         stateText = [] ;
         for k = 1:channels
             stateSearch(k) = get(dropDowns{k},'Value')-1;
-            stateText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' '];
+            tempText = [stateText ' ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' '];
+            stateText = tempText;
         end
         searchArray(lengtH+1,:) = stateSearch;
         searchText{lengtH+2} = stateText;
@@ -72,6 +77,16 @@ function [searchArray] = stateSearchUi(channels,stateList)
         end
     end    
 
+    function nStateCallback(~,~)
+        stateText = repmat('Inf ',[1 channels]);
+        searchArray(lengtH+1,:) = Inf([1 channels]);
+        searchText{lengtH+2} = stateText;
+        set(searchString, 'String', strjoin(searchText,';'));
+        lengtH = lengtH+1;
+        set(btn3,'Enable','on');
+    end
+
+
     function searchCallback(~,~)
         try
             stateCell = searchText(2:end);
@@ -82,6 +97,7 @@ function [searchArray] = stateSearchUi(channels,stateList)
             delete(instructions);
             delete(btn);
             delete(btn2);
+            delete(btn4);
         catch
         end
         close(gcf);
