@@ -14,7 +14,7 @@ classdef Kera < handle
         fitType
         order
         filenames
-        histogram
+        Histogram
         histogramFit
         histogramRow = 1
         visualizeTrans
@@ -27,7 +27,9 @@ classdef Kera < handle
         dataCell
         dataCellEdited
         importedData
+        h1
         h2
+        h3
         dataDisplayed
     end
     methods
@@ -244,9 +246,9 @@ classdef Kera < handle
 
             [filename, path] = uigetfile('*.mat');
             if filename
-                tempGui = kera.gui;
+%                 guiTemp = kera.gui.guiWindow;
                 kera = load([path filesep filename]);
-                kera.gui = tempGui;
+%                 kera.gui.guiWindow = guiTemp;
             else
                 kera.gui.errorMessage('Failed to import saved session file');
             end
@@ -258,7 +260,7 @@ classdef Kera < handle
             
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
-            delete(kera.histogram);
+            delete(kera.Histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
             
@@ -278,7 +280,12 @@ classdef Kera < handle
 %             [filename, path] = uiputfile('savePackage.spkg');
 %             save([path filesep filename], 'savePackage', '-ascii', '-double');
             [filename, path] = uiputfile('savedSession.mat');
+%             guiTemp = kera.gui.guiWindow;
+                 %saving the gui window itself would be a waste of memory,
+                 %since it is re-created every time anyway  
+%             kera.gui.guiWindow = [];
             save([path filesep filename], 'kera');
+%             kera.gui.guiWindow = guiTemp;
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
@@ -393,27 +400,36 @@ classdef Kera < handle
             out.order = kera.order;
             out.data = kera.output(row).timeLengths;
             
-            delete(kera.histogram);
+            delete(kera.Histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
             hold on;
 %             out.handle = gcf;
-            h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
+            if isempty(kera.h1)
+                kera.h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
+            end
+            cla(kera.h1);
+            if kera.fitType == 2
+                out.data(out.data<=0) = [];
+                out.data = log(out.data);
+            end
             kera.dataDisplayed = out.data;
             switch kera.dataType
                 case 1
-                    kera.histogram = histogram(h1,out.data);
+                    kera.Histogram = histogram(kera.h1,out.data);
                 case 2
-                    kera.histogram = plot(h1,sort(out.data),linspace(0,1,length(out.data)));
+                    kera.Histogram = plot(kera.h1,sort(out.data),linspace(0,1,length(out.data)));
             end
-            h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
-            set(gca, 'ColorOrderIndex', 1);
-
+            if isempty(kera.h3)
+                kera.h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
+            end
+            cla(kera.h3);
+            set(kera.h3, 'ColorOrderIndex', 1);
             [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
             for j = 2:size(yList,2)
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
-            kera.visualizeTrans = plot(h3,xList, yList, 'LineWidth', 2);
+            kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
             ylim([min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
             xlim([min(xList,[],'all') max(xList,[],'all')]);
 %                 disp(outText);
@@ -436,7 +452,7 @@ classdef Kera < handle
             out.data = kera.output(row).timeLengths;
 
             delete(kera.histogramFit);
-            hold on;
+%             hold on;
 %             out.handle = gcf;
             if isempty(kera.h2)
                 kera.h2 = subplot('Position', [0.55 0.35 0.4 0.45]);

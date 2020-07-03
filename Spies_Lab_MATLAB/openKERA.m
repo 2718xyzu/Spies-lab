@@ -14,10 +14,10 @@ kera.gui.createPrimaryMenu('Import');
 kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretImport);
 kera.gui.createSecondaryMenu('Import', 'QuB', @kera.qubImport);
 kera.gui.createSecondaryMenu('Import', 'Hammy', @kera.haMMYImport);
-kera.gui.createSecondaryMenu('Import', 'spkg', @kera.importSPKG);
+kera.gui.createSecondaryMenu('Import', 'Saved Session', @kera.importSPKG);
 
 kera.gui.createPrimaryMenu('Export');
-kera.gui.createSecondaryMenu('Export', 'spkg', @kera.exportSPKG);
+kera.gui.createSecondaryMenu('Export', 'Save Session', @kera.exportSPKG);
 kera.gui.createSecondaryMenu('Export', 'Analyzed Data');
 kera.gui.createSecondaryMenu('Analyzed Data', 'csv', @kera.exportAnalyzed);
 kera.gui.createSecondaryMenu('Export', 'State Dwell Summary');
