@@ -338,13 +338,13 @@ classdef Kera < handle
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
 
-            kera.gui.createText(int2str(kera.histogramRow), [0.2 0.10 0.05 0.07]);
+            kera.gui.createText(['Row: ' int2str(kera.histogramRow)], [0.2 0.15 0.05 0.07]);
             kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>', [0.25 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>>', [0.36 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
-            kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
+%             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
         function customSearch(kera, hObject, eventData, handles)
@@ -391,7 +391,7 @@ classdef Kera < handle
                 end
             end
 
-            set(kera.gui.elements('1'), 'String', kera.histogramRow);
+            set(kera.gui.elements('1'), 'String', ['Row: ' kera.histogramRow]);
             row = kera.histogramRow;
             set(kera.gui.elements('Total'), 'String', ['Total: ' int2str(kera.output(kera.histogramRow).count)]);
 
@@ -432,6 +432,8 @@ classdef Kera < handle
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
             ylim([min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
             xlim([min(xList,[],'all') max(xList,[],'all')]);
+            
+            generateFits(kera);
 %                 disp(outText);
         end
             
