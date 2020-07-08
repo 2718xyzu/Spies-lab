@@ -338,7 +338,7 @@ classdef Kera < handle
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
 
-            kera.gui.createText(['Row: ' int2str(kera.histogramRow)], [0.2 0.15 0.05 0.07]);
+            kera.gui.createText('Row: 1', [0.2 0.17 0.05 0.07]);
             kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>', [0.25 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.histogramData);
@@ -391,7 +391,7 @@ classdef Kera < handle
                 end
             end
 
-            set(kera.gui.elements('1'), 'String', ['Row: ' kera.histogramRow]);
+            set(kera.gui.elements('Row: 1'), 'String', ['Row: ' num2str(kera.histogramRow)]);
             row = kera.histogramRow;
             set(kera.gui.elements('Total'), 'String', ['Total: ' int2str(kera.output(kera.histogramRow).count)]);
 
