@@ -12,7 +12,7 @@ function [dataCell, fileNames] = packagePairsebFRET(channels)
 %fileNames does its best to extract the filenames out of the dataset and
 %have each one corresponding to its trace(s).
 
-fileNames = {};
+fileNames = cell([1 channels]);
     dataCell = cell([1 channels 2]);
     for j = 1:channels
     output = questdlg(['Please select the SMD file for channel ',...
@@ -22,14 +22,22 @@ fileNames = {};
         end
         [file, path] = uigetfile;
         smd = importdata([path file]);
-        fileNames = cell([size(smd.data,2) 1]);
         for i = 1:size(smd.data,2)
-            longth = size(smd.data(i).values(:,4),1);
             dataCell{i,j,1} = smd.data(i).values(:,3); %raw values (the "FRET" signal)
             dataCell{i,j,2} = smd.data(i).values(:,4); %discretized values
-            fileNames{i} = smd.data(i).attr.file; %the ebFRET output structure holds the names of the original files
+            fileNames{i,j} = smd.data(i).attr.file; %the ebFRET output structure holds the names of the original files
         end
     end
-    
 
+    
+try
+    assert(all(~cellfun(@isempty,fileNames(end,:))));
+catch
+    warning('Some of the data sets entered do not have the same number of trajectories; check the variable named "filenames" to find the mismatch ');
+    keyboard;
+end
+    
+   
+
+fileNames = fileNames(:,1);
 end
