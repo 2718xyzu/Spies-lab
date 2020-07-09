@@ -38,6 +38,9 @@ while i <= N
             n = length(dataCellEdited{i,j,2});
         end
         ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
+        for i0 = unique(dataCellEdited{i,j,2})'
+            text(1.05*n,meanState{j}(i0)+shift,num2str(i0),'Color',color1,'FontSize',16);
+        end
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
         if ~rawAvailable
