@@ -6,11 +6,6 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
               
         out = findStateEvents(searchMatrix, condensedStates, timeData, filenames); %function which does the searching
 
-        try
-%             [output(i).statesSummary,~] = parseTransition(expr, channels, stateList);
-%             output(i).searchState = eval(searchMatrix);
-        catch
-        end
         output(i).count = out.numEvents;
         output(i).meanLength = mean(out.timeLengths);
         output(i).eventList = out.eventList;
@@ -30,5 +25,4 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
             catch
             end
         end
-
 end

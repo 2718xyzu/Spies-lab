@@ -430,8 +430,8 @@ classdef Kera < handle
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
-            ylim([min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
-            xlim([min(xList,[],'all') max(xList,[],'all')]);
+            ylim(kera.h3,[min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
+            xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
             
             generateFits(kera);
 %                 disp(outText);

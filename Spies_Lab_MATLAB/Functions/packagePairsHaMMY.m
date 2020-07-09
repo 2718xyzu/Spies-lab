@@ -14,11 +14,7 @@ for j = 1:channels
         dataCell = cell([size(dir2,1) channels 2]);
         fileNames = cell([size(dir2,1) 1]);
     end
-    for i = length(dir2):-1:1
-        if dir2(i).name(1) == '.' %must ignore files which begin with a period (MacOS)
-            dir2(i) = [];
-        end
-    end
+    dir2 = dir2(~cellfun('isempty', {dir2.date})); %ignore invalid files
     importedFilenames(1:length(dir2),j) =  {dir2.name};
     for i = 1:size(dir2,1)
         A = importdata([ path filesep importedFilenames{i,j}]);
