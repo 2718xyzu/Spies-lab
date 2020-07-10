@@ -43,17 +43,23 @@ switch fitType %linear or log
                 switch order
                     case 1
                         model = fittype(@(a1, k1, x) (a1*exp(-x*k1)));
+                        startingPoint = [max(y)/2 1/mean(data)];
                     case 2
-                        model = fittype(@(a1, k1, a2, k2, x) (a1*exp(-x*k1)+a2*exp(-x*k2)));
+                        model = fittype(@(a1, k1, a2, k2s, x) (a1*exp(-x*k1)+a2*exp(-x*(k1+k2s^2))));
+                        startingPoint = [max(y)/2 1/mean(data) max(y)/2 1/mean(data)];
+                        %the odd form of this custom model in the second
+                        %term is to allow the solver to distinguish between
+                        %the functional form of the second term; of course,
+                        %when solved, k2s will not be a rate constant;
+                        %instead, k2 = k1+k2s^2.
                 end
                 fitLower = repmat([eps,eps],[1 order]);
-                startingPoint = repmat([max(y)/2 1/mean(data)],[1 order]);
             case 2 %cumulative distribution
                 switch order
                     case 1
                         model = fittype(@(k1, x) (-exp(-x*k1)+1));
                     case 2
-                        model = fittype(@(a1, k1, k2, x) (-a1*exp(-x*k1)-(1-a1)*exp(-x*k2)+1));
+                        model = fittype(@(a1, k1, k2s, x) (-a1*exp(-x*k1)-(1-a1)*exp(-x*(k1+k2s^2))+1));
                 end
                 fitLower = repmat(eps,[1 order*2-1]);
                 startingPoint = [repmat(.5,[1 order-1]) repmat(1/mean(data),[1 order])];
@@ -70,8 +76,8 @@ switch fitType %linear or log
                         model = fittype(@(a1,k1,x) (a1*exp(x+log(k1)+dt/2-exp(x+log(k1)+dt/2))));
                     case 2
                         fitLower = [eps, eps, eps, eps];
-                        model = fittype(@(a1,k1,a2,k2,x) (a1*exp(x+log(k1)+dt/2-exp(x+log(k1)+dt/2))+...
-                            a2*exp(x+log(k2)+dt/2-exp(x+log(k2)+dt/2))));
+                        model = fittype(@(a1,k1,a2,k2s,x) (a1*exp(x+log(k1)+dt/2-exp(x+log(k1)+dt/2))+...
+                            a2*exp(x+log((k1+k2s^2))+dt/2-exp(x+log((k1+k2s^2))+dt/2))));
                 end
                 startingPoint = repmat([1/mean(originalx) max(y)],[1 order]);
             case 2 %cumulative
@@ -83,7 +89,7 @@ switch fitType %linear or log
                     case 2
                         fitLower = [eps, eps, eps];
                         startingPoint = [.5 1/mean(originalx) 1/mean(originalx)];
-                        model = fittype(@(a1,k1,k2,x) (1-a1*exp(-k1*exp(x))-(1-a1)*exp(-k2*exp(x))));
+                        model = fittype(@(a1,k1,k2s,x) (1-a1*exp(-k1*exp(x))-(1-a1)*exp(-(k1+k2s^2)*exp(x))));
                 end
         end
         fitModel = fit(x,y,model,'Lower',fitLower,'StartPoint',startingPoint);
@@ -93,7 +99,7 @@ switch order
     case 1
         rate = fitModel.k1;
     case 2
-        rate = [fitModel.k1 fitModel.k2];
+        rate = [fitModel.k1 (fitModel.k2s)^2+fitModel.k1];
 end
 
 

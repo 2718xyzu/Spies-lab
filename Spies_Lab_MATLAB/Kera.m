@@ -465,7 +465,7 @@ classdef Kera < handle
                 xList = linspace(min(out.data),max(out.data),500);
                 yList = fitModel(xList);
                 kera.histogramFit = plot(kera.h2, xList, yList);
-                text(kera.h2, mean(xList),prctile(yList,90),rateText);
+                text(kera.h2, mean(xList),range(yList)*0.7,rateText);
             catch
                 disp('Fitting failed due to insufficient data');
                 kera.histogramFit = plot(kera.h2,[0 0],[0 0]);
