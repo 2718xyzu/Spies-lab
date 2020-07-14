@@ -39,7 +39,7 @@ while i <= N
         end
         ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
         for i0 = unique(dataCellEdited{i,j,2})'
-            text(1.05*n,meanState{j}(i0)+shift,num2str(i0),'Color',color1,'FontSize',16);
+            text(ax,(1+.05*j)*n*timeInterval,meanState{j}(i0)+shift,num2str(i0),'Color',color1,'FontSize',16);
         end
         legendList(l) = {['Channel ' num2str(j) ' discrete']};
         l=l+1;
@@ -119,8 +119,8 @@ while i <= N
                 bigDiscMat = cell2mat(dataCellEdited(:,j,2));
                 bigNormalizedMat = cell2mat(normalizedTraces);
                 for i0 = 1:maxStates(j)
-                    [histVal{j,i0,1}, edgeVal{j,i0,1}] = histcounts(bigRawMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))));
-                    [histVal{j,i0,2}, edgeVal{j,i0,2}] = histcounts(bigNormalizedMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))));
+                    [histVal{j,i0,1}, edgeVal{j,i0,1}] = histcounts(bigRawMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))),'Normalization','countdensity');
+                    [histVal{j,i0,2}, edgeVal{j,i0,2}] = histcounts(bigNormalizedMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))),'Normalization','countdensity');
                 end %these variables are stored so that less data has to be passed into the app
             end
             clear bigRawMat bigDiscMat bigNormalizedMat normalizedTraces
@@ -150,7 +150,7 @@ while i <= N
             %the three variables should be set now, if the above function
             %has executed properly
             if isnan(threshold) || stateSet == 0
-                %Something prevented the variables from being set
+                %Something prevented the variables fransom being set
                 continue
             end
             %otherwise

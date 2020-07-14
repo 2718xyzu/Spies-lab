@@ -9,10 +9,10 @@ for i = 1:size(plotCell,1)
     end
     discTrace = plotCell{i,j,2};
     diffDisc = diff(discTrace);
-    foundChanges = [1 reshape(find(diffDisc),[1 length(find(diffDisc))]) length(diffDisc)];
+    foundChanges = [1 reshape(find(diffDisc)+1,[1 length(find(diffDisc))]) length(discTrace)+1];
     for index = 1:length(foundChanges)-1 %split the trace into the discrete segments corresponding with each
                                          %state dwell
-        if discTrace(index) == states2Set || states2Set == 0
+        if discTrace(foundChanges(index)) == states2Set || states2Set == 0
         meanSegment = mean(rawTrace(foundChanges(index):foundChanges(index+1)-1));
             switch boundDirection
                 case 1

@@ -198,11 +198,11 @@ classdef Kera < handle
             if isempty(kera.baseState)
                 kera.baseState = ones([1,kera.channels]);
             end
-            kera.stateDwellSummary = dwellSummary(kera.dataCell, kera.timeInterval, kera.channels, kera.baseState);
+            kera.stateDwellSummary = dwellSummary(kera.dataCellEdited, kera.timeInterval, kera.channels, kera.baseState);
             %dataCell should contain only column vectors, and the vectors
             %for colocalized sets should be the same length
-            for i = 1:size(kera.dataCell,1)
-                workingStates = horzcat(kera.dataCell{i,:,2});
+            for i = 1:size(kera.dataCellEdited,1)
+                workingStates = horzcat(kera.dataCellEdited{i,:,2});
                 changeStates = diff(workingStates);
                 changeStates = logical([1; sum(abs(changeStates),2)]);
                 kera.condensedStates{i} = workingStates(changeStates,:);
@@ -462,6 +462,7 @@ classdef Kera < handle
             cla(kera.h2);
             try
                 [fitModel, rateText, out.data] = getFitHistogram(out.data,out.dataType,out.fitType,out.order, kera.timeInterval);
+                assignin('base','fitModel',fitModel);
                 xList = linspace(min(out.data),max(out.data),500);
                 yList = fitModel(xList);
                 kera.histogramFit = plot(kera.h2, xList, yList);

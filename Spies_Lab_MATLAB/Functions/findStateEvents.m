@@ -23,6 +23,7 @@ for i0 = 1:N
             i2 = i1+1;
             for row = 2:size(stateSearch,1)
                 if stateSearch(row,1) == Inf 
+%                     i2 = i2-1;
                     continue
                 end
                 if stateSearch(row-1,1) == Inf   
@@ -34,6 +35,7 @@ for i0 = 1:N
                                 starts(numEv+1) = i1;  %starting position of the event
                                 ends(numEv+1) = i2; %ending position of the event
                                 numEv = numEv + 1;
+                                break %remove this to make Inf wildcards "greedy"
                             else
                                 break %get out of the Inf-directed loop to check the next search term
                             end
