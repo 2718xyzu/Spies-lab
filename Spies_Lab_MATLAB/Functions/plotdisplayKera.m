@@ -29,7 +29,7 @@ while i <= N
         if n>0
             rawAvailable = 1;
             for state = 1:max(dataCellEdited{i,j,2})
-                meanState{j}(state) = mean(dataCellEdited{i,j,1}(dataCellEdited{i,j,2}==state));
+                meanState{j}(state) = mean(dataCellEdited{i,j,1}(dataCellEdited{i,j,2}==state)); %need to change this if 0 or negative state id's are ever allowed
             end
             plot(((1:n)*timeInterval)-timeInterval,dataCellEdited{i,j,1}+shift);
             legendList(l) = {['Channel ' num2str(j) ' raw']};
@@ -149,7 +149,7 @@ while i <= N
 %             thresholdingKeraTraces_exported(histVal, edgeVal, channels);
             %the three variables should be set now, if the above function
             %has executed properly
-            if isnan(threshold)
+            if isnan(threshold) || stateSet == 0
                 %Something prevented the variables from being set
                 continue
             end

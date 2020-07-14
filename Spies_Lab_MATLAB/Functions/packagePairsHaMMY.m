@@ -12,7 +12,7 @@ for j = 1:channels
     dir2 = dir([path filesep '*path.dat']);
     if j == 1
         dataCell = cell([size(dir2,1) channels 2]);
-        fileNames = cell([size(dir2,1) 1]);
+        fileNames = cell([size(dir2,1) channels]);
     end
     dir2 = dir2(~cellfun('isempty', {dir2.date})); %ignore invalid files
     importedFilenames(1:length(dir2),j) =  {dir2.name};
@@ -25,9 +25,11 @@ for j = 1:channels
         levelArray = arrayfun(@(x) find(x==levels),A(:,5),'UniformOutput',false);
         dataCell{i,j,1} = A(:,4);
         dataCell{i,j,2} = cell2mat(levelArray);
-        fileNames{i} = importedFilenames{i,j}(1:end-8);
+        fileNames{i,j} = importedFilenames{i,j}(1:end-8);
     end
-
+    
+[dataCell, fileNames] = useLongFormImport(dataCell, fileNames, j);
+    
 end
 
 
