@@ -32,6 +32,7 @@ classdef Kera < handle
         h3
         dataDisplayed
         dwellSelection
+        dwellSelectionOn = 0;
     end
     methods
         function kera = Kera()
@@ -258,7 +259,8 @@ classdef Kera < handle
         function postProcessing(kera)
             % kera.gui.alert('Processing is done!');
             kera.gui.enable('Export');
-            
+            kera.gui.enable('Toggle intraevent kinetics');
+            kera.gui.enable('Custom Search');
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
             delete(kera.Histogram);
@@ -266,7 +268,7 @@ classdef Kera < handle
             delete(kera.visualizeTrans);
             
             kera.histogramRow = 1;
-            kera.histogramData(1, 1, 1);
+            kera.histogramData(1, 1, 1); %set up the rest of the interface
         end
 
         function exportSPKG(kera, hObject, eventData, handles)
@@ -340,6 +342,7 @@ classdef Kera < handle
             kera.order = 1;
             
             kera.gui.createDropdown('dwellSelection', {'All'}, [.5 .15 .13 .1], @kera.histogramData);
+            set(kera.gui.elements('dwellSelection'), 'Visible', 'off');
             kera.dwellSelection = 1;
 
             kera.gui.createText('Row: 1', [0.2 0.17 0.05 0.07]);
@@ -396,18 +399,22 @@ classdef Kera < handle
                 elseif strcmp(hObject.String,'<<')
                     kera.histogramRow = 1;    
                 end
-                
+            end
+            if hObject==1 || (isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton'))
                 if ~isempty(kera.output(kera.histogramRow).excel)
                     enable(kera.gui,'dwellSelection');
-                    kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
+                    
                     labels = cell([size(kera.output(kera.histogramRow).excel,2)-1 1]);
                     labels{1} = 'All';
                     for i = 1:(size(kera.output(kera.histogramRow).excel,2)-2)
                         labels{i+1} = num2str(i);
                     end
                     set(kera.gui.elements('dwellSelection'),'String',labels);
+                    set(kera.gui.elements('dwellSelection'),'Value',min(kera.dwellSelection,length(labels)));
+                    kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
                 else
-                    disable(kera.gui,'dwellSelection');
+                    set(kera.gui.elements('dwellSelection'),'Value',1);
+                    set(kera.gui.elements('dwellSelection'),'String',{'All'});
                     kera.dwellSelection = 1;
                 end
             end
@@ -454,10 +461,12 @@ classdef Kera < handle
             for j = 2:size(yList,2)
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
-            if kera.dwellSelection == 1
-                rectangle(kera.h3,'Position',[2 0 xList(end-1)-2 max(yList(isfinite(yList)),[],'all')],'FaceColor','y');
-            else
-                rectangle(kera.h3,'Position',[kera.dwellSelection 0 1 max(yList,[],'all')],'FaceColor','y');
+            if kera.dwellSelectionOn
+                if kera.dwellSelection == 1
+                    rectangle(kera.h3,'Position',[2 0 xList(end-1)-2 max(yList(isfinite(yList)),[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
+                else
+                    rectangle(kera.h3,'Position',[kera.dwellSelection 0 1 max(yList,[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
+                end
             end
             hold(kera.h3,'on');
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
@@ -541,6 +550,18 @@ classdef Kera < handle
         
         function setBaselineState(kera, ~, ~, ~)
             kera.baseState = stateSetUi(kera.channels, kera.stateList);
+        end
+        
+        function toggleDwellSelection(kera, ~, ~, ~)
+            kera.dwellSelectionOn = ~kera.dwellSelectionOn;
+            if kera.dwellSelectionOn
+                set(kera.gui.elements('dwellSelection'), 'Visible', 'on');
+                kera.histogramData(1,1,1); %refresh the screen
+            else
+                set(kera.gui.elements('dwellSelection'), 'Visible', 'off');
+                kera.dwellSelection = 1;
+                kera.histogramData(1,1,1); %refresh the screen
+            end
         end
             
     end

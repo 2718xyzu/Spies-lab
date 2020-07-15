@@ -32,8 +32,12 @@ kera.gui.createPrimaryMenu('Settings');
 kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
 kera.gui.createSecondaryMenu('Settings','Set time step', @kera.setTimeStep);
 kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineState);
+kera.gui.createSecondaryMenu('Settings','Toggle intraevent kinetics', @kera.toggleDwellSelection);
 
-
+%commands which should not be available at the beginning but which will be
+%enabled later:
 kera.gui.disable('Export');
 kera.gui.disable('Analyze');
 kera.gui.disable('Set baseline state');
+kera.gui.disable('Toggle intraevent kinetics');
+kera.gui.disable('Custom Search');
