@@ -35,7 +35,6 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     if anS(1)=='Y'
         verboseStateOut = 1;
     end
-    end
     if verboseStateOut %but in general, we want to do a search for every individual state, as well as every single-channel change
         subs = cell([1 channels]);
         nans = NaN([1 channels]);

@@ -21,7 +21,7 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
             out.timeList,out.timeDiff,out.begin,out.last,out.filenames,'VariableNames',...
             {'Events','Total_Duration','Time_Points','Delta_t','Time_first','Time_last','File'});
             try 
-                output(i).excel = cell2mat(out.timeDiff);
+                output(i).excel = cell2mat(out.timeDiff')';
             catch
             end
         end

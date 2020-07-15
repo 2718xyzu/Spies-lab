@@ -31,6 +31,7 @@ classdef Kera < handle
         h2
         h3
         dataDisplayed
+        dwellSelection
     end
     methods
         function kera = Kera()
@@ -337,6 +338,9 @@ classdef Kera < handle
             kera.gui.createText('Data Order:', [0.60 0 0.2 0.1]);
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
+            
+            kera.gui.createDropdown('dwellSelection', {'All'}, [.5 .15 .13 .1], @kera.histogramData);
+            kera.dwellSelection = 1;
 
             kera.gui.createText('Row: 1', [0.2 0.17 0.05 0.07]);
             kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.histogramData);
@@ -377,6 +381,9 @@ classdef Kera < handle
                 kera.dataType = get(kera.gui.elements('dataType'), 'Value');
                 kera.fitType = get(kera.gui.elements('fitType'), 'Value');
                 kera.order = get(kera.gui.elements('order'), 'Value');
+                if ~isempty(kera.output(kera.histogramRow).excel)
+                    kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
+                end
             end
 
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
@@ -389,6 +396,20 @@ classdef Kera < handle
                 elseif strcmp(hObject.String,'<<')
                     kera.histogramRow = 1;    
                 end
+                
+                if ~isempty(kera.output(kera.histogramRow).excel)
+                    enable(kera.gui,'dwellSelection');
+                    kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
+                    labels = cell([size(kera.output(kera.histogramRow).excel,2)-1 1]);
+                    labels{1} = 'All';
+                    for i = 1:(size(kera.output(kera.histogramRow).excel,2)-2)
+                        labels{i+1} = num2str(i);
+                    end
+                    set(kera.gui.elements('dwellSelection'),'String',labels);
+                else
+                    disable(kera.gui,'dwellSelection');
+                    kera.dwellSelection = 1;
+                end
             end
 
             set(kera.gui.elements('Row: 1'), 'String', ['Row: ' num2str(kera.histogramRow)]);
@@ -398,7 +419,11 @@ classdef Kera < handle
             out.dataType = kera.dataType; %1 = normal histogram, 2 = cumulative distribution fit
             out.fitType = kera.fitType;
             out.order = kera.order;
-            out.data = kera.output(row).timeLengths;
+            if kera.dwellSelection == 1
+                out.data = kera.output(row).timeLengths;
+            else
+                out.data = kera.output(row).excel(:,kera.dwellSelection);
+            end
             
             delete(kera.Histogram);
             delete(kera.histogramFit);
@@ -429,8 +454,14 @@ classdef Kera < handle
             for j = 2:size(yList,2)
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
+            if kera.dwellSelection == 1
+                rectangle(kera.h3,'Position',[2 0 xList(end-1)-2 max(yList(isfinite(yList)),[],'all')],'FaceColor','y');
+            else
+                rectangle(kera.h3,'Position',[kera.dwellSelection 0 1 max(yList,[],'all')],'FaceColor','y');
+            end
+            hold(kera.h3,'on');
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
-            ylim(kera.h3,[min(yList,[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
+            ylim(kera.h3,[min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
             xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
             
             generateFits(kera);
