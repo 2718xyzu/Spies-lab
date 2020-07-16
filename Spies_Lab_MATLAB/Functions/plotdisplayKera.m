@@ -51,7 +51,7 @@ while i <= N
     end
     legendList = legendList(1:(l-1));
     legend(legendList);
-    output = KeraSelectUi(ax1,rawAvailable, thresholded);
+    output = KeraSelectUi(ax1,rawAvailable, thresholded, N, i);
     switch output.Value
         
         case 6 %closed without selecting anything (probably want to get out)
@@ -67,13 +67,10 @@ while i <= N
             
         case 1 %discard and next
             selection(i) = 0;
-            i = i+1;
         case 2
-            i = i+1; %go forward
+            i = i+1; %go to next trace
         case 3
-            if i>1
-                i = i-1; %go back
-            end
+            i = output.trace; %go to specified trace
         case 7 %reset everything back to how it was
             for j = 1:channels
                 dataCellEdited(i,j,2) = dataCell(i,j,2);

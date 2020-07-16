@@ -1,17 +1,23 @@
-function output = KeraSelectUi(ax1, rawAvailable, thresholded)
+function output = KeraSelectUi(ax1, rawAvailable, thresholded, N, index)
 %A function called by plotdisplayKera
     handles = struct;
-    handles.btn = uicontrol('Style', 'pushbutton', 'String', 'Discard & Next',...
+    handles.btn = uicontrol('Style', 'pushbutton', 'String', 'Discard trace',...
             'Position', [20 5 100 20],...
             'UserData', 1,'Callback', @buttonCallback); 
         
     handles.btn2 = uicontrol('Style', 'pushbutton', 'String', 'Next trace',...
             'Position', [130 5 90 20],...
-            'UserData',  2,'Callback', @buttonCallback); 
+            'UserData',  2, 'Callback', @buttonCallback); 
+    
+    dDownString = cell([N 1]);
+    for trace = 1:N
+        dDownString{trace} = num2str(trace);
+    end
         
-    handles.btn3 = uicontrol('Style', 'pushbutton', 'String', 'Go back',...
+    handles.btn3 = uicontrol('Style', 'popupmenu', 'String', dDownString,...
             'Position', [230 5 90 20],...
-            'UserData', 3,'Callback', @buttonCallback); 
+            'UserData', 3,'Callback', @dDownCallback); 
+    set(handles.btn3,'Value',index);
         
     handles.btn4 = uicontrol('Style', 'pushbutton', 'String', 'Auto Deadtime',...
         'Position', [330 5 110 20],...
@@ -101,4 +107,13 @@ function output = KeraSelectUi(ax1, rawAvailable, thresholded)
                 close(gcf);
         end
     end
+
+    function dDownCallback(hObject,~)
+        output.Value = hObject.UserData;
+        output.trace = get(handles.btn3, 'Value');
+        close(gcf);
+    end
+
+
+
 end

@@ -1,4 +1,4 @@
-function out = findCompletedEvents(baseState, condensedStates)
+function out = findCompletedEvents(baseState, condensedStates, selection)
 %baseState is a vector of numbers, one for each channel, which describes
 %where the "default" state of the system is.  This is nice because, often
 %the events you're interested in, are the ways in which the system departs
@@ -8,8 +8,8 @@ starts = zeros([100 1]); %pre-allocating, but of course there may be more or few
 ends = zeros([100 1]);
 traceId = zeros([100 1]);
 numEv = 0;
-N = length(condensedStates);
-for i0 = 1:N
+
+for i0 = find(selection)'
     states = condensedStates{i0};
     n = size(states,1);
     for i1 = 1:n-1

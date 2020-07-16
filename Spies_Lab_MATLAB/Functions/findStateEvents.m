@@ -1,4 +1,4 @@
-function out = findStateEvents(stateSearch, condensedStates, timeData, filenames)
+function out = findStateEvents(stateSearch, condensedStates, timeData, filenames, selection)
 %stateSearch is a numerical array, with each row being a system state (the
 %number of columns equals the number of channels)
 %the wildcard "NaN" can appear in that array and stand in for any state,
@@ -13,9 +13,9 @@ starts = zeros([100 1]); %pre-allocating, but of course there may be more or few
 ends = zeros([100 1]);
 traceId = zeros([100 1]);
 numEv = 0;
-N = length(condensedStates);
+
 beginState = stateSearch(1,:);
-for i0 = 1:N
+for i0 = find(selection)'
     states = condensedStates{i0};
     n = size(states,1);
     for i1 = 1:n-1

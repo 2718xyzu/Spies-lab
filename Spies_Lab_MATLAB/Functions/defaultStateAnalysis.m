@@ -1,4 +1,4 @@
-function output = defaultStateAnalysis(output, condensedStates, timeData, filenames, baseState, stateList)
+function output = defaultStateAnalysis(output, condensedStates, timeData, filenames, baseState, stateList, selection)
     
 %     [timeLong, posLong, rowLong] = timeLengthenState(timeData,stateText);
 %     baseState = repmat(' 1 ',[1,channels]);
@@ -6,7 +6,7 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
 %     expr2{1} = defaultString;
 %     out = regExAnalyzer3(defaultString, condensedStates, stateText, timeLong, posLong, rowLong, filenames);
     channels = length(stateList);
-    out = findCompletedEvents(baseState, condensedStates);
+    out = findCompletedEvents(baseState, condensedStates, selection);
     %the above line searches the transition matrix (nonZeros) for all
     %events matching the 'default' description (typically, all events which
     %are surrounded by state 1 in all channels, which may be interpreted as
@@ -60,7 +60,7 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     f = waitbar(0,'Finding event classifications');
     for i = 1:rows
         waitbar(i/rows,f,'Finding event classifications');
-        output = fillRowState(output, i, eval(searchExpr{i}), condensedStates, timeData, filenames);
+        output = fillRowState(output, i, eval(searchExpr{i}), condensedStates, timeData, filenames, selection);
     end
     close(f);
 end

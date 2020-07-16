@@ -1,10 +1,10 @@
-function output = fillRowState(output, i, searchMatrix, condensedStates, timeData, filenames)
+function output = fillRowState(output, i, searchMatrix, condensedStates, timeData, filenames, selection)
         %searchMatrix is a numerical array; see findStateEvents for
         %conventions
         output(i).searchMatrix = searchMatrix;
         output(i).expr = mat2str(searchMatrix);
               
-        out = findStateEvents(searchMatrix, condensedStates, timeData, filenames); %function which does the searching
+        out = findStateEvents(searchMatrix, condensedStates, timeData, filenames, selection); %function which does the searching
 
         output(i).count = out.numEvents;
         output(i).meanLength = mean(out.timeLengths);

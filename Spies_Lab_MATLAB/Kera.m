@@ -277,9 +277,10 @@ classdef Kera < handle
         end
         
         function processDataStates(kera, ~, ~, ~)
+            Y = kera.selection;
             kera.preProcessing();
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
-                kera.stateTimes, kera.filenames(Y), kera.baseState, kera.stateList);
+                kera.stateTimes, kera.filenames, kera.baseState, kera.stateList, kera.selection);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
@@ -296,7 +297,7 @@ classdef Kera < handle
             row2fill = size(kera.output,2)+1;
             kera.output(row2fill).searchMatrix = searchMatrix;
             kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
-                kera.condensedStates, kera.stateTimes, kera.filenames(kera.selection));
+                kera.condensedStates, kera.stateTimes, kera.filenames, kera.selection);
             assignin('base','analyzedData',kera.output);
 
         end
