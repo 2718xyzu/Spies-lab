@@ -1,9 +1,11 @@
-function [dataCellEdited] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval)
+function [dataCellEdited, selection] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval, selection)
 %a function called when the user clicks the "view data" button
 
 maxStates = getMaxStates(dataCellEdited);
 N = size(dataCell,1);
-selection = ones([1 N],'logical');
+if isempty(selection)
+    selection = ones([N 1],'logical');
+end
 channels = size(dataCellEdited,2);
 thresholded = 0;
 i = 1;
@@ -161,7 +163,7 @@ while i <= N
             dataCellEdited = dataCellBeforeLastThreshold;
         case 11
             dataCellEdited = dataCell; %the big reset button
-            return
+%             return
     end
 end
 

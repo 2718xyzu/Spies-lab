@@ -18,6 +18,7 @@ classdef Kera < handle
         histogramFit
         histogramRow = 1
         visualizeTrans
+        selection
         stateText
         condensedStates
         stateTimes
@@ -74,34 +75,6 @@ classdef Kera < handle
             end
             kera.gui.enable('Set baseline state');
         end
-        
-        function importSuccessful(kera,~,~,~)
-            %keep track of the original data entered vs any changes which are subsequently made
-%             kera.dataCellEdited  = kera.dataCell; 
-              kera.gui.enable('Analyze');
-              if isempty(kera.dataCell)
-                  kera.dataCell = kera.importedData;
-                  kera.importedData = [];
-                  kera.dataCellEdited  = kera.dataCell;
-              else
-                  anS = questdlg(['You already have data loaded; do you want'...
-                      'to overwrite it or append to it with the newly-loaded data?'],...
-                      'New data','Overwrite','Append','Overwrite');
-                  switch anS
-                      case 'Overwrite'
-                          kera.dataCell = kera.importedData;
-                          kera.dataCellEdited  = kera.dataCell;
-                          kera.importedData = [];
-                          disp('Data overwritten');
-                      case 'Append'
-                          kera.dataCell = cat(1,kera.dataCell,kera.importedData);
-                          kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
-                          kera.importedData = [];
-                          disp('Data appended');
-                  end
-              end
-        end
-        
 
         function qubImport(kera, hObject, eventData, handles)
             %qubImport imports QuB data and packages it into the standard
@@ -165,6 +138,26 @@ classdef Kera < handle
             kera.importSuccessful();
         end
         
+        function haMMYImport(kera,hObject, eventData, handles)
+            %imports HaMMY data then calls the analysis function
+            %   See also qubImport and PROCESSDATASTATES
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            [kera.importedData, kera.filenames] = packagePairsHaMMY(kera.channels);
+            kera.importSuccessful();
+        end
+        
+        
+        
         function exampleImport(kera, ~, ~, ~)
             %this example function can be altered to allow the import of a
             %filetype not currently supported
@@ -219,52 +212,47 @@ classdef Kera < handle
             kera.importSuccessful();
         end
         
-        
+        function importSuccessful(kera,~,~,~)
+            %keep track of the original data entered vs any changes which are subsequently made
+%             kera.dataCellEdited  = kera.dataCell; 
+              kera.gui.enable('Analyze');
+              if isempty(kera.dataCell)
+                  kera.dataCell = kera.importedData;
+                  kera.importedData = [];
+                  kera.dataCellEdited  = kera.dataCell;
+              else
+                  anS = questdlg(['You already have data loaded; do you want'...
+                      'to overwrite it or append to it with the newly-loaded data?'],...
+                      'New data','Overwrite','Append','Overwrite');
+                  switch anS
+                      case 'Overwrite'
+                          kera.dataCell = kera.importedData;
+                          kera.dataCellEdited  = kera.dataCell;
+                          kera.importedData = [];
+                          disp('Data overwritten');
+                      case 'Append'
+                          kera.dataCell = cat(1,kera.dataCell,kera.importedData);
+                          kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
+                          kera.importedData = [];
+                          disp('Data appended');
+                  end
+              end
+              kera.selection = ones([size(kera.dataCell,1) 1],'logical');
+        end
         
         function viewTraces(kera,~,~,~)
-            kera.dataCellEdited = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval);
-        end
-        
-        function haMMYImport(kera,hObject, eventData, handles)
-            %imports HaMMY data then calls the analysis function
-            %   See also qubImport and PROCESSDATASTATES
-            kera.gui.resetError();
-            if isempty(kera.channels) || isempty(kera.stateList)
-                kera.setChannelState()
-            end
-            if isempty(kera.timeInterval)
-                kera.setTimeStep(kera);
-            end
-            if kera.gui.error
-                kera.gui.resetError();
-                return
-            end
-            [kera.importedData, kera.filenames] = packagePairsHaMMY(kera.channels);
-            kera.importSuccessful();
+            [kera.dataCellEdited, kera.selection] = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval, kera.selection);
         end
 
-        function rawAnalyze(kera, hObject, eventData, handles)
-            %RAWANALYZE Analyzes data stored as column vectors of states in
-            %MATLAB matrix variables
-            %   See also ebfretImport and PROCESSDATA
-            kera.gui.resetError();
-            kera.setChannelState()
-            if kera.gui.error
-                kera.gui.resetError();
-                return
-            end
-            kera.importSuccessful();
-        end
-        
-        
-        function processDataStates(kera, ~, ~, ~)
+        function preProcessing(kera, ~, ~, ~)
             if isempty(kera.baseState)
                 kera.baseState = ones([1,kera.channels]);
             end
-            kera.stateDwellSummary = dwellSummary(kera.dataCellEdited, kera.timeInterval, kera.channels, kera.baseState);
+            Y = kera.selection;
+            kera.stateDwellSummary = dwellSummary(kera.dataCellEdited(Y,:,:), kera.timeInterval, kera.channels, kera.baseState);
             %dataCell should contain only column vectors, and the vectors
             %for colocalized sets should be the same length
-            for i = 1:size(kera.dataCellEdited,1)
+            for i = find(Y)'
                 workingStates = horzcat(kera.dataCellEdited{i,:,2});
                 changeStates = diff(workingStates);
                 changeStates = logical([1; sum(abs(changeStates),2)]);
@@ -281,36 +269,44 @@ classdef Kera < handle
                 %the time point of each change in state (transition) as
                 %well as the time point occurrig after the end of the trace
             end
-%             kera.stateText = '';
-%             for i = 1:length(kera.condensedStates)
-%                 tempText = mat2str(kera.condensedStates{i});
-%                 kera.stateText = [kera.stateText tempText];
-%             end
-%             kera.stateText = regexprep(kera.stateText,' ','  ');
-%             kera.stateText = regexprep(kera.stateText,';',' ; ');
-%             kera.stateText = regexprep(kera.stateText,'[','[ ');
-%             kera.stateText = regexprep(kera.stateText,']',' ]');
-% 
+            
             if isempty(kera.output)
                 kera.output = struct([]);
             end
-            
+
+        end
+        
+        function processDataStates(kera, ~, ~, ~)
+            kera.preProcessing();
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
-                kera.stateTimes, kera.filenames, kera.baseState, kera.stateList);
+                kera.stateTimes, kera.filenames(Y), kera.baseState, kera.stateList);
 %             dispOutput = kera.output;
             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
             kera.postProcessing()
         end
+        
+        function customSearch(kera, hObject, eventData, handles)
+            kera.preProcessing();
+            searchWindow = figure('Visible','on','Position',[400 400 500 350]);
+            searchWindow.MenuBar = 'none';
+            searchWindow.ToolBar = 'none'; 
+            searchMatrix = stateSearchUi(kera.channels, kera.stateList);
+            row2fill = size(kera.output,2)+1;
+            kera.output(row2fill).searchMatrix = searchMatrix;
+            kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
+                kera.condensedStates, kera.stateTimes, kera.filenames(kera.selection));
+            assignin('base','analyzedData',kera.output);
+
+        end
 
         function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
             kera.gui.resetError();
-
             [filename, path] = uigetfile('*.mat');
             if filename
 %                 guiTemp = kera.gui.guiWindow;
-                kera = load([path filesep filename]);
+                load([path filesep filename]); %load all variables; "kera" might not be called kera
 %                 kera.gui.guiWindow = guiTemp;
             else
                 kera.gui.errorMessage('Failed to import saved session file');
@@ -321,13 +317,12 @@ classdef Kera < handle
             % kera.gui.alert('Processing is done!');
             kera.gui.enable('Export');
             kera.gui.enable('Toggle intraevent kinetics');
-            kera.gui.enable('Custom Search');
+            
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
             delete(kera.Histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
-            
             kera.histogramRow = 1;
             kera.histogramData(1, 1, 1); %set up the rest of the interface
         end
@@ -415,21 +410,7 @@ classdef Kera < handle
 %             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
-        function customSearch(kera, hObject, eventData, handles)
-            searchWindow = figure('Visible','on','Position',[400 400 500 350]);
-            searchWindow.MenuBar = 'none';
-            searchWindow.ToolBar = 'none'; 
-            searchMatrix = stateSearchUi(kera.channels, kera.stateList);
-            
-%             searchExpr = states2search(kera.stateList, channel, transitionList);
-            row2fill = size(kera.output,2)+1;
-            kera.output(row2fill).searchMatrix = searchMatrix;
-            kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
-                kera.condensedStates, kera.stateTimes, kera.filenames);
-            %fillRow(output, i, expr, channels, stateList, timeData, letters, timeLong, posLong, rowLong, filenames)
-            assignin('base','analyzedData',kera.output);
-%             kera.savePackage.output = kera.output;
-        end
+
         
         function histogramData(kera, hObject, eventData, handles)
             kera.gui.resetError();

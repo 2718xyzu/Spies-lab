@@ -44,4 +44,3 @@ kera.gui.disable('Export');
 kera.gui.disable('Analyze');
 kera.gui.disable('Set baseline state');
 kera.gui.disable('Toggle intraevent kinetics');
-kera.gui.disable('Custom Search');
