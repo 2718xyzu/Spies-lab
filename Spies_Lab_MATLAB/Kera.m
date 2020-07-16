@@ -4,7 +4,7 @@ classdef Kera < handle
         channels
         states
         stateList
-        timeInterval = 1
+        timeInterval
         stateDwellSummary
         savePackage
         transM
@@ -111,6 +111,9 @@ classdef Kera < handle
             if isempty(kera.channels) || isempty(kera.stateList)
                 kera.setChannelState()
             end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
             if kera.gui.error
                 kera.gui.resetError();
                 return
@@ -159,9 +162,64 @@ classdef Kera < handle
                 return
             end
             [kera.importedData, kera.filenames] = packagePairsebFRET(kera.channels);
-            %new scripts:
             kera.importSuccessful();
         end
+        
+        function exampleImport(kera, ~, ~, ~)
+            %this example function can be altered to allow the import of a
+            %filetype not currently supported
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            
+            %[kera.importedData, kera.filenames] = yourfunctionhere(channels);
+            
+            %write a function, place it in the "functions" folder, and make
+            %sure the output arguments hold to the following conventions:
+            
+            %importedData must be an N-by-Channels-by-2 cell, where N is
+            %the number of traces (or trace pairs, etc.) and Channels is the
+            %number of channels.  Each cell must contain a column vector,
+            %and the colunmn vector in importedData(1,a,1) must have the
+            %same length as importedData(1,b,1) and importedData(1,a,2).
+            %This is because importedData(1,a,1) and importedData(1,b,1)
+            %are the time series of the same colocalized trace but in the
+            %different channels.  The (:,:,1) entries are the "raw" data
+            %values (the pure fluorescence or FRET values) whereas the
+            %(:,:,2) entries are column vectors of integers, which
+            %correspond to the discretized traces.  All values in the
+            %discretized trace cells must be integers greater than 0 in
+            %order for the "viewing" functions to work correctly, and though the
+            %analysis can probably still run if some of the states are 
+            %0, the custom search interface will not be able to access
+            %those states (you may have to dig in to the code a bit to
+            %change how the custom search works).  
+            %Putting anything in the "raw" data cells is optional, as this
+            %only shows up when viewing the data and setting the dead time,
+            %and otherwise has no bearing on the analysis
+            
+            %filenames should be a N-by-1 cell of strings which identify
+            %the trace sets.  This could be as simple as making a list of
+            %{'1'; '2'; .... 'N'} or you could actually try to pull some 
+            %filename information from the imported data
+            
+            %For help on crafting an import function for your type of data,
+            %contact Joseph Tibbs at jtibbs2@illinois.edu, or the authors
+            %of a paper who you know have used KERA on the type of data you
+            %want to.
+            
+            kera.importSuccessful();
+        end
+        
+        
         
         function viewTraces(kera,~,~,~)
             kera.dataCellEdited = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval);
@@ -173,6 +231,9 @@ classdef Kera < handle
             kera.gui.resetError();
             if isempty(kera.channels) || isempty(kera.stateList)
                 kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
             end
             if kera.gui.error
                 kera.gui.resetError();

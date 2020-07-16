@@ -37,7 +37,11 @@ function [data,names] = findPairs(kera)
     %the next issue is that there might be a '1 tr12Cy5' and a '2 tr12Cy5',
     %and we need to keep these separate (hence the variable 'column').
     for i = 1:numel(dir3)
+        try
         column = str2double(dir3{i}(1));
+        catch
+        column = 1; %some file names won't start with a number, probably
+        end
         match = regexp(strjoin(dir3(i)),'r\d+.+','match');
         suffix = regexp(strjoin(match(1)),'\d[^\d].+','match');
         suffixes(i) = {lower(suffix{1}(2:end))};

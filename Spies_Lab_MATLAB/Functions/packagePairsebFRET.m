@@ -41,6 +41,9 @@ catch
 end
     
    
-
+%keyboard %uncomment this line in order to view the filenames before
+%continuing analysis; this way, you can view the variable named "fileNames"
+%and make sure the names in each column correspond to the traces which are
+%supposed to be paired
 fileNames = fileNames(:,1);
 end
