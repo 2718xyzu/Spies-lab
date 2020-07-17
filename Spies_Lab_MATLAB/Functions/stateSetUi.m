@@ -1,7 +1,6 @@
 function [baseState] = stateSetUi(channels,stateList)
-    %This interface allows users to specify a sequence of states they would 
-    %like to search for within the data
-    %
+    %This interface allows users to specify the baseline state
+    
 
     guiWindow = figure('Visible', 'on', 'Position', [1000 1000 500 200]);
     guiWindow.MenuBar = 'none';
@@ -48,10 +47,11 @@ function [baseState] = stateSetUi(channels,stateList)
         
     function dropDownCallback(~,~)
         stateSearch = zeros([1 channels]);
-        stateText = [];
+        stateText = '';
         for k = 1:channels
             stateSearch(k) = get(dropDowns{k},'Value')-1;
-            stateText = ['  ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' ' ];
+            stateTextTemp = stateText;
+            stateText = [stateTextTemp '  ' dropDownOpt{k}{(get(dropDowns{k},'Value'))} ' ' ];
             %puts stateText as a string of the format ' \d  \d  \d ... \d '
             %The number of spaces is important
         end

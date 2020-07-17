@@ -48,10 +48,16 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
         %again in the new data
     end
     verboseStateOut = 0;
-    anS = questdlg(['Would you like to get an output for every unique system configuration and transition'...
-        '? There are ' num2str(prod(stateList))*(sum(stateList-1)+1) 'possible configurations and transitions' ]);
+    verboseTransitionOut = 0;
+    anS = questdlg(['Would you like to get an output for every unique system configuration'...
+        '? There are ' num2str(prod(stateList))*(sum(stateList-1)+1) 'possible configurations' ]);
     if anS(1)=='Y'
         verboseStateOut = 1;
+        anS = questdlg(['Would you like to get an output for every single-channel transition'...
+            '? There are ' num2str(prod(stateList))*(sum(stateList-1)) 'possible transitions' ]);
+        if anS(1)=='Y'
+            verboseTransitionOut = 1;
+        end
     end
     if verboseStateOut %but in general, we want to do a search for every individual state, as well as every single-channel change
         subs = cell([1 channels]);
