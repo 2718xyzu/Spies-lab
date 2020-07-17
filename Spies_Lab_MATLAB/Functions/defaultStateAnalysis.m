@@ -6,19 +6,37 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
 %     expr2{1} = defaultString;
 %     out = regExAnalyzer3(defaultString, condensedStates, stateText, timeLong, posLong, rowLong, filenames);
     channels = length(stateList);
-    out = findCompletedEvents(baseState, condensedStates, selection);
-    %the above line searches the transition matrix (nonZeros) for all
-    %events matching the 'default' description (typically, all events which
-    %are surrounded by state 1 in all channels, which may be interpreted as
-    %a lack of any bound species).
-    C = out.eventList;
-    nums = cellfun(@(x) mat2str(x),C,'UniformOutput',false);
-    %find all unique classifications of a 'completed' event
-    searchExpr = unique(nums);
-    defaultExpr = baseState;
-    defaultExpr(3,:) = baseState;
-    defaultExpr(2,:) = Inf;
-    searchExpr{end+1} = mat2str(defaultExpr);
+    searchExpr = {};
+    baseStateAnalysis = 0;
+     %Find out if the user would like to do the (sometimes rather verbose) baseline-event analysis
+    anS = questdlg(['Would you like to find all events which occur as departures from the'...
+        ' base state of ' mat2str(baseState) '?']);
+
+    if anS(1)=='Y'
+        baseStateAnalysis = 1;
+    end
+        
+    if baseStateAnalysis
+        out = findCompletedEvents(baseState, condensedStates, selection);
+        %the above line searches the transition matrix (nonZeros) for all
+        %events matching the 'default' description (typically, all events which
+        %are surrounded by state 1 in all channels, which may be interpreted as
+        %a lack of any bound species).
+        %In other words, the analyzed data will include all unique event
+        %classes which start with the baseline configuration (Which can be user
+        %defined but is, by default, just state-1 in all channels) and then
+        %have some transitions happen before returning to the baseline.
+        C = out.eventList;
+        nums = cellfun(@(x) mat2str(x),C,'UniformOutput',false);
+        %find all unique classifications of a 'completed' event
+        searchExpr = unique(nums);
+        defaultExpr = baseState;
+        defaultExpr(3,:) = baseState;
+        defaultExpr(2,:) = Inf;
+        searchExpr{end+1} = mat2str(defaultExpr);
+    
+    end
+    
     
     
     for i = 1:size(output,2)

@@ -321,6 +321,7 @@ classdef Kera < handle
             
             assignin('base', 'analyzedData', kera.output);
             assignin('base', 'stateDwellSummary', kera.stateDwellSummary);
+            
             delete(kera.Histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);

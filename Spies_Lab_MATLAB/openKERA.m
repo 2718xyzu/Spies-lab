@@ -29,7 +29,7 @@ kera.gui.createSecondaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwel
 
 kera.gui.createPrimaryMenu('Analyze');
 kera.gui.createSecondaryMenu('Analyze', 'View Data', @kera.viewTraces);
-kera.gui.createSecondaryMenu('Analyze', 'Run Analysis', @kera.processDataStates);
+kera.gui.createSecondaryMenu('Analyze', 'Run/Refresh Analysis', @kera.processDataStates);
 kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
 
 kera.gui.createPrimaryMenu('Settings');

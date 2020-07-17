@@ -1,6 +1,8 @@
 function [dataCellEdited, selection] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval, selection)
 %a function called when the user clicks the "view data" button
-
+dataCellUponOpening = dataCellEdited;
+selectionUponOpening = selection;
+saved = 0;
 maxStates = getMaxStates(dataCellEdited);
 N = size(dataCell,1);
 if isempty(selection)
@@ -68,6 +70,21 @@ handles.btn10 = uicontrol('Style', 'pushbutton', 'String', 'Save & Exit',...
 
 renderPlots();
 uiwait;
+
+if ~saved
+    anS = questdlg('Would you like to save the changes made during this view session?','Save?', 'Yes', 'No','Yes');
+    switch anS
+        case 'Yes'
+            %dataCellEdited and selection get returned
+        case 'No'
+            dataCellEdited = dataCellUponOpening;
+            selection = selectionUponOpening;
+            %put the variables back to how they were before opening this
+            %view session--not necessarily a reset to "dataCell", just a
+            %reset to how the variables were before opening.
+    end
+end
+
 return
 
     function renderPlots()
@@ -128,6 +145,7 @@ return
 %     switch output.Value
 
     function buttonCallback12(~,~) %close and save
+        saved = 1;
         close(gcf);
         return
     end
