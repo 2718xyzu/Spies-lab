@@ -277,7 +277,6 @@ classdef Kera < handle
         end
         
         function processDataStates(kera, ~, ~, ~)
-            Y = kera.selection;
             kera.preProcessing();
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
                 kera.stateTimes, kera.filenames, kera.baseState, kera.stateList, kera.selection);
@@ -307,7 +306,8 @@ classdef Kera < handle
             [filename, path] = uigetfile('*.mat');
             if filename
 %                 guiTemp = kera.gui.guiWindow;
-                load([path filesep filename]); %load all variables; "kera" might not be called kera
+                kera2 = load([path filesep filename]); %load all variables; "kera" might not be called kera
+                assignin('base',['kera' num2str(get(gcf,'Number'))],kera2);
 %                 kera.gui.guiWindow = guiTemp;
             else
                 kera.gui.errorMessage('Failed to import saved session file');

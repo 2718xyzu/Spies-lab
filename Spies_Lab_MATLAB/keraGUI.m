@@ -1,17 +1,29 @@
 classdef keraGUI < handle
+    %This function defines a variety of methods which may be used in a KERA
+    %window, but does not itself "set up" the window; that is done by the
+    %lines of code in "openKERA" and various lines in the methods of Kera.m
+    
+    
     properties
         guiWindow
         error = 0
         elements = containers.Map()
     end
+    
+    methods (Static)
+
+    end
+    
+    
     methods
         function gui = keraGUI()
             gui.guiWindow = figure('Visible', 'on');
             gui.guiWindow.MenuBar = 'none';
             gui.guiWindow.ToolBar = 'none';
             gui.guiWindow.Units = 'normalized';
+            gui.guiWindow.CloseRequestFcn = @closeGuiSaveRequest;
         end
-
+        
         function createButton(gui, label, position, callback)
             gui.elements(label) = uicontrol('Style', 'pushbutton', 'Units', 'normalized', 'String', label, 'Position', position, 'Callback', callback);
         end
