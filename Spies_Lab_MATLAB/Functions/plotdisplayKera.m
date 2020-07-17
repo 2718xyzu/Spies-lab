@@ -11,10 +11,12 @@ thresholded = 0;
 i = 1;
 % while i <= N
 rawAvailable = 0; %becomes 1 if a trace has raw data in addition to the discrete data
-figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
+figure('Units', 'Normalized','Position',[.05 .4 .9 .5],'MenuBar','none','ToolBar','none');
 ax = axes;
+ax1 = cell([1 1]); %to hold the plots themselves and obtain brushing information
+brushing = {};
+dataCellBeforeLastThreshold = {};
 hold on;
-clear output
 handles = struct;
 handles.btn = uicontrol('Style', 'pushbutton', 'String', 'Discard trace',...
     'Position', [20 5 100 20],...
@@ -32,7 +34,7 @@ end
 handles.btn3 = uicontrol('Style', 'popupmenu', 'String', dDownString,...
     'Position', [230 5 90 20],...
     'UserData', 3,'Callback', @dDownCallback);
-set(handles.btn3,'Value',index);
+set(handles.btn3,'Value',i);
 
 %     handles.btn4 = uicontrol('Style', 'pushbutton', 'String', 'Auto Deadtime',...
 %         'Position', [330 5 110 20],...
@@ -55,23 +57,30 @@ handles.btn8 = uicontrol('Style', 'pushbutton', 'String', 'Undo Threshold',...
     'Position', [765 5 120 20],...
     'UserData', 10, 'Callback', @buttonCallback10,'Visible', 'off');
 
+
 handles.btn9 = uicontrol('Style', 'pushbutton', 'String', 'Reset All',...
     'Position', [895 5 100 20],...
     'UserData', 11, 'Callback', @buttonCallback11);
 
 handles.btn10 = uicontrol('Style', 'pushbutton', 'String', 'Save & Exit',...
-    'Position', [10005 5 105 20],...
+    'Position', [1005 5 105 20],...
     'UserData', 12, 'Callback', @buttonCallback12);
 
 renderPlots();
 uiwait;
-
+return
 
     function renderPlots()
-        
+        set(handles.btn3,'Value',i);
+        cla(ax);
+        if thresholded
+            set(handles.btn8,'Visible','on');
+        else
+            set(handles.btn8,'Visible','off');
+        end
         helptext = '';
         if ~selection(i)
-            helptext = 'Currently deselected';
+            helptext = 'Currently deselected; click "reset" to re-select';
         end
         title([fileNames{i} newline helptext]);
         shift = 0;
@@ -94,7 +103,12 @@ uiwait;
             else
                 n = length(dataCellEdited{i,j,2});
             end
-            ax1{j}=plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
+            if rawAvailable
+                set(handles.btn7,'Visible', 'on');
+            else
+                set(handles.btn7,'Visible', 'off');
+            end 
+            ax1{j} = plot(((1:n)*timeInterval)-timeInterval,meanState{j}(dataCellEdited{i,j,2})+shift,'o','Color',color1);
             for i0 = unique(dataCellEdited{i,j,2})'
                 text(ax,(1+.05*j)*n*timeInterval,meanState{j}(i0)+shift,num2str(i0),'Color',color1,'FontSize',16);
             end
@@ -113,7 +127,8 @@ uiwait;
 %     output = KeraSelectUi(ax1,rawAvailable, thresholded, N, i);
 %     switch output.Value
 
-    function buttonCallback12(~,~) %closed without selecting anything (probably want to get out)
+    function buttonCallback12(~,~) %close and save
+        close(gcf);
         return
     end
 
@@ -135,42 +150,53 @@ uiwait;
 %             maxStates = getMaxStates(dataCellEdited);
 %     end
 
-    function buttonCallback5(~,~)
+    function buttonCallback5(~,~) %brushing the data
         brush;
-        set(handles.btn,'enable','off');
+        set(handles.btn,'enable','off'); %disable some buttons:
         set(handles.btn2,'enable','off');
         set(handles.btn3,'enable','off');
-        set(handles.btn4,'enable','off');
-        set(handles.btn5,'UserData',0);
+%         set(handles.btn4,'enable','off');
+        set(handles.btn7,'enable','off');
+        set(handles.btn8,'enable','off');
+        set(handles.btn5,'Callback',@buttonCallback0); %change the appreance and behavior of two buttons:
         set(handles.btn5,'String','Assign Brushed');
-        set(handles.btn6,'UserData',8);
+        set(handles.btn6,'Callback',@buttonCallback8);
         set(handles.btn6,'String','Cancel');
     end
 
-    function buttonCallback8(~,~)
-        for i = 1:length(ax1)
-            output.brushing{i} = [];
-            set(ax1{i},'BrushData',[]);
+    function buttonCallback8(~,~) %brushing canceled
+        for j = 1:length(ax1)
+            brushing{j} = [];
+            set(ax1{j},'BrushData',[]);
         end
-        set(handles.btn,'enable','on');
+        set(handles.btn,'enable','on'); %enable some buttons:
         set(handles.btn2,'enable','on');
         set(handles.btn3,'enable','on');
-        set(handles.btn4,'enable','on');
-        set(handles.btn5,'UserData',5);
+%         set(handles.btn4,'enable','on');
+        set(handles.btn7,'enable','on');
+        set(handles.btn8,'enable','on');
+        set(handles.btn5,'Callback',@buttonCallback5); %change the appreance and behavior of two buttons:
         set(handles.btn5,'String','Manual Set');
-        set(handles.btn6,'UserData',7);
+        set(handles.btn6,'Callback',@buttonCallback7);
         set(handles.btn6,'String','Reset');
         brush off
     end
+
     function buttonCallback1(~,~) %discard and next
         selection(i) = 0;
+        i = i+1;
+        renderPlots();
     end
-    function buttonCallback2(~,~)
+
+    function buttonCallback2(~,~) %next trace
         i = i+1; %go to next trace
+        renderPlots();
     end
+
     function dDownCallback(~,~)
         i = get(handles.btn3, 'Value');
         %go to specified trace
+        renderPlots();
     end
 
     function buttonCallback7(~,~) %reset everything back to how it was
@@ -178,18 +204,20 @@ uiwait;
             dataCellEdited(i,j,2) = dataCell(i,j,2);
         end
         selection(i) = 1;
+        renderPlots();
     end
 
     function buttonCallback0(~,~) %brushed some data
         brushing = cell([length(ax1) 1]);
-        for i = 1:length(ax1)
-            brushing{i} = get(ax1{i}, 'BrushData');
+        for j = 1:length(ax1)
+            brushing{j} = get(ax1{j}, 'BrushData');
         end
         
         try
             assert(sum(cat(2,brushing{:}))>0);
         catch
             [~] = questdlg('No data selected; drag the brush tool to select data','Brushing help','Ok','Ok');
+            buttonCallback8();
             renderPlots();
             return
         end
@@ -200,6 +228,7 @@ uiwait;
                 assert(round(channelEdit)==channelEdit) %or gives something not an integer?
                 assert(channelEdit<=size(dataCellEdited,2)); %or something which is not a valid channel
             catch
+                buttonCallback8();
                 renderPlots();
                 return %skip it and re-open the trace
             end
@@ -213,23 +242,24 @@ uiwait;
             stateEdit = str2double(stateEdit{:}); %if the user closes without answering
             assert(round(stateEdit)==stateEdit) %or gives something not an integer?
             
-            assert(length(output.brushing{channelEdit})==length(dataCellEdited{i,channelEdit,2}));
-            dataCellEdited{i,channelEdit,2}(logical(output.brushing{channelEdit})) = stateEdit;
+            assert(length(brushing{channelEdit})==length(dataCellEdited{i,channelEdit,2}));
+            dataCellEdited{i,channelEdit,2}(logical(brushing{channelEdit})) = stateEdit;
             maxStates = getMaxStates(dataCellEdited);
         catch
-            renderPlots();
-            return %skip it and re-open the trace
+            %don't edit the data if one of the above tests does not pass
         end
+        buttonCallback8();
+        renderPlots();
     end
 
-    function buttonCallback9(~,~)
+    function buttonCallback9(~,~) %thresholding
         maxStates = getMaxStates(dataCellEdited);
         histVal = cell([channels max(maxStates) 2]);
         edgeVal = cell([channels max(maxStates) 2]);
         for j = 1:channels
             normalizedTraces = cellfun(@(x) (x-prctile(x,1))/(prctile(x,99)-prctile(x,1)), dataCellEdited(:,j,1),'UniformOutput',false);
-            bigRawMat = cell2mat(dataCellEdited(:,j,1));
-            bigDiscMat = cell2mat(dataCellEdited(:,j,2));
+            bigRawMat = cell2mat(dataCellEdited(selection,j,1));
+            bigDiscMat = cell2mat(dataCellEdited(selection,j,2));
             bigNormalizedMat = cell2mat(normalizedTraces);
             for i0 = 1:maxStates(j)
                 [histVal{j,i0,1}, edgeVal{j,i0,1}] = histcounts(bigRawMat(bigDiscMat==i0),ceil(sqrt(nnz(bigDiscMat==i0))),'Normalization','countdensity');
@@ -237,7 +267,7 @@ uiwait;
             end %these variables are stored so that less data has to be passed into the app
         end
         clear bigRawMat bigDiscMat bigNormalizedMat normalizedTraces
-        %NOTE: assignin is being used to set the following three
+        %NOTE: a bit of a kludge is being used to assign the following
         %variables:
         threshold = NaN;
         boundDirection = NaN;
@@ -255,25 +285,27 @@ uiwait;
             stateSet = app.stateSet;
             boundDirection = app.boundDirection;
             channel = app.channel;
-            method = app.method;
             states2Set = app.state2ChangeFrom;
+            method = app.method;
             pause(0.05);
         end
-        %             thresholdingKeraTraces_exported(histVal, edgeVal, channels);
-        %the three variables should be set now, if the above function
-        %has executed properly
+        %the three variables should be set now, if the app
+        %has executed and exited properly
         if isnan(threshold) || stateSet == 0
             %Something prevented the variables from being set
             renderPlots();
+            %don't change the data
         else
             dataCellBeforeLastThreshold = dataCellEdited; %thresholding needs a quick 'undo' button
             dataCellEdited = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, states2Set, dataCellEdited);
             thresholded = 1;
+            renderPlots();
         end
     end
 
     function buttonCallback10(~,~)
-        dataCellEdited = dataCellBeforeLastThreshold;
+        dataCellEdited = dataCellBeforeLastThreshold; %undo that thresholding
+        renderPlots();
     end
 
     function buttonCallback11(~,~)
