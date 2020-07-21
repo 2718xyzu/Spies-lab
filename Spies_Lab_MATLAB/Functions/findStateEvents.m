@@ -21,6 +21,13 @@ for i0 = find(selection)'
     for i1 = 1:n-1
         if compareStates(beginState,states(i1,:))
             i2 = i1+1;
+            if size(stateSearch,1)==1 %should *really* not be inputting searches which are only one state long, but whatever                               
+                traceId(numEv+1) = i0;
+                starts(numEv+1) = i1;  %the start is the end
+                ends(numEv+1) = i1; 
+                numEv = numEv + 1;
+                continue 
+            end
             for row = 2:size(stateSearch,1)
                 if stateSearch(row,1) == Inf 
 %                     i2 = i2-1;

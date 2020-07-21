@@ -11,4 +11,6 @@ function [x, y] = visualizeTransition(stateRecord, channels)
     end
     x = [x x(end)+1];
     x = repmat(x',[1 channels]);
+    
+    %x and y are arrays of column vectors
 end

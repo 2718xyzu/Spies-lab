@@ -28,6 +28,7 @@ classdef Kera < handle
         dataCell
         dataCellEdited
         importedData
+        importedFilenames
         h1
         h2
         h3
@@ -97,7 +98,7 @@ classdef Kera < handle
                 return
             end
 
-            kera.filenames = names;
+            kera.importedFilenames = names;
             k = 1;
             kera.importedData = cell([size(data,4) kera.channels 2]);
             for i = 1:size(data,1) %number of colocalized trace sets
@@ -134,7 +135,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.importedData, kera.filenames] = packagePairsebFRET(kera.channels);
+            [kera.importedData, kera.importedFilenames] = packagePairsebFRET(kera.channels);
             kera.importSuccessful();
         end
         
@@ -152,7 +153,7 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [kera.importedData, kera.filenames] = packagePairsHaMMY(kera.channels);
+            [kera.importedData, kera.importedFilenames] = packagePairsHaMMY(kera.channels);
             kera.importSuccessful();
         end
         
@@ -173,7 +174,7 @@ classdef Kera < handle
                 return
             end
             
-            %[kera.importedData, kera.filenames] = yourfunctionhere(channels);
+            %[kera.importedData, kera.importedFilenames] = yourfunctionhere(channels);
             
             %write a function, place it in the "functions" folder, and make
             %sure the output arguments hold to the following conventions:
@@ -220,6 +221,8 @@ classdef Kera < handle
                   kera.dataCell = kera.importedData;
                   kera.importedData = [];
                   kera.dataCellEdited  = kera.dataCell;
+                  kera.filenames = kera.importedFilenames;
+                  kera.importedFilenames = [];
               else
                   anS = questdlg(['You already have data loaded; do you want'...
                       'to overwrite it or append to it with the newly-loaded data?'],...
@@ -229,11 +232,15 @@ classdef Kera < handle
                           kera.dataCell = kera.importedData;
                           kera.dataCellEdited  = kera.dataCell;
                           kera.importedData = [];
+                          kera.filenames = kera.importedFilenames;
+                          kera.importedFilenames = [];
                           disp('Data overwritten');
                       case 'Append'
                           kera.dataCell = cat(1,kera.dataCell,kera.importedData);
                           kera.dataCellEdited = cat(1,kera.dataCellEdited,kera.importedData);
+                          kera.filenames = cat(1,kera.filenames,kera.importedFilenames);
                           kera.importedData = [];
+                          kera.importedFilenames = [];
                           disp('Data appended');
                   end
               end
@@ -241,10 +248,10 @@ classdef Kera < handle
         end
         
         function viewTraces(kera,~,~,~)
-            [kera.dataCellEdited, kera.selection] = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval, kera.selection);
+            [kera.dataCellEdited, kera.selection, kera.stateList] = plotdisplayKera(kera.dataCell, kera.dataCellEdited, kera.filenames, kera.timeInterval, kera.selection);
         end
 
-        function preProcessing(kera, ~, ~, ~)
+        function preProcessing(kera, ~, ~, ~)          
             if isempty(kera.baseState)
                 kera.baseState = ones([1,kera.channels]);
             end
@@ -514,8 +521,13 @@ classdef Kera < handle
             end
             hold(kera.h3,'on');
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
-            ylim(kera.h3,[min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]);
+            yLimCalc = [min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2];
+            ylim(kera.h3,yLimCalc);
             xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
+            for yInf = find(diff((sum(yList,2)==Inf)')==1)+1
+                text(kera.h3,xList(yInf,1)+.5, mean(get(kera.h3,'YLim')),'...','FontSize',30,'HorizontalAlignment','center');
+            end
+            
             
             generateFits(kera);
 %                 disp(outText);
@@ -551,9 +563,13 @@ classdef Kera < handle
                 yList = fitModel(xList);
                 kera.histogramFit = plot(kera.h2, xList, yList);
                 text(kera.h2, mean(xList),range(yList)*0.7,rateText);
-            catch
-                disp('Fitting failed due to insufficient data');
+            catch err
                 kera.histogramFit = plot(kera.h2,[0 0],[0 0]);
+                if strcmp(err.identifier, ('curvefit:fit:InsufficientData'))
+                    disp('Fitting failed due to insufficient data');
+                else
+                    rethrow(err);
+                end
             end
            
         end

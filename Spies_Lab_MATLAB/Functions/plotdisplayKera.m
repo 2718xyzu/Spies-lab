@@ -1,4 +1,4 @@
-function [dataCellEdited, selection] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval, selection)
+function [dataCellEdited, selection, maxStates] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval, selection)
 %a function called when the user clicks the "view data" button
 dataCellUponOpening = dataCellEdited;
 selectionUponOpening = selection;

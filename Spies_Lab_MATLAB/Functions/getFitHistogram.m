@@ -16,7 +16,7 @@ switch dataType
         data = data+rand(size(data))*timeStep-.5*timeStep;
         if fitType==2 %logarithmic histogram
             originalx = data;
-            data(data<0) = []; %this shouldn't happen, but just in case
+            data(data<=0) = []; %this shouldn't happen, but just in case
             data = log(data);
         end
         [y, binEdges] = histcounts(data,ceil(sqrt(length(data))));
@@ -25,7 +25,7 @@ switch dataType
     case 2
         if fitType==2 %logarithmic histogram
             originalx = data;
-            data(data<0) = []; %this shouldn't happen, but just in case
+            data(data<=0) = []; %this shouldn't happen, but just in case
             data = log(data);
         end
         x = sort(data); %cumulative distribution
@@ -100,12 +100,16 @@ switch order
         rate = fitModel.k1;
     case 2
         rate = [fitModel.k1 (fitModel.k2s)^2+fitModel.k1];
+        a1 = fitModel.a1;
 end
 
 
 for i = 1:order
     tempText = [rateText 'k' num2str(i) ' = ' num2str(rate(i)) newline];
     rateText = tempText;
+    if i==2
+        rateText = [tempText 'a1 = ' num2str(a1) newline];
+    end
 end
 
 end
