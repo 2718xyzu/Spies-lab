@@ -288,7 +288,7 @@ classdef Kera < handle
             kera.output = defaultStateAnalysis(kera.output, kera.condensedStates, ...
                 kera.stateTimes, kera.filenames, kera.baseState, kera.stateList, kera.selection);
 %             dispOutput = kera.output;
-            kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
+%             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             [~,index] = sortrows([kera.output.count].');
             kera.output = kera.output(index(end:-1:1));
             kera.postProcessing()
@@ -314,7 +314,7 @@ classdef Kera < handle
             if filename
 %                 guiTemp = kera.gui.guiWindow;
                 kera2 = load([path filesep filename]); %load all variables; "kera" might not be called kera
-                assignin('base',['kera' num2str(get(gcf,'Number'))],kera2);
+                assignin('base',['kera' num2str(get(gcf,'Number'))],kera2.kera);
 %                 kera.gui.guiWindow = guiTemp;
             else
                 kera.gui.errorMessage('Failed to import saved session file');
@@ -367,17 +367,22 @@ classdef Kera < handle
                 return
             end
 
-            for row = 2:length(kera.output)
+            for row = 1:length(kera.output)
+                try
                 t1 = kera.output(row).table;
                 t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
                 t = [t2 t1];
                 filename = strcat(path, filesep, 'row_', int2str(row), '.csv');
                 writetable(t, filename, 'Delimiter', ',');
+                catch
+                end
             end
         end
 
         function exportStateDwellSummary(kera, hObject, eventData, handles)
             kera.gui.resetError();
+            channelAns = inputdlg('Which channel would you like to export the dwells of?'); 
+            channelExport = str2double(channelAns{1});
             ans1 = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
             if ~strcmp(ans1,'Ok')
                 return
@@ -387,10 +392,8 @@ classdef Kera < handle
                 return
             end
 
-            t1 = table(kera.stateDwellSummary.dwellTimes);
-            t2 = table(kera.stateDwellSummary.eventTimes);
-            writetable(t1, [path filesep 'dwellTimes.csv'], 'Delimiter', ',');
-            writetable(t2, [path filesep 'eventTimes.csv'], 'Delimiter', ',');
+            t1 = table(kera.stateDwellSummary(channelExport).dwellTimes);
+            writetable(t1, [path filesep 'channel_' num2str(channelExport) '_dwellTimes.csv'], 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)

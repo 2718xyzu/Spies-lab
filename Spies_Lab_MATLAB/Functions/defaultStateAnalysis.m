@@ -50,11 +50,11 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     verboseStateOut = 0;
     verboseTransitionOut = 0;
     anS = questdlg(['Would you like to get an output for every unique system configuration'...
-        '? There are ' num2str(prod(stateList))*(sum(stateList-1)+1) 'possible configurations' ]);
+        '? There are ' num2str(prod(stateList)) ' possible configurations' ]);
     if anS(1)=='Y'
         verboseStateOut = 1;
         anS = questdlg(['Would you like to get an output for every single-channel transition'...
-            '? There are ' num2str(prod(stateList))*(sum(stateList-1)) 'possible transitions' ]);
+            '? There are ' num2str((prod(stateList))*(sum(stateList-1))) ' possible transitions' ]);
         if anS(1)=='Y'
             verboseTransitionOut = 1;
         end
@@ -66,12 +66,14 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
             [subs{:}] = ind2sub(stateList,i);
             mat2Search = cat(1,nans,cell2mat(subs),nans);
             searchExpr{end+1} = mat2str(mat2Search);
-            for j = 1:channels
-                for i0 = 1:stateList(j)
-                    transitionTo = cell2mat(subs);
-                    transitionTo(j) = i0;
-                    mat2Search = cat(1,nans,cell2mat(subs),transitionTo);
-                    searchExpr{end+1} = mat2str(mat2Search);        
+            if verboseTransitionOut
+                for j = 1:channels
+                    for i0 = 1:stateList(j)
+                        transitionTo = cell2mat(subs);
+                        transitionTo(j) = i0;
+                        mat2Search = cat(1,nans,cell2mat(subs),transitionTo);
+                        searchExpr{end+1} = mat2str(mat2Search);        
+                    end
                 end
             end
         end
