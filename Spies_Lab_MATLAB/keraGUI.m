@@ -1,4 +1,4 @@
-classdef keraGUI < handle
+classdef keraGUI
     %This function defines a variety of methods which may be used in a KERA
     %window, but does not itself "set up" the window; that is done by the
     %lines of code in "openKERA" and various lines in the methods of Kera.m
