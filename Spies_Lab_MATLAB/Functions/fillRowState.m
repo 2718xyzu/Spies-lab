@@ -9,12 +9,14 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
         
         
         output(i).searchMatrix = searchMatrix;
-        if searchMatrix(1)~=-1
+        if searchMatrix(1)~=-1 %interpret searchMatrix like a normal search matrix
             output(i).expr = mat2str(searchMatrix);
             out = findStateEvents(searchMatrix, condensedStates, timeData, filenames, selection); %function which does the searching
-        else
-            output(i).expr = char(searchMatrix);
-            
+        else %interpret the string of numbers as characters and do a special "regular expressions"
+             %search of the converted-to-text list of states.  See
+             %documentation (or the inside of regexSearch) for details
+            output(i).expr = char(searchMatrix(2:end));
+            out = regexSearch(output(i).expr, condensedStates, timeData, filenames, selection);
         end
               
         

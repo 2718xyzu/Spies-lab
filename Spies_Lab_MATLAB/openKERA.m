@@ -31,6 +31,7 @@ kera.gui.createPrimaryMenu('Analyze');
 kera.gui.createSecondaryMenu('Analyze', 'View Data', @kera.viewTraces);
 kera.gui.createSecondaryMenu('Analyze', 'Run/Refresh Analysis', @kera.processDataStates);
 kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
+kera.gui.createSecondaryMenu('Analyze','Regex Search (advanced)', @kera.regexSearch);
 
 kera.gui.createPrimaryMenu('Settings');
 kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
