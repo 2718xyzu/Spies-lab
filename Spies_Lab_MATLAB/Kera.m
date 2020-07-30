@@ -463,6 +463,7 @@ classdef Kera < handle
             end
 
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
+                disable(kera.gui, hObject.String);
                 if strcmp(hObject.String,'<') && kera.histogramRow > 1
                     kera.histogramRow = kera.histogramRow - 1;
                 elseif strcmp(hObject.String,'>') && kera.histogramRow < length(kera.output)
@@ -559,6 +560,12 @@ classdef Kera < handle
             
             generateFits(kera);
 %                 disp(outText);
+
+            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
+                enable(kera.gui, hObject.String);
+            end
+
+
         end
             
         function generateFits(kera, hObject, eventData, handles)

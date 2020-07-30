@@ -9,7 +9,7 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
-if exist(kera,1)
+if exist('kera','var')
     [~] = questdlg(['Warning: a variable called "kera" already exists; delete or rename that variable'...
         ' to avoid overwriting it with this function'],'Kera overwrite warning','Ok','Ok');
     return
