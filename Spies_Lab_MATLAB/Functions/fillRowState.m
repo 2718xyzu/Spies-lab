@@ -1,11 +1,25 @@
 function output = fillRowState(output, i, searchMatrix, condensedStates, timeData, filenames, selection)
+        %This is the most important (and most general) search function,
+        %which actually calculates all the data which goes into "output"
+        %and then puts it there, one row at a time
+
+        
         %searchMatrix is a numerical array; see findStateEvents for
         %conventions
+        
+        
         output(i).searchMatrix = searchMatrix;
-        output(i).expr = mat2str(searchMatrix);
+        if searchMatrix(1)~=-1 %interpret searchMatrix like a normal search matrix
+            output(i).expr = mat2str(searchMatrix);
+            out = findStateEvents(searchMatrix, condensedStates, timeData, filenames, selection); %function which does the searching
+        else %interpret the string of numbers as characters and do a special "regular expressions"
+             %search of the converted-to-text list of states.  See
+             %documentation (or the inside of regexSearch) for details
+            output(i).expr = char(searchMatrix(2:end));
+            out = regexSearch(output(i).expr, condensedStates, timeData, filenames, selection);
+        end
               
-        out = findStateEvents(searchMatrix, condensedStates, timeData, filenames, selection); %function which does the searching
-
+        
         if length(out.timeDiff)>0 && length(out.timeDiff{1})==1 
             %if the search term has only one configuration, we have to break a few rules
             %a search for state-1 dwells should really be phrased as [NaN 1 NaN],

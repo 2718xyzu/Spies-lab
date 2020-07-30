@@ -307,6 +307,25 @@ classdef Kera < handle
             assignin('base','analyzedData',kera.output);
 
         end
+        
+        function regexSearch(kera,~,~,~)
+            kera.preProcessing();
+            regexInput = inputdlg(['Input string of regular expression text with which to search the data.'...
+                '  See regexSearch.m and the documentation for conventions']);
+            try
+                assert(~isempty(regexInput)); %make sure they didn't hit cancel
+            catch
+                return
+            end
+            regexInput = regexInput{1};
+            searchMatrix = double(regexInput); %convert to a numerical array
+            searchMatrix = [-1 searchMatrix]; %append the flag
+            row2fill = size(kera.output,2)+1;
+            kera.output(row2fill).searchMatrix = searchMatrix; %same process as customSearch (above)
+            kera.output = fillRowState(kera.output, row2fill, searchMatrix,... 
+                kera.condensedStates, kera.stateTimes, kera.filenames, kera.selection);
+            assignin('base','analyzedData',kera.output);
+        end
 
         function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
             kera.gui.resetError();
@@ -511,7 +530,13 @@ classdef Kera < handle
             end
             cla(kera.h3);
             set(kera.h3, 'ColorOrderIndex', 1);
-            [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
+            if kera.output(row).searchMatrix(1)~= -1 %the row was created with the normal search method
+                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
+            else %rarely used: the regex search function was used (this is an advanced feature)
+                xList = [NaN 0   5   NaN NaN];
+                yList = [NaN NaN NaN 0   1  ];
+                text(kera.h3,2.5, 0.5 ,kera.output(row).expr,'FontSize',30,'HorizontalAlignment','center');
+            end
             for j = 2:size(yList,2)
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
             end
@@ -524,7 +549,7 @@ classdef Kera < handle
             end
             hold(kera.h3,'on');
             kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
-            yLimCalc = [min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2];
+            yLimCalc = [min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]; %the mod is there for the handling of "Inf" flags
             ylim(kera.h3,yLimCalc);
             xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
             for yInf = find(diff((sum(yList,2)==Inf)')==1)+1
@@ -568,7 +593,8 @@ classdef Kera < handle
                 text(kera.h2, mean(xList),range(yList)*0.7,rateText);
             catch err
                 kera.histogramFit = plot(kera.h2,[0 0],[0 0]);
-                if strcmp(err.identifier, ('curvefit:fit:InsufficientData'))
+                if strcmp(err.identifier, ('curvefit:fit:InsufficientData'))...
+                        || strcmp(err.identifier, ('MATLAB:histcounts:expectedPositive'))
                     disp('Fitting failed due to insufficient data');
                 else
                     rethrow(err);
