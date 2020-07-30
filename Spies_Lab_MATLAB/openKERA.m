@@ -9,6 +9,13 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
+if exist(kera,1)
+    [~] = questdlg(['Warning: a variable called "kera" already exists; delete or rename that variable'...
+        ' to avoid overwriting it with this function'],'Kera overwrite warning','Ok','Ok');
+    return
+end
+
+
 kera = Kera();
 kera.gui.createPrimaryMenu('Import');
 kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretImport);
