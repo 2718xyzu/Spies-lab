@@ -10,7 +10,7 @@ function out = regexSearch(expr, condensedStates, timeData, filenames, selection
     letters = regexprep(letters,' ','  ');
     letters = regexprep(letters,';',' ; ');
     letters = regexprep(letters,'[','[ ');
-    letters = regexprep(letters,']',' ]');
+    letters = regexprep(letters,']',' ;]');
 
     %The above turns the condensedStates variable into a long text string
     %of the following form:

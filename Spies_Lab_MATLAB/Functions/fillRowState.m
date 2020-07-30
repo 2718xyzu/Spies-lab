@@ -20,7 +20,7 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
         end
               
         
-        if length(out.timeDiff)>0 && length(out.timeDiff{1})==1 
+        if ~isempty(out.timeDiff) && all(cellfun(@length,out.timeDiff)==1) 
             %if the search term has only one configuration, we have to break a few rules
             %a search for state-1 dwells should really be phrased as [NaN 1 NaN],
             %where the "NaN" any-state wildcards ensure that the dwells

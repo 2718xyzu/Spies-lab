@@ -308,7 +308,7 @@ classdef Kera < handle
 
         end
         
-        function regexSearch(kera,~,~,~)
+        function regexSearchUI(kera,~,~,~)
             kera.preProcessing();
             regexInput = inputdlg(['Input string of regular expression text with which to search the data.'...
                 '  See regexSearch.m and the documentation for conventions']);
@@ -536,7 +536,7 @@ classdef Kera < handle
             else %rarely used: the regex search function was used (this is an advanced feature)
                 xList = [NaN 0   5   NaN NaN];
                 yList = [NaN NaN NaN 0   1  ];
-                text(kera.h3,2.5, 0.5 ,kera.output(row).expr,'FontSize',30,'HorizontalAlignment','center');
+                text(kera.h3,2.5, 0.5 ,kera.output(row).expr,'FontSize',30,'HorizontalAlignment','center','Interpreter','none');
             end
             for j = 2:size(yList,2)
                 yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart

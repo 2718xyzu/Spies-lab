@@ -40,8 +40,8 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     
     
     for i = 1:size(output,2)
-        if ~isempty(output(i).expr)
-            searchExpr{end+1} = output(i).expr; 
+        if ~isempty(output(i).searchMatrix)
+            searchExpr{end+1} = mat2str(output(i).searchMatrix); 
         end
         %if this dataset has already been analyzed, pull out any event
         %classifications previously found and make sure to look for them
@@ -81,12 +81,18 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
     
     searchExpr = unique(searchExpr);
     
+    for i = 1:length(searchExpr) 
+        %at this point, "unique" has compared all of the strings, and they need to be converted
+        %back to matrices which fillRowState takes as input
+        searchExpr{i} = eval(searchExpr{i});
+    end
+    
     rows = length(searchExpr);
     output = struct();
     f = waitbar(0,'Finding event classifications');
     for i = 1:rows
         waitbar(i/rows,f,'Finding event classifications');
-        output = fillRowState(output, i, eval(searchExpr{i}), condensedStates, timeData, filenames, selection);
+        output = fillRowState(output, i, searchExpr{i}, condensedStates, timeData, filenames, selection);
     end
     close(f);
 end
