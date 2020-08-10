@@ -1,5 +1,5 @@
-N = 300; %number of traces to create
-lengthTrace = 6000; %length of each trace in time points
+N = 10; %number of traces to create
+lengthTrace = 1000; %length of each trace in time points
 cy3Final = cell([N 1]);
 cy5Final = cell([N 1]);
 cy3QuB = cell([N 1]);
@@ -77,7 +77,7 @@ for i = 1:N
     filenames{i} = num2str(i);
 end
 
-saveebFRET = 1;
+saveebFRET = 0;
 if saveebFRET
     saveEmFret(cy3Final,1, filenames); %save the cy3 traces
     saveEmFret(cy5Final,2, filenames); %save the cy5 traces
@@ -104,4 +104,10 @@ if saveQuB
             save(([saveDir filesep '1 tr' filenames{i} '_c' num2str(channel) '.dwt']),'saveMatrix','-ascii');
         end
     end
+end
+
+savehFRET = 1;
+if savehFRET
+    cy3Save = cell2mat(cy3Final)';
+    save('/Users/josephtibbs/Desktop/cy3Save.dat','-ascii');
 end
