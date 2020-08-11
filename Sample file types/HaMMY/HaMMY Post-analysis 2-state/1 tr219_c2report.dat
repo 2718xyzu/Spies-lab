@@ -1,0 +1,8 @@
+Number of states:  2    Max probability found:  3806.91
+FRET peaks at:    0.165564  0.813657
+FRET sigma:  0.0239074    Signal sigma:  0.000640729
+Transition probability matrix:  
+       0.165564       0.165564             -1              0              0
+       0.165564       0.813657    0.000640729       0.207753              1
+       0.813657       0.165564      0.0111112      0.0545124              1
+       0.813657       0.813657             -1              0              0
