@@ -139,6 +139,25 @@ classdef Kera < handle
             kera.importSuccessful();
         end
         
+        function hFRETImport(kera, hObject, eventData, handles)
+            %ebfretImport Analyzes ebFRET data
+            %   See also qubImport and PROCESSDATASTATES
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            [kera.importedData, kera.importedFilenames] = packagePairshFRET(kera.channels);
+            kera.importSuccessful();
+        end
+        
+        
         function haMMYImport(kera,hObject, eventData, handles)
             %imports HaMMY data then calls the analysis function
             %   See also qubImport and PROCESSDATASTATES
