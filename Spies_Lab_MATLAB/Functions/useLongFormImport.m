@@ -7,8 +7,7 @@ fileNames(:,j) = fileNames(ordering,j);
     
     
 if 2*length(dataCell{1,j,1})>=sum(cellfun(@length,dataCell(:,j,1)))
-    anS = questdlg('Did you want to use the fits in the first (long) trace?');
-    if strcmp(anS,'Yes')
+
         u = unique(dataCell{1,j,2});
         for i0 = u'
             meanState(i0) = mean(dataCell{1,j,1}(dataCell{1,j,2}==i0));
@@ -24,7 +23,10 @@ if 2*length(dataCell{1,j,1})>=sum(cellfun(@length,dataCell(:,j,1)))
                 if sum((dataCell{1,j,1}(i2:(i2+length(dataCell{i,j,1})-1))-dataCell{i,j,1}).^2)/sum((dataCell{i,j,1}-mean(dataCell{i,j,1})).^2)<1E-7
                     dataCell{i,j,2} = dataCell{1,j,2}(i2:(i2+length(dataCell{i,j,2})-1));
                 else
-                    keyboard;
+                    if numel(find(dataCell{1,j,1}==dataCell{i,j,1}(1)))==1
+                        keyboard; %something is wrong; are you sure the second smd you entered has the same traces
+                                  %in it as the "long" trace in the first smd?
+                    end
                 end
             end
         end
@@ -32,7 +34,7 @@ if 2*length(dataCell{1,j,1})>=sum(cellfun(@length,dataCell(:,j,1)))
         fileNames(1:end-1,j) = fileNames(2:end,j);
         dataCell(end,:,:) = [];
         fileNames(end,:,:) = [];
-    end
+
 end
 
 

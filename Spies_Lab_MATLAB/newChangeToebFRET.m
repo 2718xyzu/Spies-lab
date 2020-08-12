@@ -162,5 +162,5 @@ end
 % end
 
 for c = 1:channels
-    saveEmFret(emFret{c}(selectionAll),c, fileNames);
+    saveEmFret(emFret{c}(selectionAll),c, fileNames(selectionAll));
 end

@@ -25,10 +25,31 @@ output = questdlg(['Please select the SMD file for channel ',...
     for i = 1:size(smd.data,2)
         dataCell{i,j,1} = smd.data(i).values(:,3); %raw values (the "FRET" signal)
         dataCell{i,j,2} = smd.data(i).values(:,4); %discretized values
-        fileNames{i,j} = smd.data(i).attr.file; %the ebFRET output structure holds the names of the original files
+        if isfield(smd.data(i).attr,'file')
+            fileNames{i,j} = smd.data(i).attr.file; %the ebFRET output structure (sometimes) holds the names of the original files
+        end
     end
 
-[dataCell, fileNames] = useLongFormImport(dataCell, fileNames, j);
+if size(smd.data,2)==1
+    anS = questdlg('Did you want to use the fits in this trace, but distributed over the separate traces from a different smd?');
+    if strcmp(anS,'Yes')
+    %we're using long form (the first smd entered had all the traces
+    %stitched together into one long trace; the second smd has to have them
+    %individually, but the first is where the idealization data is taken
+    %from)
+    [file, path] = uigetfile;
+    smd = importdata([path file]);
+    for i = 1:size(smd.data,2)
+        dataCell{i+1,j,1} = smd.data(i).values(:,3); %raw values (the "FRET" signal)
+        dataCell{i+1,j,2} = smd.data(i).values(:,4); %discretized values
+        if isfield(smd.data(i).attr,'file')
+            fileNames{i+1,j} = smd.data(i).attr.file; %the ebFRET output structure (sometimes) holds the names of the original files
+        end
+    end
+    
+    [dataCell, fileNames] = useLongFormImport(dataCell, fileNames, j);
+    end
+end
 
 end
 

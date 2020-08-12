@@ -1,7 +1,7 @@
 function closeGuiSaveRequest(~, ~, ~)
    selection = questdlg('Close KERA?  This will delete unsaved progress', ...
               'Warning', ...
-              'Yes','No','Save a backup of the workspace','Yes');
+              'Yes','No','Crash (save backup)','Yes');
     switch selection
         case 'Yes'
             delete(gcf) %the normal behavior for deleting a figure
