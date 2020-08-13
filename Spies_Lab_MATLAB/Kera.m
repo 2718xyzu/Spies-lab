@@ -310,7 +310,7 @@ classdef Kera < handle
 %             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
             anS = questdlg(['Would you like to sort the classifications '...
                 'by order of frequency, or leave the ordering as it was before?'],'Sort?','Sort','Do not sort','Do not sort');
-            if strcmp(anS,'Yes')
+            if strcmp(anS,'Sort')
                 [~,index] = sortrows([kera.output.count].');
                 kera.output = kera.output(index(end:-1:1));
             end
