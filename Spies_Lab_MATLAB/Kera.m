@@ -308,9 +308,14 @@ classdef Kera < handle
                 kera.stateTimes, kera.filenames, kera.baseState, kera.stateList, kera.selection);
 %             dispOutput = kera.output;
 %             kera.stateDwellSummary(1).eventTimes = kera.output(1).timeLengths;
-            [~,index] = sortrows([kera.output.count].');
-            kera.output = kera.output(index(end:-1:1));
+            anS = questdlg(['Would you like to sort the classifications '...
+                'by order of frequency, or leave the ordering as it was before?'],'Sort?','Sort','Do not sort','Do not sort');
+            if strcmp(anS,'Yes')
+                [~,index] = sortrows([kera.output.count].');
+                kera.output = kera.output(index(end:-1:1));
+            end
             kera.postProcessing()
+            
         end
         
         function customSearch(kera, hObject, eventData, handles)
@@ -372,6 +377,10 @@ classdef Kera < handle
             delete(kera.visualizeTrans);
             kera.histogramRow = 1;
             kera.histogramData(1, 1, 1); %set up the rest of the interface
+             N = length(kera.output);
+            labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
+            set(kera.gui.elements('Jump to Row'), 'String', labels);
+            set(kera.gui.elements('Jump to Row'), 'Value', kera.histogramRow)
         end
 
         function exportSPKG(kera, hObject, eventData, handles)
@@ -435,6 +444,13 @@ classdef Kera < handle
         end
 
         function histogramDataSetup(kera)
+            
+            %sets up all the buttons and ui for interacting with the
+            %histogram screen.  It's important to remember that most of the
+            %items here are referred to elsewhere by their string, so
+            %changing the displayed string might break some of the other
+            %interaction code.
+            
             kera.gui.createText('Data Type:', [0.60 0.2 0.2 0.1]);
             kera.gui.createDropdown('dataType', {'Histogram', 'Cumulative dist.'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
             kera.dataType = 1;
@@ -457,6 +473,9 @@ classdef Kera < handle
             kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createButton('>>', [0.36 0.09 0.1 0.07], @kera.histogramData);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
+            N = length(kera.output);
+            labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
+            kera.gui.createDropdown('Jump to Row', labels, [0.185 0.002 0.15 0.07], @kera.histogramData);
 %             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
@@ -480,8 +499,9 @@ classdef Kera < handle
                     kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
                 end
             end
-
+            newRow = 0;
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
+                newRow = 1;
                 disable(kera.gui, hObject.String);
                 if strcmp(hObject.String,'<') && kera.histogramRow > 1
                     kera.histogramRow = kera.histogramRow - 1;
@@ -493,10 +513,23 @@ classdef Kera < handle
                     kera.histogramRow = 1;    
                 end
             end
-            if hObject==1 || (isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton'))
+            
+            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'popupmenu')
+                newRow = 1;
+                try
+                    kera.histogramRow = get(kera.gui.elements('Jump to Row'), 'Value');
+                catch %if the menu doesn't exist yet
+                     N = length(kera.output);
+                    labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
+                    kera.gui.createDropdown('Jump to Row', labels, [0.185 0.002 0.15 0.07], @kera.histogramData);
+                end
+            end
+            
+            set(kera.gui.elements('Jump to Row'), 'Value',kera.histogramRow);
+            
+            if hObject==1 || newRow
                 if ~isempty(kera.output(kera.histogramRow).excel)
                     enable(kera.gui,'dwellSelection');
-                    
                     labels = cell([size(kera.output(kera.histogramRow).excel,2)-1 1]);
                     labels{1} = 'All';
                     for i = 1:(size(kera.output(kera.histogramRow).excel,2)-2)

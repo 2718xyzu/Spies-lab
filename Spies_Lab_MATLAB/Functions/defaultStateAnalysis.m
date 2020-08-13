@@ -29,7 +29,7 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
         C = out.eventList;
         nums = cellfun(@(x) mat2str(x),C,'UniformOutput',false);
         %find all unique classifications of a 'completed' event
-        searchExpr = unique(nums);
+        searchExpr = unique(nums,'stable');
         defaultExpr = baseState;
         defaultExpr(3,:) = baseState;
         defaultExpr(2,:) = Inf;
@@ -79,7 +79,7 @@ function output = defaultStateAnalysis(output, condensedStates, timeData, filena
         end
     end
     
-    searchExpr = unique(searchExpr);
+    searchExpr = unique(searchExpr,'stable');
     
     for i = 1:length(searchExpr) 
         %at this point, "unique" has compared all of the strings, and they need to be converted

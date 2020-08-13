@@ -13,7 +13,8 @@ thresholded = 0;
 i = 1;
 % while i <= N
 rawAvailable = 0; %becomes 1 if a trace has raw data in addition to the discrete data
-figure('Units', 'Normalized','Position',[.05 .4 .9 .5],'MenuBar','none','ToolBar','none');
+figure('Units', 'Normalized','Position',[.05 .4 .9 .5]);
+% figure('Units', 'Normalized','Position',[.05 .4 .9 .5],'MenuBar','none');
 ax = axes;
 ax1 = cell([1 1]); %to hold the plots themselves and obtain brushing information
 brushing = {};

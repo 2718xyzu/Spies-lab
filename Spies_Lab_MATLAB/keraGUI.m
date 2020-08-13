@@ -28,7 +28,7 @@ classdef keraGUI
             gui.elements(label) = uicontrol('Style', 'pushbutton', 'Units', 'normalized', 'String', label, 'Position', position, 'Callback', callback);
         end
 
-        function dropdown = createDropdown(gui, name, labels, position, callback)
+        function createDropdown(gui, name, labels, position, callback)
             gui.elements(name) = uicontrol('Style', 'popup', 'Units', 'normalized', 'String', labels, 'Position', position, 'Callback', callback);
         end
 
