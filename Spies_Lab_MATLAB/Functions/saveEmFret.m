@@ -1,20 +1,22 @@
 function saveEmFret(emFret,channel, fileNames)
-%comment
-    anS = questdlg('Would you like to save in the format for ebFRET or HaMMY or both?',...
-        'Select save format','ebFRET','HaMMY','Both','Both');
-    formatStrings = {'ebFRET', 'HaMMY'};
-    switch anS
-        case 'ebFRET'
-            format = 1;
-        case 'HaMMY'
-            format = 2;
-        case 'Both'
-            format = [1 2];
+
+    formatStrings = {'ebFRET', 'HaMMY','hFRET'};
+    [format, tf] = listdlg('ListString',formatStrings,'PromptString','Select export format(s)');
+    if ~tf || ~any(logical(format))
+        disp('No file types selected; save aborted.')
     end
     
     if any(format==2)
         timeStr = inputdlg('Please enter the frame rate of data in seconds (i.e. 0.1)');
         timeUnit = str2double(timeStr);
+    end
+    
+    if any(format==3)
+        fillerValue = inputdlg(['Please enter the numerical value you would like to pad all'...
+            ' trajectories with so they are the same length']);
+        fillerValue = str2double(fillerValue);
+        hFRETmat = zeros([1 length(emFret)]);
+        lengthVector = zeros([1 length(emFret)]);
     end
     
     
@@ -32,13 +34,24 @@ function saveEmFret(emFret,channel, fileNames)
         switch j
             case 1
                 saveMatrix = vertcat(traceD,traceA)';
-                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_eb_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
             case 2
                 timeVector = 0:timeUnit:((length(traceD)-1)*timeUnit);
                 saveMatrix = vertcat(timeVector, traceD, traceA)';
-                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
+                save(([saveDir filesep regexprep(fileNames{i},'.dat','') '_ha_c' num2str(channel) '.dat']),'saveMatrix','-ascii');
+            case 3
+                lengthVector(i) = length(traceA);
+                hFRETmat(1:lengthVector(i),i) = traceA;
         end
         
     end
+    
+    if any(format==3)
+        for i = 1:length(emFret)
+            hFRETmat((lengthVector(i)+1):end,i) = fillerValue;
+        end
+        save(([saveDir filesep 'traces_hF_c' num2str(channel) '.dat']),'hFRETmat','-ascii');
+    end
+    
     end
 end
