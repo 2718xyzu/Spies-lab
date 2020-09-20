@@ -208,7 +208,9 @@ return
     end
 
     function buttonCallback2(~,~) %next trace
-        i = i+1; %go to next trace
+        if i<N
+            i = i+1; %go to next trace
+        end
         renderPlots();
     end
 

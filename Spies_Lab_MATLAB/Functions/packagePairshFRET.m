@@ -29,18 +29,52 @@ output = questdlg(['Please select the hFRET output file for channel ',...
     end
     [file, path] = uigetfile;
     hf = importdata([path file]);
-    for i = 1:size(hf.data,1)
-        dataCell{i,j,1} = hf.data{i}; %raw values (the "FRET" signal)
-        m = hf.vbem{i}.m;
-        discrete = zeros(size(hf.vbem{i}.ideals));
-        for i0 = 1:length(hf.vbem{i}.ideals)
-            discrete(i0) = find(hf.vbem{i}.ideals(i0)==m);
+    paddingTon = inputdlg('Enter the padding value for this data set, or "NaN" if you want to leave the data as-is');
+    paddingTon = str2double(paddingTon);
+    if ~isnan(paddingTon)
+        state2Set = inputdlg(['If anything in the trace was set to the padding state, what state should it be' ...
+            ' assigned to (i.e. 1 if you padded at a baseline level)']);
+        state2Set = str2double(state2Set);
+        mGiven = hf.vbem{1}.m;
+        padState = inputdlg(['These are the values of the center of each state: ' mat2str(mGiven) ...
+            '.  Which one represents the padding state?  Again, if you padded at the baseline, this is probalby 1.']);
+        padState = str2double(padState);
+        if isnan(padState)
+            padState = 1;
         end
+        mPad = mGiven(padState);
+        mWithoutPad = mGiven(setdiff(1:length(mGiven),padState));
+        %m is the list of "idealized" levels, which allows us to assign
+        %each point to the idealized state which hFRET decided for it
+        %(stored in the "ideals" list in the hFRET output struct)
+        %But if we're deleting padding, we also need to delete the state
+        %which was assigned to the padding
+    end
+    for i = 1:size(hf.data,1)
+        if isnan(paddingTon) %set it up so the data does not get changed and we do not assume any padding
+            dataCell{i,j,1} = hf.data{i}; %raw values (the "FRET" signal)
+            m = hf.vbem{i}.m;
+            state2Set = length(m);
+            cropIndex = length(hf.data{i});
+        else
+            tempData = hf.data{i}; %prepare to cut out padded values and re-assign states
+            cropIndex = find(diff(tempData == paddingTon),1,'last');
+            if isempty(cropIndex)
+                cropIndex = length(tempData);
+            end
+            dataCell{i,j,1} = hf.data{i}(1:cropIndex);
+            m = [mWithoutPad ; mPad];
+        end
+        discrete = zeros(min(size(hf.vbem{i}.ideals),cropIndex));
+        for i0 = 1:cropIndex
+            discrete(i0) = find(hf.vbem{i}.ideals(i0)==m); 
+        end
+        discrete(discrete==(length(m))) = state2Set; %in non-padded sets, this line does nothing
         dataCell{i,j,2} = discrete;  %discretized values
-        fileNames{i,j} = num2str(i); %the ebFRET output structure holds the names of the original files
+        fileNames{i,j} = num2str(i); %the output structure does not hold any original filenames
     end
 
-[dataCell, fileNames] = useLongFormImport(dataCell, fileNames, j);
+%long form is not applicable ot hFRET
 
 end
 
