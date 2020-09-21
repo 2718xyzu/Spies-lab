@@ -3,10 +3,16 @@ function out = regexSearch(expr, condensedStates, timeData, filenames, selection
 
     letters = '';
     for i = find(selection)'
-        tempText = [letters mat2str(condensedStates{i})];
+        tempText = [letters '[' mat2str(condensedStates{i}) ']'];
+        %mat2str already creates strings with brackets, but very rarely in
+        %a one-channel study a trace will consist of only one state
+        %throughout, and when this happens mat2str returns a single number,
+        %like '3', with no brakets.  The double-bracketing is removed in
+        %the regexprep below.
         letters = tempText;
     end
-    
+    letters = regexprep(letters,'[[','[');
+    letters = regexprep(letters,']]',']');
     letters = regexprep(letters,' ','  ');
     letters = regexprep(letters,';',' ; ');
     letters = regexprep(letters,'[','[ ');

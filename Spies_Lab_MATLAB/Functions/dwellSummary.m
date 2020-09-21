@@ -10,6 +10,8 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
         out(j).dwellTimes(1,:) = zeros([1,max(dataCell{1,j,2})]); 
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
+        out(j).meanDwells = zeros([1,max(dataCell{1,j,2})]); 
+        %the mean of the columns in the previous (excluding zero padding)
     end
 
     for i = 1:size(dataCell,1)
@@ -39,11 +41,16 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
                 out(j).timeAfterLast(end+1) = longth; %time after last event spent at ground (if any)
             end
         end
+            for state = 1:size(out(j).dwellTimes,2)
+                nnzState = nnz(out(j).dwellTimes(:,state));
+                out(j).meanDwells(state) = mean(out(j).dwellTimes(1:nnzState,state));
+            end
         end
     end
     for j = 1:channels %scale by factor of time interval (converts to seconds, generally)
         out(j).timeBeforeFirst = (out(j).timeBeforeFirst').*timeInterval;
         out(j).timeAfterLast = (out(j).timeAfterLast').*timeInterval;
         out(j).dwellTimes = out(j).dwellTimes.*timeInterval;
+        out(j).meanDwells = out(j).meanDwells.*timeInterval;
     end
 end

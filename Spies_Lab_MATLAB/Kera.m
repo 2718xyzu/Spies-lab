@@ -609,10 +609,12 @@ classdef Kera < handle
                 text(kera.h3,xList(yInf,1)+.5, mean(get(kera.h3,'YLim')),'...','FontSize',30,'HorizontalAlignment','center');
             end
             
-            
-            generateFits(kera);
+            try
+                generateFits(kera);
 %                 disp(outText);
-
+            catch
+            end
+            
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
                 enable(kera.gui, hObject.String);
             end
