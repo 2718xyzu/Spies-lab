@@ -3,54 +3,58 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
     %baseState is passed in as a vector with "channels" elements
 
     for j = 1:channels %initialize the fields; each row corresponds to a channel
-        out(j).timeBeforeFirst(1) = 0; %the time at ground before the first event
-        out(j).timeBeforeFirst(1) = [];
-        out(j).timeAfterLast(1) = 0;%the time spent at ground after last event
-        out(j).timeAfterLast(1) = [];
-        out(j).dwellTimes(1,:) = zeros([1,max(dataCell{1,j,2})]); 
+        out(j).timeBeforeFirst = []; %the time at ground before the first event
+        out(j).timeAfterLast = []; %the time spent at ground after last event
+        out(j).dwellTimes = cell([1,max(dataCell{1,j,2})]);
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
         out(j).meanDwells = zeros([1,max(dataCell{1,j,2})]); 
         %the mean of the columns in the previous (excluding zero padding)
+        out(j).dwellTimesWithEdges = cell([1,max(dataCell{1,j,2})]);
+        %dwellTimes but allowing those states which were cut off by the
+        %edge of the trajectory
+        out(j).meanDwellsWithEdges = zeros([1,max(dataCell{1,j,2})]);
+        %the mean of the previous
     end
-
-    for i = 1:size(dataCell,1)
-        for j = 1:channels
-        tempList = dataCell{i,j,2}; %extract single trace
-        if any(tempList ~= baseState(j)) %if the trajectory is not all base
-            i0 = find(tempList~=baseState(j),1);
-            if i0>1 && i0~=tempList(i0)
-                out(j).timeBeforeFirst(end+1) = i0-1; %time spent at ground before first event
+    
+    for j = 1:channels
+        for i = 1:size(dataCell,1)
+            tempList = dataCell{i,j,2}; %extract single trace
+            tempList = reshape(tempList,[1 length(tempList)]);
+            diffList = [1 diff(tempList) 1];
+            foundDiff = find(diffList); %the position of all state changes (and the borders of the trace)
+            
+            %run analysis on trace's first state
+            state = tempList(1);
+            if state == baseState(j) && length(foundDiff)>2 %this isn't valid if it's all one state for the whole trace
+                out(j).timeBeforeFirst(end+1) = (foundDiff(2)-foundDiff(1))*timeInterval;
             end
-
-            iLast = i0-1;
-            while i0<length(tempList) %this block of code is one reason no state can be named "0" or any negative number
-                state = tempList(i0);
-                stateNext = tempList(i0+1);
-                if state~=stateNext
-                    longth = i0 - iLast; %time spent at this state; append to list in appropriate col
-                    out(j).dwellTimes(nnz(out(j).dwellTimes(:,state))+1,state) = longth;
-                    iLast = i0;
-                end
-                
-                i0 = i0+1;
+            if length(foundDiff)>2 %handling traces that are all a single state; this time gets recorded later, so it's not double-counted
+                out(j).dwellTimesWithEdges{state}(end+1) = (foundDiff(2)-foundDiff(1))*timeInterval;
             end
-
-            if tempList(end) == baseState(j)
-                longth = i0 - iLast;
-                out(j).timeAfterLast(end+1) = longth; %time after last event spent at ground (if any)
+            
+            for i0 = 2:(length(foundDiff)-2)
+                state = tempList(foundDiff(i0));
+                out(j).dwellTimesWithEdges{state}(end+1) = (foundDiff(i0+1)-foundDiff(i0))*timeInterval;
+                out(j).dwellTimes{state}(end+1) = (foundDiff(i0+1)-foundDiff(i0))*timeInterval;
             end
+            
+            %run analysis on trace's last state
+            state = tempList(end);
+            if state == baseState(j) && length(foundDiff)>2
+                out(j).timeAfterLast(end+1) = (foundDiff(end)-foundDiff(end-1))*timeInterval;
+            end
+            out(j).dwellTimesWithEdges{state}(end+1) = (foundDiff(end)-foundDiff(end-1))*timeInterval;
         end
-            for state = 1:size(out(j).dwellTimes,2)
-                nnzState = nnz(out(j).dwellTimes(:,state));
-                out(j).meanDwells(state) = mean(out(j).dwellTimes(1:nnzState,state));
-            end
+        
+        for i=1:length(out(j).dwellTimes)
+            out(j).meanDwells(i) = mean(out(j).dwellTimes{i});
         end
+        for i=1:length(out(j).dwellTimesWithEdges)
+            out(j).meanDwellsWithEdges(i) = mean(out(j).dwellTimesWithEdges{i});
+        end
+        
+        
     end
-    for j = 1:channels %scale by factor of time interval (converts to seconds, generally)
-        out(j).timeBeforeFirst = (out(j).timeBeforeFirst').*timeInterval;
-        out(j).timeAfterLast = (out(j).timeAfterLast').*timeInterval;
-        out(j).dwellTimes = out(j).dwellTimes.*timeInterval;
-        out(j).meanDwells = out(j).meanDwells.*timeInterval;
-    end
+    
 end

@@ -314,7 +314,7 @@ classdef Kera < handle
                 [~,index] = sortrows([kera.output.count].');
                 kera.output = kera.output(index(end:-1:1));
             end
-            kera.postProcessing()
+            kera.postProcessing();
             
         end
         
@@ -328,7 +328,7 @@ classdef Kera < handle
             kera.output(row2fill).searchMatrix = searchMatrix;
             kera.output = fillRowState(kera.output, row2fill, searchMatrix,...
                 kera.condensedStates, kera.stateTimes, kera.filenames, kera.selection);
-            assignin('base','analyzedData',kera.output);
+            kera.postProcessing();
 
         end
         
@@ -348,7 +348,7 @@ classdef Kera < handle
             kera.output(row2fill).searchMatrix = searchMatrix; %same process as customSearch (above)
             kera.output = fillRowState(kera.output, row2fill, searchMatrix,... 
                 kera.condensedStates, kera.stateTimes, kera.filenames, kera.selection);
-            assignin('base','analyzedData',kera.output);
+            kera.postProcessing();
         end
 
         function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
