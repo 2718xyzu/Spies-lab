@@ -37,8 +37,10 @@ classdef Kera < handle
         dwellSelectionOn = 0;
     end
     methods
-        function kera = Kera()
-            kera.gui = keraGUI();
+        function kera = Kera(new)
+            if new %a new Kera is initialized if an argument is given; otherwise it will not
+                kera.gui = keraGUI();
+            end
         end
 
         function setChannelState(kera,~,~,~)

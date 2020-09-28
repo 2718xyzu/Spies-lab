@@ -1,12 +1,14 @@
 lastwarn('');
 addpath('Functions');
 [warnMsg, warnId] = lastwarn;
-if ~isempty(warnMsg)
-    questdlg(['Functions directory not found; please select the Spies-lab '...
+while ~isempty(warnMsg)
+    questdlg(['Functions directory not found; please select the sourceCode '...
         'scripts directory to add it to the search path'],'Select search dir',...
     'Ok','Ok');
+    lastwarn('');
     cd(uigetdir);
     addpath('Functions');
+    [warnMsg, warnId] = lastwarn;
 end
 
 if exist('kera','var')
@@ -18,7 +20,7 @@ if exist('kera','var')
 end
 
 
-kera = Kera();
+kera = Kera(1);
 kera.gui.createPrimaryMenu('Import');
 kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretImport);
 kera.gui.createSecondaryMenu('Import', 'QuB', @kera.qubImport);
