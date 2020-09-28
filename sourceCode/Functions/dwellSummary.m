@@ -3,8 +3,6 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
     %baseState is passed in as a vector with "channels" elements
 
     for j = 1:channels %initialize the fields; each row corresponds to a channel
-        out(j).timeBeforeFirst = []; %the time at ground before the first event
-        out(j).timeAfterLast = []; %the time spent at ground after last event
         out(j).dwellTimes = cell([1,max(dataCell{1,j,2})]);
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
@@ -15,6 +13,8 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
         %edge of the trajectory
         out(j).meanDwellsWithEdges = zeros([1,max(dataCell{1,j,2})]);
         %the mean of the previous
+        out(j).timeBeforeFirst = []; %the time at ground before the first event
+        out(j).timeAfterLast = []; %the time spent at ground after last event
     end
     
     for j = 1:channels

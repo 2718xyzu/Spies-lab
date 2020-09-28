@@ -432,17 +432,30 @@ classdef Kera < handle
             kera.gui.resetError();
             channelAns = inputdlg('Which channel would you like to export the dwells of?'); 
             channelExport = str2double(channelAns{1});
+            dwellAns = questdlg('Export dwell times excluding edge states (states occurring at the beginning or end of a trace)',...
+                'Exclude edge states?', 'Exclude edges', 'Include edges','Exclude edges');
+            switch dwellAns(1)
+                case 'E'
+                    cellSave = kera.stateDwellSummary(channelExport).dwellTimes;
+                case 'I'
+                    cellSave = kera.stateDwellSummary(channelExport).dwellTimesWithEdges;
+            end
+            dataSave = zeros([1 length(cellSave)]);
+            for i = 1:length(cellSave)
+                dataSave(1:length(cellSave{i}),i) = cellSave{i};
+            end
+            
             ans1 = questdlg('Select a folder where you want the csv files to be saved', 'Folder Selection', 'Ok', 'Cancel', 'Ok');
             if ~strcmp(ans1,'Ok')
                 return
             end
             path = kera.selectFolder();
-            if ~exist(path,'var')
+            if ~exist('path','var')
                 return
             end
 
-            t1 = table(kera.stateDwellSummary(channelExport).dwellTimes);
-            writetable(t1, [path filesep 'channel_' num2str(channelExport) '_dwellTimes.csv'], 'Delimiter', ',');
+            t1 = table(dataSave);
+            writetable(t1, [path filesep 'channel_' num2str(channelExport) '_' dwellAns(1) '_dwellTimes.csv'], 'Delimiter', ',');
         end
 
         function histogramDataSetup(kera)
