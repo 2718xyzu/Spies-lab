@@ -26,6 +26,7 @@ kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretImport);
 kera.gui.createSecondaryMenu('Import', 'QuB', @kera.qubImport);
 kera.gui.createSecondaryMenu('Import', 'Hammy', @kera.haMMYImport);
 kera.gui.createSecondaryMenu('Import', 'hFRET', @kera.hFRETImport);
+kera.gui.createSecondaryMenu('Import', 'Raw Data Cell', @kera.rawImport);
 kera.gui.createSecondaryMenu('Import', 'Saved Session', @kera.importSPKG);
 %add a line here to create a new import option, then create a function
 %(like the @ functions above) inside the file Kera.m to execute your import

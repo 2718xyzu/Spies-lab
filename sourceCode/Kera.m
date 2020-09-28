@@ -178,7 +178,29 @@ classdef Kera < handle
             kera.importSuccessful();
         end
         
-        
+        function rawImport(kera, ~, ~, ~)
+            kera.gui.resetError();
+            if isempty(kera.channels) || isempty(kera.stateList)
+                kera.setChannelState()
+            end
+            if isempty(kera.timeInterval)
+                kera.setTimeStep(kera);
+            end
+            if kera.gui.error
+                kera.gui.resetError();
+                return
+            end
+            [~] = questdlg('Please select the .mat file containing the dataCell (see documentation for format)',...
+                'Select file','Ok','Ok');
+            [file, path] = uigetfile();
+            dataCellTemp = load([path filesep file]);
+            fieldNames = fieldnames(dataCellTemp);
+            kera.importedData = dataCellTemp.(fieldNames{1}); 
+            for i = 1:size(kera.importedData,1)
+                kera.importedFilenames{i} = num2str(i);
+            end
+            kera.importSuccessful();
+        end
         
         function exampleImport(kera, ~, ~, ~)
             %this example function can be altered to allow the import of a
