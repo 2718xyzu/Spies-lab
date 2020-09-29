@@ -101,6 +101,11 @@ switch order
     case 2
         rate = [fitModel.k1 (fitModel.k2s)^2+fitModel.k1];
         a1 = fitModel.a1;
+        %if we did a histogram fit, we need to normalize the amplitudes:
+        if dataType == 1
+            a2 = fitModel.a2;
+            a1 = a1/(a1+a2);
+        end
 end
 
 
