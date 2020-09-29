@@ -51,6 +51,7 @@ kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChan
 kera.gui.createSecondaryMenu('Settings','Set time step', @kera.setTimeStep);
 kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineState);
 kera.gui.createSecondaryMenu('Settings','Toggle intraevent kinetics', @kera.toggleDwellSelection);
+kera.gui.createSecondaryMenu('Settings','Name Window', @kera.nameWindow);
 
 %commands which should not be available at the beginning but which will be
 %enabled later:

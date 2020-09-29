@@ -192,6 +192,7 @@ classdef Kera < handle
             end
             [~] = questdlg('Please select the .mat file containing the dataCell (see documentation for format)',...
                 'Select file','Ok','Ok');
+            %also see the long comment below in the exampleImport function
             [file, path] = uigetfile();
             dataCellTemp = load([path filesep file]);
             fieldNames = fieldnames(dataCellTemp);
@@ -381,7 +382,10 @@ classdef Kera < handle
             if filename
 %                 guiTemp = kera.gui.guiWindow;
                 kera2 = load([path filesep filename]); %load all variables; "kera" might not be called kera
+                namestr = inputdlg('Give your new KERA window a label');
+                set(kera2.kera.gui.guiWindow,'Name',namestr{1});
                 assignin('base',['kera' num2str(get(gcf,'Number'))],kera2.kera);
+                disp(['New kera window opened; figure named ' namestr{1} ' and variable named kera' num2str(get(gcf,'Number'))]);
 %                 kera.gui.guiWindow = guiTemp;
             else
                 kera.gui.errorMessage('Failed to import saved session file');
@@ -434,16 +438,14 @@ classdef Kera < handle
                 return
             end
             path = kera.selectFolder();
-            if ~exist(path,'var')
+            if ~exist('path','var')
                 return
             end
 
             for row = 1:length(kera.output)
                 try
-                t1 = kera.output(row).table;
-                t2 = table(kera.output(row).timeLengths, 'VariableNames', {'Time_Lengths'});
-                t = [t2 t1];
-                filename = strcat(path, filesep, 'row_', int2str(row), '.csv');
+                t = kera.output(row).table;
+                filename = [path, filesep, 'row_', int2str(row), '.csv'];
                 writetable(t, filename, 'Delimiter', ',');
                 catch
                 end
@@ -751,5 +753,9 @@ classdef Kera < handle
             end
         end
             
+        function nameWindow(kera, ~, ~, ~)
+            namestr = inputdlg('Enter name for the figure window');
+            set(kera.gui.guiWindow,'Name',namestr{1});
+        end
     end
 end
