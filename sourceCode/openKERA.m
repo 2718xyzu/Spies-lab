@@ -1,3 +1,10 @@
+% KERA setup function
+% Joseph Tibbs 09/30/2020
+
+
+% Make sure the user is in the sourceCode directory, and add
+% the Functions folder to the path:
+
 lastwarn('');
 addpath('Functions');
 [warnMsg, warnId] = lastwarn;
@@ -10,14 +17,7 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
-% if exist('kera','var')
-%     [~] = questdlg(['Warning: a variable called "kera" already exists; export your current KERA session to '...
-%         'a saved session, delete the kera variable, and then run this script again.  You can later reopen '...
-%         'the old session by clicking "import-->saved session" in your new kera (this is the only supported ' ...
-%         'method to open multiple kera sessions at once)'],'Kera overwrite warning','Ok','Ok');
-%     return
-% end
+% open a KERA session:
 
-
-Kera(1);
+[~] = Kera(1);
 
