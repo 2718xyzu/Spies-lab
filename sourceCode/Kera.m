@@ -1,15 +1,16 @@
 classdef Kera < handle
     properties
+        output
+        stateDwellSummary
+        versionNumber = '3.0.0'
         gui
         channels
         states
         stateList
         timeInterval
-        stateDwellSummary
         savePackage
         transM
         rawM
-        output
         dataType
         fitType
         order
@@ -40,6 +41,48 @@ classdef Kera < handle
         function kera = Kera(new)
             if new %a new Kera is initialized if an argument is given; otherwise it will not
                 kera.gui = keraGUI();
+                kera.gui.createPrimaryMenu('Import');
+                kera.gui.createSecondaryMenu('Import', 'ebFRET', @kera.ebfretImport);
+                kera.gui.createSecondaryMenu('Import', 'QuB', @kera.qubImport);
+                kera.gui.createSecondaryMenu('Import', 'Hammy', @kera.haMMYImport);
+                kera.gui.createSecondaryMenu('Import', 'hFRET', @kera.hFRETImport);
+                kera.gui.createSecondaryMenu('Import', 'Raw Data Cell', @kera.rawImport);
+                kera.gui.createSecondaryMenu('Import', 'Saved Session', @kera.importSPKG);
+                %add a line here to create a new import option, then create a function
+                %(like the @ functions above) inside the file Kera.m to execute your import
+                %script.  An example has been included as "exampleImport" there; rename it
+                %and fill it in with your own code
+
+                kera.gui.createPrimaryMenu('Export');
+                kera.gui.createSecondaryMenu('Export', 'Save Session', @kera.exportSPKG);
+                kera.gui.createSecondaryMenu('Export', 'Analyzed Data');
+                kera.gui.createSecondaryMenu('Analyzed Data', 'csv', @kera.exportAnalyzed);
+                kera.gui.createSecondaryMenu('Export', 'State Dwell Summary');
+                kera.gui.createSecondaryMenu('State Dwell Summary', 'csv', @kera.exportStateDwellSummary);
+
+                kera.gui.createPrimaryMenu('Analyze');
+                kera.gui.createSecondaryMenu('Analyze', 'View Data', @kera.viewTraces);
+                kera.gui.createSecondaryMenu('Analyze', 'Run/Refresh Analysis', @kera.processDataStates);
+                kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
+                kera.gui.createSecondaryMenu('Analyze','Regex Search (advanced)', @kera.regexSearchUI);
+
+                kera.gui.createPrimaryMenu('Settings');
+                kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
+                kera.gui.createSecondaryMenu('Settings','Set time step', @kera.setTimeStep);
+                kera.gui.createSecondaryMenu('Settings','Set baseline state', @kera.setBaselineState);
+                kera.gui.createSecondaryMenu('Settings','Toggle intraevent kinetics', @kera.toggleDwellSelection);
+                kera.gui.createSecondaryMenu('Settings','Name Window', @kera.nameWindow);
+                kera.gui.createSecondaryMenu('Settings','Update old file', @kera.updateOldFile);
+
+                %commands which should not be available at the beginning but which will be
+                %enabled later:
+                kera.gui.disable('Export');
+                kera.gui.disable('Analyze');
+                kera.gui.disable('Set baseline state');
+                kera.gui.disable('Toggle intraevent kinetics');
+                
+                assignin('base',['kera' num2str(get(gcf,'Number'))],kera);
+                disp(['New kera window opened; figure named ' num2str(get(gcf,'Number')) ' and variable named kera' num2str(get(gcf,'Number'))]);
             end
         end
 
@@ -756,6 +799,50 @@ classdef Kera < handle
         function nameWindow(kera, ~, ~, ~)
             namestr = inputdlg('Enter name for the figure window');
             set(kera.gui.guiWindow,'Name',namestr{1});
+        end
+        
+        function updateOldFile(kera, ~, ~, ~) 
+            updatedAnything = 0;
+            mostRecentVersion = '2.9.9';
+            
+            %when KERA is updated, new properties, fields, or GUI elements
+            %might be added.  While they should go into their respective
+            %setup functions, a check for these new features should also be
+            %added here so that a user who opens a Kera created before the
+            %change can "update" it to have those properties added to the
+            %existing file.  Each entry should look something like this:
+            
+            % if (kera doesn't have this thing)
+                % add that thing to this kera
+                % updatedAnything = 1;
+                % mostRecentVersion = new version number
+            % end
+            
+            %example: before version 3.0.0, the kera menu did not
+            %inluce the "Name Window" option
+            
+            if ~isKey(kera.gui.elements,'Name Window')
+                kera.gui.createSecondaryMenu('Settings','Name Window', @kera.nameWindow);
+                mostRecentVersion = '3.0.0';
+                updatedAnything = 1;
+            end
+            
+            
+            %Pre-initilized properties, fields of properties, and GUI elements
+            %(menu items, buttons, etc.) should be added hdere.  Methods do
+            %not need to be added here, since kera objects access all code
+            %in the main body of Kera.m.  Mainly, add things that get
+            %initialized and would cause an error if the code tries to do
+            %something with them on a kera version where that thing doesn't
+            %exist
+            
+            
+            if updatedAnything
+                disp(['Features added; updated to version ' mostRecentVersion]);
+                kera.versionNumber = mostRecentVersion;
+            else
+                disp('Nothing to update');
+            end
         end
     end
 end
