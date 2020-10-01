@@ -1,4 +1,7 @@
 function [finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
+%Not really in use by KERA
+
+
 %Function to intelligently fill events which are shorter than a length of
 %(deadFrames+1).  Mostly, this is intended to fill single-frame gaps due to
 %noise, such as [1 1 1 1 1 2 1 1 1 1 ] where it is unambiguous where the
@@ -10,6 +13,7 @@ function [finalDiscrete] = autoDeadTime(raw, discrete, deadFrames)
 %Gaussian priors for each state based on the individual trace are used to
 %create a maximum-likelihood estimate for the solution which eliminates
 %short events
+
 
 %raw: a 1xN array of raw trace values (the data before discretization)
 %discrete: a 1xN array of integers (the discretized data; the states)

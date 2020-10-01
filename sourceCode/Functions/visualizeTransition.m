@@ -1,4 +1,7 @@
 function [x, y] = visualizeTransition(stateRecord, channels)
+    %no longer used; see "createTransitionVisual" in the kera.m file
+    %instead
+
 %     transition = regexprep(transition, '[^\d ;]+','0');
 %     stateRecord = eval(['[' transition ']']);
     

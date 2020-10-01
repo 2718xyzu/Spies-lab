@@ -1,4 +1,5 @@
 function statusList = partitionNeighborhoods(xList, yList, nSize, fieldSize,nDots)
+    %a microscope analysis code; not part of Kera
     neighborhoods = zeros(2*ceil(ceil(prod(fieldSize)/nSize)/nSize),8,'int16');
     statusList = zeros(nDots,1);
     n = zeros(1,8);

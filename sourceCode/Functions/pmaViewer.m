@@ -1,5 +1,5 @@
 function pmaViewer()
-
+    %a microscope analysis script; not part of kea
     [A,fileName] = openFile(); %Old function used to get file id
 
     sizeX = fread(A,1,'uint16'); %the first 16 bits of a pma file always contains the pixels on the X dimension
