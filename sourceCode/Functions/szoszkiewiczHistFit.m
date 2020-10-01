@@ -1,8 +1,12 @@
 function [fit1, bin1, chi1, fit2, bin2, chi2] = szoszkiewiczHistFit(x,order)
+%Is not currently implemented anywhere in the Kera suite, I just thought it
+%was a method that might be useful somewhere
+
 %methods from Szoszkiewicz et al 2008
 %"order" currently only supports first- or second-order fitting
 %x is the dwell time data as a list of numbers
 %linear histogram
+
 if numel(x)<6
     %definitely can't fit if there aren't enough data points
     fit1 = 0;

@@ -1,4 +1,10 @@
 function plotCell = setThresholdingOnPlotCell(threshold, stateSet, boundDirection, channel, method, states2Set, plotCell)
+
+%called by the button callback buttonCallback9 in plotdisplayKera; this
+%handles thresholding of the ensemble of traces, if the user chooses to use
+%that feature.  See documentation for an illustration of thresholding
+
+
 j = channel;
 for i = 1:size(plotCell,1)
     rawTrace = plotCell{i,j,1};

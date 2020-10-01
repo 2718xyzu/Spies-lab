@@ -1,6 +1,9 @@
 function [baseState] = stateSetUi(channels,stateList)
-    %This interface allows users to specify the baseline state
     
+    %This interface allows users to specify the baseline state
+    %This is the state which all "completed" events depart from and return
+    %to, and is a convenient way for the default search to look for
+    %"interesting" patterns.  Called by Kera.setBaselineState (in Kera.m)
 
     guiWindow = figure('Visible', 'on', 'Position', [1000 1000 500 200]);
     guiWindow.MenuBar = 'none';

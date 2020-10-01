@@ -1,5 +1,10 @@
 function out = regexSearch(expr, condensedStates, timeData, filenames, selection)
-
+%turn the condensed states into a searchable text array and locate all
+%instances of expr in it.  Record relevant event details such as file
+%location and start time by encoding each position in the long string to
+%correspond to a timestamp and file.  Called by fillRowState when the first
+%number in the searchMatrix is -1 (a flag directing the code to treat the
+%query as a regex search).
 
     letters = '';
     for i = find(selection)'
@@ -78,7 +83,17 @@ for i = 1:numEv
     %sequences which must be present for the match to be counted but which
     %are not included in the final match.  For example:
     
+    %(?<=(2|3)  \d ; )((1  2 )|(1  1 ; 1  2 ))(; 1  \d )*(?=; (2|3))
     
+    %the lookahead and lookbehind are important; we are looking for a
+    %region where channel 1 is constantly at state 1, so we don't want to
+    %include the preceding (and following) state2 or state3 portions, but
+    %we need to make sure they're there so that we know we got the full
+    %state1 event.  Lookaheads and lookbehinds are also useful because
+    %regex does not allow two string matches to overlap except in the
+    %region of a lookahead or lookbehind.  This is probably fine, since
+    %the researcher probably isn't looking to double-count any events with
+    %an overlapping search.
     
 end
     

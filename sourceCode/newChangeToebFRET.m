@@ -1,8 +1,11 @@
 
-%A wrapper function to guide through data input from raw intensity values;
-%contains call to "emulateFRET", which allows for trace pre-processing,
-%before calling smoothNormalize which smooths and normalizes all traces,
-%with or without baselines specified.
+%A wrapper function to guide through data input from raw intensity values
+%to "emulated FRET", a normalized version of the signal which can be
+%imported to ebFRET, HaMMY, or other programs which assume you will be
+%feeding them a FRET signal.
+%Contains call to "emulateFRET", which allows for trace pre-processing,
+%before calling smoothNormalize (if no baselines were selected) or normalizeSelection
+%(preferred; uses user input data to help normalize) which smooth and normalize all traces
 
 lastwarn('');
 addpath('Functions');

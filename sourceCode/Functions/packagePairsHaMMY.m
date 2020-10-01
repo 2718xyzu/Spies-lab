@@ -1,5 +1,7 @@
 function [dataCell, fileNames] = packagePairsHaMMY(channels)
-%still needs to be tested
+
+%called by Kera.haMMYimport inside Kera.m
+
 importedFilenames = cell([1 channels]);
 
 for j = 1:channels

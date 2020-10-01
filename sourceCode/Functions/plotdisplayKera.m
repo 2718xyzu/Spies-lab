@@ -1,5 +1,14 @@
 function [dataCellEdited, selection, maxStates] = plotdisplayKera(dataCell, dataCellEdited, fileNames, timeInterval, selection)
 %a function called when the user clicks the "view data" button
+%it keeps track of edits in the dataCellEdited variable, while keeping all
+%original versions of traces (*all* the way original, from when they were
+%first uploaded) in the dataCell.  This allows the user to exclude traces
+%from the analysis, view the discretizations, and do some basic editing
+%functions to the traces.  Some buttons cause other buttons to appear or
+%change their behavior--watch out for that if editing this script.  
+%Called by kera.viewTraces (inside Kera.m)
+
+
 dataCellUponOpening = dataCellEdited;
 selectionUponOpening = selection;
 saved = 0;

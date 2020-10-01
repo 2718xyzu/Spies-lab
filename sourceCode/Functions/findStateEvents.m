@@ -9,6 +9,10 @@ function out = findStateEvents(stateSearch, condensedStates, timeData, filenames
 %[ 1  1 ]                  [ 1  1 ]         [ 2  2 ]
 %                                           [ 1  2 ] 
 %                                           [ 1  1 ]
+
+%called by fillRowState when the search matrix is not in regex form
+
+
 starts = zeros([100 1]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);
 traceId = zeros([100 1]);

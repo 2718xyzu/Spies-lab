@@ -1,5 +1,10 @@
 function saveEmFret(emFret,channel, fileNames)
 
+    %called by newChangeToebFRET for the purpose of saving the
+    %newly-normalized trace data to a format which can be imported to
+    %ebFRET or HaMMY
+
+
     formatStrings = {'ebFRET', 'HaMMY','hFRET'};
     [format, tf] = listdlg('ListString',formatStrings,'PromptString','Select export format(s)');
     if ~tf || ~any(logical(format))

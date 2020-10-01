@@ -1,4 +1,7 @@
 function [low, high, trim, selection] = selectTracesEmFret(channels,intensity,selectionAll, fileNames, low, high, trim)
+    
+    %user interface for selecting the baseline, highest state, and possibly
+    %trimming each trace
 
     N = length(intensity{1}); %number of traces; assumes a cell input
     selection = selectionAll;

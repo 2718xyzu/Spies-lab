@@ -1,9 +1,11 @@
 function out = findCompletedEvents(baseState, condensedStates, selection)
+%A function to scan each trace and find "complete" events
 %baseState is a vector of numbers, one for each channel, which describes
-%where the "default" state of the system is.  This is nice because, often
-%the events you're interested in, are the ways in which the system departs
+%where the "default" state of the system is.  This is nice because often
+%the events you're interested in are the ways in which the system departs
 %from and then returns to that state, which is what this function searches
-%for.
+%for.  
+%Called by defaultStateAnalysis
 starts = zeros([100 1]); %pre-allocating, but of course there may be more or fewer than 100 events
 ends = zeros([100 1]);
 traceId = zeros([100 1]);

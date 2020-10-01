@@ -1,5 +1,11 @@
 function output = defaultStateAnalysis(output, condensedStates, timeData, filenames, baseState, stateList, selection)
-    
+%a function which sets up the default search types and runs them.  If
+%searches have already been done, it keeps them and runs them again on the
+%data (useful if you have uploaded new data or changed the existing data)
+%This is the main function activated when the user selects "run/refresh
+%analysis".  Called by Kera.processDataStates (inside Kera.m)
+
+
 %     [timeLong, posLong, rowLong] = timeLengthenState(timeData,stateText);
 %     baseState = repmat(' 1 ',[1,channels]);
 %     defaultString = ['(?<=' baseState(1:end-1) ')[^\]]+?(?=' baseState(2:end) ')'];

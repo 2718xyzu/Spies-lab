@@ -1,6 +1,10 @@
 function [data,names] = findPairs(kera)
 %This function is only for QuB data, where the files are imported
 %separately and we have to pair them up
+%The QuB files of the Spies lab have a strange naming convention. If your lab wants to use
+%QuB and have your own naming convention, you might need to dig into the
+%below code to make sure it can find your files and pair them correctly.  
+%called by Kera.qubImport (inside Kera.m)
     output = questdlg('Select a folder which has the *.dwt files you want to analyze',...
         'Instructions','OK','Quit','OK');
     if ~strcmp(output, 'OK')

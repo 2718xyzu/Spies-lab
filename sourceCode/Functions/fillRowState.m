@@ -1,11 +1,15 @@
 function output = fillRowState(output, i, searchMatrix, condensedStates, timeData, filenames, selection)
-        %This is the most important (and most general) search function,
-        %which actually calculates all the data which goes into "output"
-        %and then puts it there, one row at a time
+    %This is the most important (and most general) search function,
+    %which actually calculates all the data which goes into "output"
+    %and then puts it there, one row at a time
+    %called by defaultStateAnalysis, Kera.customSearch, and Kera.regexSearchUI
+    %(the latter two are in Kera.m), which are called when the user selects
+    %"Run/Refresh Analysis", "Custom Search", and "Regex Search",
+    %respectively.
 
         
-        %searchMatrix is a numerical array; see findStateEvents for
-        %conventions
+    %searchMatrix is a numerical array; see findStateEvents for
+    %conventions
         
         
         output(i).searchMatrix = searchMatrix;

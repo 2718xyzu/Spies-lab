@@ -1,5 +1,7 @@
 function [dataCell, fileNames] = packagePairsebFRET(channels)
 
+%called by Kera.ebfretImport inside Kera.m
+
 %a function which takes in multiple ebFRET output files and extracts the
 %data from them, keeping the traces in the correct order to pair the
 %corresponding traces with each other
