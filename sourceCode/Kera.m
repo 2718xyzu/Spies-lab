@@ -17,7 +17,7 @@ classdef Kera < handle
         filenames
         Histogram
         histogramFit
-        histogramRow = 1
+        histogramRow
         visualizeTrans
         selection
         stateText
@@ -246,6 +246,23 @@ classdef Kera < handle
             kera.importSuccessful();
         end
         
+        function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
+            kera.gui.resetError();
+            [filename, path] = uigetfile('*.mat');
+            if filename
+%                 guiTemp = kera.gui.guiWindow;
+                kera2 = load([path filesep filename]); %load all variables; "kera" might not be called kera
+                namestr = inputdlg('Give your new KERA window a label');
+                set(kera2.kera.gui.guiWindow,'Name',namestr{1});
+                assignin('base',['kera' num2str(get(gcf,'Number'))],kera2.kera);
+                disp(['New kera window opened; figure named ' namestr{1} ' and variable named kera' num2str(get(gcf,'Number'))]);
+%                 kera.gui.guiWindow = guiTemp;
+            else
+                kera.gui.errorMessage('Failed to import saved session file');
+            end
+        end
+        
+        
         function exampleImport(kera, ~, ~, ~)
             %this example function can be altered to allow the import of a
             %filetype not currently supported
@@ -419,21 +436,7 @@ classdef Kera < handle
             kera.postProcessing();
         end
 
-        function importSPKG(kera, hObject, eventData, handles) %#ok<*INUSD>
-            kera.gui.resetError();
-            [filename, path] = uigetfile('*.mat');
-            if filename
-%                 guiTemp = kera.gui.guiWindow;
-                kera2 = load([path filesep filename]); %load all variables; "kera" might not be called kera
-                namestr = inputdlg('Give your new KERA window a label');
-                set(kera2.kera.gui.guiWindow,'Name',namestr{1});
-                assignin('base',['kera' num2str(get(gcf,'Number'))],kera2.kera);
-                disp(['New kera window opened; figure named ' namestr{1} ' and variable named kera' num2str(get(gcf,'Number'))]);
-%                 kera.gui.guiWindow = guiTemp;
-            else
-                kera.gui.errorMessage('Failed to import saved session file');
-            end
-        end
+
 
         function postProcessing(kera)
             % kera.gui.alert('Processing is done!');
@@ -446,32 +449,25 @@ classdef Kera < handle
             delete(kera.Histogram);
             delete(kera.histogramFit);
             delete(kera.visualizeTrans);
-            kera.histogramRow = 1;
-            kera.histogramData(1, 1, 1); %set up the rest of the interface
-             N = length(kera.output);
+            
+            if isempty(kera.histogramRow)
+                %set up the whole histogram interface
+                kera.histogramDataSetup();
+            end
+            kera.histogramData(); %display the histograms
+            kera.createTransitionVisual(); %display the top panel visualization
+            N = length(kera.output);
             labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
             set(kera.gui.elements('Jump to Row'), 'String', labels);
             set(kera.gui.elements('Jump to Row'), 'Value', kera.histogramRow)
         end
 
         function exportSPKG(kera, hObject, eventData, handles)
+            %save the entire session (a good idea if you want to continue
+            %analysis at a later date)
             kera.gui.resetError();
-
-%             savePackageNames = {'channels', 'stateList', 'letters', 'timeData', 'nonZeros', 'lettersR', 'timeDataR', 'nonZerosR', 'stateDwellSummary', 'output'};
-%             savePackageData = {kera.savePackage.channels, kera.savePackage.stateList, kera.savePackage.letters,...
-%                 kera.savePackage.timeData, kera.savePackage.nonZeros, kera.savePackage.lettersR, kera.savePackage.timeDataR,...
-%                 kera.savePackage.nonZerosR, kera.stateDwellSummary, kera.savePackage.output};
-% 
-%             savePackage = jsonencode(containers.Map(savePackageNames, savePackageData)); 
-%             [filename, path] = uiputfile('savePackage.spkg');
-%             save([path filesep filename], 'savePackage', '-ascii', '-double');
             [filename, path] = uiputfile('savedSession.mat');
-%             guiTemp = kera.gui.guiWindow;
-                 %saving the gui window itself would be a waste of memory,
-                 %since it is re-created every time anyway  
-%             kera.gui.guiWindow = [];
             save([path filesep filename], 'kera');
-%             kera.gui.guiWindow = guiTemp;
         end
 
         function exportAnalyzed(kera, hObject, eventData, handles)
@@ -484,7 +480,6 @@ classdef Kera < handle
             if ~exist('path','var')
                 return
             end
-
             for row = 1:length(kera.output)
                 try
                 t = kera.output(row).table;
@@ -501,11 +496,16 @@ classdef Kera < handle
             channelExport = str2double(channelAns{1});
             dwellAns = questdlg('Export dwell times excluding edge states (states occurring at the beginning or end of a trace)',...
                 'Exclude edge states?', 'Exclude edges', 'Include edges','Exclude edges');
-            switch dwellAns(1)
+            switch dwellAns(1) %if you change the prompt, remember to change the cases
                 case 'E'
                     cellSave = kera.stateDwellSummary(channelExport).dwellTimes;
                 case 'I'
                     cellSave = kera.stateDwellSummary(channelExport).dwellTimesWithEdges;
+                otherwise
+                    warning(['Save failed because the button pressed did not'...
+                        ' match the cases in this switch block.  Please review the'...
+                        ' code at this location']);
+                    return
             end
             dataSave = zeros([1 length(cellSave)]);
             for i = 1:length(cellSave)
@@ -521,7 +521,7 @@ classdef Kera < handle
                 return
             end
 
-            t1 = table(dataSave);
+            t1 = table(dataSave); %make it csv friendly
             writetable(t1, [path filesep 'channel_' num2str(channelExport) '_' dwellAns(1) '_dwellTimes.csv'], 'Delimiter', ',');
         end
 
@@ -532,6 +532,8 @@ classdef Kera < handle
             %items here are referred to elsewhere by their string, so
             %changing the displayed string might break some of the other
             %interaction code.
+            
+            kera.histogramRow = 1;
             
             kera.gui.createText('Data Type:', [0.60 0.2 0.2 0.1]);
             kera.gui.createDropdown('dataType', {'Histogram', 'Cumulative dist.'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
@@ -545,23 +547,83 @@ classdef Kera < handle
             kera.gui.createDropdown('order', {'Single', 'Double'}, [0.75 0 0.2 0.1], @kera.histogramData);
             kera.order = 1;
             
-            kera.gui.createDropdown('dwellSelection', {'All'}, [.5 .15 .13 .1], @kera.histogramData);
+            kera.gui.createDropdown('dwellSelection', {'All'}, [.5 .15 .13 .1], @kera.dwellSelectionChange);
             set(kera.gui.elements('dwellSelection'), 'Visible', 'off');
             kera.dwellSelection = 1;
 
             kera.gui.createText('Row: 1', [0.2 0.17 0.05 0.07]);
-            kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.histogramData);
-            kera.gui.createButton('>', [0.25 0.09 0.1 0.07], @kera.histogramData);
-            kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.histogramData);
-            kera.gui.createButton('>>', [0.36 0.09 0.1 0.07], @kera.histogramData);
+            kera.gui.createButton('<', [0.12 0.09 0.1 0.07], @kera.backOne);
+            kera.gui.createButton('>', [0.25 0.09 0.1 0.07], @kera.forwardOne);
+            kera.gui.createButton('<<', [0.01 0.09 0.1 0.07], @kera.backAll);
+            kera.gui.createButton('>>', [0.36 0.09 0.1 0.07], @kera.forwardAll);
             kera.gui.createText('Total', [0.15 0.23 0.17 0.07]);
             N = length(kera.output);
             labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
-            kera.gui.createDropdown('Jump to Row', labels, [0.185 0.002 0.15 0.07], @kera.histogramData);
+            kera.gui.createDropdown('Jump to Row', labels, [0.185 0.002 0.15 0.07], @kera.jumpToRow);
 %             kera.gui.createButton('Generate Fits', [0.4 0.15 0.15 0.05], @kera.generateFits); 
         end
 
+        %the disable/enable on each button is because if you hit the button
+        %twice in quick succession the histogram function can run twice
+        %without clearing and this can also cause the program to freeze
+        function backOne(kera, hObject, ~, ~)
+            disable(kera.gui, hObject.String);
+            if kera.histogramRow > 1
+                kera.histogramRow = kera.histogramRow - 1;
+            end
+            try
+                kera.histogramData();
+                kera.createTransitionVisual();
+            catch
+            end
+            enable(kera.gui, hObject.String);
+        end
+        
+        function backAll(kera, hObject, ~, ~)
+            disable(kera.gui, hObject.String);
+            kera.histogramRow = 1;
+            try
+                kera.histogramData();
+                kera.createTransitionVisual();
+            catch
+            end
+            enable(kera.gui, hObject.String);
+        end
+        
+        function forwardOne(kera, hObject, ~, ~)
+            disable(kera.gui, hObject.String);
+            if kera.histogramRow<length(kera.output)
+                kera.histogramRow = kera.histogramRow + 1;
+            end
+            try
+                kera.histogramData();
+                kera.createTransitionVisual();
+            catch
+            end
+            enable(kera.gui, hObject.String);
+        end
+        
+        function forwardAll(kera, hObject, ~, ~)
+            disable(kera.gui, hObject.String);
+            kera.histogramRow = length(kera.output);
+            try
+                kera.histogramData();
+                kera.createTransitionVisual();
+            catch
+            end
+            enable(kera.gui, hObject.String);
+        end
+        
+        function jumpToRow(kera, ~, ~, ~)
+            kera.histogramRow = get(kera.gui.elements('Jump to Row'), 'Value');
+            kera.histogramData();
+            kera.createTransitionVisual();
+        end
 
+        function dwellSelectionChange(kera, ~, ~, ~)
+            kera.histogramData();
+            kera.createTransitionVisual();
+        end
         
         function histogramData(kera, hObject, eventData, handles)
             %refreshes the Kera window; a variety of GUI elements can
@@ -569,52 +631,17 @@ classdef Kera < handle
             %likely function to break or malfunction
             kera.gui.resetError();
 
-            if isempty(kera.savePackage)
-%                 kera.gui.errorMessage('Import data before analyzing');
-%                 return
-            end
-
-            if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
-                kera.histogramDataSetup()
-            else
-                kera.dataType = get(kera.gui.elements('dataType'), 'Value');
-                kera.fitType = get(kera.gui.elements('fitType'), 'Value');
-                kera.order = get(kera.gui.elements('order'), 'Value');
-                if ~isempty(kera.output(kera.histogramRow).excel)
-                    kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
-                end
-            end
-            newRow = 0; %Set to 1 if we have moved to a new row of the output
-            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
-                %in other words, was the calling object one of the buttons?
-                %figure out which one and change the row accordingly
-                newRow = 1;
-                disable(kera.gui, hObject.String);
-                if strcmp(hObject.String,'<') && kera.histogramRow > 1
-                    kera.histogramRow = kera.histogramRow - 1;
-                elseif strcmp(hObject.String,'>') && kera.histogramRow < length(kera.output)
-                    kera.histogramRow = kera.histogramRow + 1;
-                elseif strcmp(hObject.String,'>>')
-                    kera.histogramRow = length(kera.output);
-                elseif strcmp(hObject.String,'<<')
-                    kera.histogramRow = 1;    
-                end
-            end
-            
-            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'popupmenu')
-                newRow = 1;
-                try
-                    kera.histogramRow = get(kera.gui.elements('Jump to Row'), 'Value');
-                catch %if the menu doesn't exist yet
-                     N = length(kera.output);
-                    labels = cellfun(@num2str,mat2cell((1:N)', ones(1,N)),'UniformOutput',false);
-                    kera.gui.createDropdown('Jump to Row', labels, [0.185 0.002 0.15 0.07], @kera.histogramData);
-                end
+            kera.dataType = get(kera.gui.elements('dataType'), 'Value');
+            kera.fitType = get(kera.gui.elements('fitType'), 'Value');
+            kera.order = get(kera.gui.elements('order'), 'Value');
+            if ~isempty(kera.output(kera.histogramRow).excel)
+                kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
             end
             
             set(kera.gui.elements('Jump to Row'), 'Value',kera.histogramRow);
+            %needs to be done every time we change rows
             
-            if hObject==1 || newRow
+            if kera.dwellSelectionOn %see kera.toggleDwellSelection.  This is turned off by default
                 if ~isempty(kera.output(kera.histogramRow).excel)
                     enable(kera.gui,'dwellSelection');
                     labels = cell([size(kera.output(kera.histogramRow).excel,2)-1 1]);
@@ -626,90 +653,47 @@ classdef Kera < handle
                     set(kera.gui.elements('dwellSelection'),'Value',min(kera.dwellSelection,length(labels)));
                     kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
                 else
+                    disable(kera.gui,'dwellSelection');
                     set(kera.gui.elements('dwellSelection'),'Value',1);
                     set(kera.gui.elements('dwellSelection'),'String',{'All'});
                     kera.dwellSelection = 1;
                 end
             end
-
+            
+            %update text on the GUI:
             set(kera.gui.elements('Row: 1'), 'String', ['Row: ' num2str(kera.histogramRow)]);
             row = kera.histogramRow;
             set(kera.gui.elements('Total'), 'String', ['Total: ' int2str(kera.output(kera.histogramRow).count)]);
 
-            out.dataType = kera.dataType; %1 = normal histogram, 2 = cumulative distribution fit
-            out.fitType = kera.fitType;
-            out.order = kera.order;
-            if kera.dwellSelection == 1
-                out.data = kera.output(row).timeLengths;
-            else
-                out.data = kera.output(row).excel(:,kera.dwellSelection);
+            if kera.dwellSelection == 1 || ~kera.dwellSelectionOn %the default
+                outdata = kera.output(row).timeLengths;
+            else %if dwellSelection is turned on and not equal to 1, pick out specific transition
+                outdata = kera.output(row).excel(:,kera.dwellSelection);
             end
-            
-            delete(kera.Histogram);
-            delete(kera.histogramFit);
-            delete(kera.visualizeTrans);
             hold on;
-%             out.handle = gcf;
             if isempty(kera.h1)
                 kera.h1 = subplot('Position', [0.05 0.35 0.4 0.45]); 
             end
             cla(kera.h1);
             if kera.fitType == 2
-                out.data(out.data<=0) = [];
-                out.data = log(out.data);
+                outdata(outdata<=0) = [];
+                outdata = log(outdata);
             end
-            kera.dataDisplayed = out.data;
+            kera.dataDisplayed = outdata;
             switch kera.dataType
                 case 1
-                    kera.Histogram = histogram(kera.h1,out.data);
+                    kera.Histogram = histogram(kera.h1,outdata);
                 case 2
-                    kera.Histogram = plot(kera.h1,sort(out.data),linspace(0,1,length(out.data)));
+                    kera.Histogram = plot(kera.h1,sort(outdata),linspace(0,1,length(outdata)));
             end
-            if isempty(kera.h3)
-                kera.h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
-            end
-            cla(kera.h3);
-            set(kera.h3, 'ColorOrderIndex', 1);
-            if kera.output(row).searchMatrix(1)~= -1 %the row was created with the normal search method
-                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
-            else %rarely used: the regex search function was used (this is an advanced feature)
-                xList = [NaN 0   5   NaN NaN];
-                yList = [NaN NaN NaN 0   1  ];
-                text(kera.h3,2.5, 0.5 ,kera.output(row).expr,'FontSize',30,'HorizontalAlignment','center','Interpreter','none');
-            end
-            for j = 2:size(yList,2)
-                yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
-            end
-            if kera.dwellSelectionOn
-                if kera.dwellSelection == 1
-                    rectangle(kera.h3,'Position',[2 0 xList(end-1)-2 max(yList(isfinite(yList)),[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
-                else
-                    rectangle(kera.h3,'Position',[kera.dwellSelection 0 1 max(yList,[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
-                end
-            end
-            hold(kera.h3,'on');
-            kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
-            yLimCalc = [min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]; %the mod is there for the handling of "Inf" flags
-            ylim(kera.h3,yLimCalc);
-            xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
-            for yInf = find(diff((sum(yList,2)==Inf)')==1)+1
-                text(kera.h3,xList(yInf,1)+.5, mean(get(kera.h3,'YLim')),'...','FontSize',30,'HorizontalAlignment','center');
-            end
-            
             try
-                generateFits(kera);
+                kera.generateFits();
 %                 disp(outText);
             catch
             end
-            
-            if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
-                enable(kera.gui, hObject.String);
-            end
-
-
         end
-            
-        function generateFits(kera, hObject, eventData, handles)
+        
+        function generateFits(kera, ~, ~, ~)
             if isempty(kera.dataType) || isempty(kera.fitType) || isempty(kera.order)
                 kera.histogramDataSetup()
             else
@@ -717,13 +701,17 @@ classdef Kera < handle
                 kera.fitType = get(kera.gui.elements('fitType'), 'Value');
                 kera.order = get(kera.gui.elements('order'), 'Value');
             end
-
+            
             row = kera.histogramRow;
 
             out.dataType = kera.dataType; %1 = normal histogram, 2 = cumulative distribution fit
             out.fitType = kera.fitType;
             out.order = kera.order;
-            out.data = kera.output(row).timeLengths;
+            if kera.dwellSelection == 1 %the default
+                out.data = kera.output(row).timeLengths;
+            else %if dwellSelection is turned on and not equal to 1, pick out specific transition
+                out.data = kera.output(row).excel(:,kera.dwellSelection);
+            end
 
             delete(kera.histogramFit);
 %             hold on;
@@ -750,6 +738,41 @@ classdef Kera < handle
             end
            
         end
+        
+        function createTransitionVisual(kera,~,~,~)
+            %create the visual at the top of the Kera window
+            if isempty(kera.h3)
+                kera.h3 = subplot('Position', [0.05 0.85 0.9 0.1]);
+            end
+            cla(kera.h3);
+            set(kera.h3, 'ColorOrderIndex', 1);
+            row = kera.histogramRow;
+            if kera.output(row).searchMatrix(1)~= -1 %the row was created with the normal search method
+                [xList, yList] = visualizeTransition(kera.output(row).searchMatrix,kera.channels);
+            else %rarely used: the regex search function was used (this is an advanced feature)
+                xList = [NaN 0   5   NaN NaN];
+                yList = [NaN NaN NaN 0   1  ];
+                text(kera.h3,2.5, 0.5 ,kera.output(row).expr,'FontSize',25,'HorizontalAlignment','center','Interpreter','none');
+            end
+            for j = 2:size(yList,2)
+                yList(:,j) = yList(:,j)+.05*j; %make them easier to tell apart
+            end
+            if kera.dwellSelectionOn
+                if kera.dwellSelection == 1
+                    rectangle(kera.h3,'Position',[2 0 xList(end-1)-2 max(yList(isfinite(yList)),[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
+                else
+                    rectangle(kera.h3,'Position',[kera.dwellSelection 0 1 max(yList,[],'all')],'FaceColor',[1 1 .7],'LineStyle','none');
+                end
+            end
+            hold(kera.h3,'on');
+            kera.visualizeTrans = plot(kera.h3,xList, yList, 'LineWidth', 2);
+            yLimCalc = [min(min(yList,0),[],'all')-.2 max(yList(~isnan(mod(yList,1))),[],'all')+.2]; %the mod is there for the handling of "Inf" flags
+            ylim(kera.h3,yLimCalc);
+            xlim(kera.h3,[min(xList,[],'all') max(xList,[],'all')]);
+            for yInf = find(diff((sum(yList,2)==Inf)')==1)+1
+                text(kera.h3,xList(yInf,1)+.5, mean(get(kera.h3,'YLim')),'...','FontSize',30,'HorizontalAlignment','center');
+            end
+        end
 
         function path = selectFolder(kera)
             p = uigetdir;
@@ -771,14 +794,8 @@ classdef Kera < handle
         end
         
         %NOTE: changing the timestep or baseState after loading data means
-        %that you have to run the default analysis again, and so you should
-        %really make sure these are correct before doing any custom
-        %searching (since the default analysis clears out any custom search
-        %results)
-        
-        %It's probably just best to make a whole new KERA session and
-        %export if you think changing the base state is an interesting
-        %analysis to do on your data
+        %that you have to run the default analysis again to update the
+        %results
         
         function setTimeStep(kera,~,~,~)
             timeIntervalCell = inputdlg('Please enter the time interval, in seconds, between data points');
@@ -790,14 +807,24 @@ classdef Kera < handle
         end
         
         function toggleDwellSelection(kera, ~, ~, ~)
+            %get kinetic event information for just a single transition
+            %within a multi-transition event.
+            %kind of niche, since most of the time you can just do a
+            %3-state custom search and isolate the state you're interested
+            %in with the transitions before and/or after it.  On the other
+            %hand, kinetic information for the *whole* of a long event is
+            %not particularly useful, so maybe it makes sense to allow the user
+            %to access each state of it individually.
             kera.dwellSelectionOn = ~kera.dwellSelectionOn;
             if kera.dwellSelectionOn
                 set(kera.gui.elements('dwellSelection'), 'Visible', 'on');
-                kera.histogramData(1,1,1); %refresh the screen
+                kera.histogramData(); %refresh the screen
+                kera.createTransitionVisual();
             else
                 set(kera.gui.elements('dwellSelection'), 'Visible', 'off');
                 kera.dwellSelection = 1;
-                kera.histogramData(1,1,1); %refresh the screen
+                kera.histogramData(); %refresh the screen
+                kera.createTransitionVisual();
             end
         end
             
