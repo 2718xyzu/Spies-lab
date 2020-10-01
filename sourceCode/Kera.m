@@ -564,6 +564,9 @@ classdef Kera < handle
 
         
         function histogramData(kera, hObject, eventData, handles)
+            %refreshes the Kera window; a variety of GUI elements can
+            %trigger this, which is why it is so messy.  It is the most
+            %likely function to break or malfunction
             kera.gui.resetError();
 
             if isempty(kera.savePackage)
@@ -581,8 +584,10 @@ classdef Kera < handle
                     kera.dwellSelection = get(kera.gui.elements('dwellSelection'), 'Value');
                 end
             end
-            newRow = 0;
+            newRow = 0; %Set to 1 if we have moved to a new row of the output
             if isprop(hObject, 'Style') && strcmpi(get(hObject, 'Style'),'pushbutton')
+                %in other words, was the calling object one of the buttons?
+                %figure out which one and change the row accordingly
                 newRow = 1;
                 disable(kera.gui, hObject.String);
                 if strcmp(hObject.String,'<') && kera.histogramRow > 1

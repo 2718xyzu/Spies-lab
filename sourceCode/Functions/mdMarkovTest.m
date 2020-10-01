@@ -1,3 +1,6 @@
+%A test for creating a multi-dimensional Markov model
+
+
 s3 = 3;
 s5 = 2;
 t = 30/6000;

@@ -3,6 +3,7 @@ function [fitModel, rateText, data] = getFitHistogram(data,dataType,fitType,orde
 %fitType is 1 if linear, 2 if logarithmic
 %order is 1 if a single-order fit is to be assumed, 2 if a double
 %exponential distribution is desired
+%called by Kera.generateFits in the Kera.m file
 
 
 

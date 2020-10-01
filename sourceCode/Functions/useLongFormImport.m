@@ -1,6 +1,11 @@
 function [dataCell, fileNames] = useLongFormImport(dataCell, fileNames, j)
 
-
+%This was part of an experimental import method--all traces would be
+%concatenated into a single trace and analyzed by ebFRET or HaMMY that way.
+% It was largely unwieldy and ineffective; although it helped some of the
+% problems of an ebFRET analysis, HaMMY has a limit on how long any trace
+% can be which is imported to it.  If ebFRET is giving you problems, use
+% hFRET instead.
 
 
 

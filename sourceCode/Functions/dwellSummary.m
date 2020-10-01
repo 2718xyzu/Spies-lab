@@ -1,4 +1,22 @@
 function out = dwellSummary(dataCell,timeInterval,channels,baseState)
+%Generates the dwellSummary from the dwell and time information; this code
+%may be easily changed to add more information to the eventual output.
+%dwellSummary is a structure, so just add a field to it.  See documentation
+%for more details, but in brief, the structure is organized first by
+%channel, then by states within the channel.  The dwells *with* edges
+%include the states which are on the edge of the trace (beginning or end);
+%in the dwellTimes field it discards those times because we don't know how
+%long they lasted.  For determining the propoprtion of time your system
+%spent at a given state, though, definitely use the dwellTimesWithEdges so
+%you aren't biased by any state being more likely to happen at the
+%beginning or end.  Multiplying the meanDwellsWithEdges values by the
+%length of the respective dwellTimesWithEdges is a fast way to figure out
+%how long your system was at those states.
+%called by Kera.preProcessing in the Kera.m file
+
+
+
+
     out = struct();
     %baseState is passed in as a vector with "channels" elements
 

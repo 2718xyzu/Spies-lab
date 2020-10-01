@@ -1,3 +1,7 @@
+%A more advanced simulation which takes into account the state of the other
+%channel when determining transition probability.  Can be generalized to
+%more channels.  See also mdMarkovTest
+
 N = 10; %number of traces to create
 lengthTrace = 1000; %length of each trace in time points
 cy3Final = cell([N 1]);
@@ -77,13 +81,13 @@ for i = 1:N
     filenames{i} = num2str(i);
 end
 
-saveebFRET = 0;
+saveebFRET = 0; %change this to save ebFRET
 if saveebFRET
     saveEmFret(cy3Final,1, filenames); %save the cy3 traces
     saveEmFret(cy5Final,2, filenames); %save the cy5 traces
 end
 
-saveQuB = 0;
+saveQuB = 0; %change this to save QuB
 if saveQuB
     
     for channel = 1:2
@@ -106,7 +110,7 @@ if saveQuB
     end
 end
 
-savehFRET = 1;
+savehFRET = 1; %change this to save hFRET
 if savehFRET
     cy3Save = cell2mat(cy3Final)';
     save('/Users/josephtibbs/Desktop/cy3Save.dat','-ascii');

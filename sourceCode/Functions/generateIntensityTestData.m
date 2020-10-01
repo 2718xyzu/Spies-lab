@@ -1,4 +1,6 @@
-%Generates fake intensity data, to test the normalizer
+%Generates fake intensity data, to test the normalizer. Not called by
+%anything.  For multi-channel simulation, see the simulate2Channel and mdMarkovTest
+%files
 N = 100;
 states = [.1 .3, .5, .9];
 noise = .01;
