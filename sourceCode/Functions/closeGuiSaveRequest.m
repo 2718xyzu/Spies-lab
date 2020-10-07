@@ -1,4 +1,6 @@
 function closeGuiSaveRequest(~, ~, ~)
+   %a function that runs when the user closes Kera
+   
    selection = questdlg('Close KERA?  This will delete unsaved progress', ...
               'Warning', ...
               'Yes','No','Crash (save backup)','Yes');

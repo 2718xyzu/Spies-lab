@@ -3,7 +3,7 @@
 %to "emulated FRET", a normalized version of the signal which can be
 %imported to ebFRET, HaMMY, or other programs which assume you will be
 %feeding them a FRET signal.
-%Contains call to "emulateFRET", which allows for trace pre-processing,
+%Contains call to selectTracesEmFret, which allows for trace pre-processing,
 %before calling smoothNormalize (if no baselines were selected) or normalizeSelection
 %(preferred; uses user input data to help normalize) which smooth and normalize all traces
 
@@ -11,8 +11,8 @@ lastwarn('');
 addpath('Functions');
 [warnMsg, warnId] = lastwarn;
 if ~isempty(warnMsg)
-    questdlg(['Functions directory not found; please select the Spies-lab '...
-        'scripts directory to add it to the search path'],'Select search dir',...
+    questdlg(['Functions directory not found; please select the '...
+        'sourceCode directory to add it to the search path'],'Select search dir',...
     'Ok','Ok');
     cd(uigetdir);
     addpath('Functions');

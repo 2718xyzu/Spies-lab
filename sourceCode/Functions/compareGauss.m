@@ -1,4 +1,5 @@
 function [xShift,yShift,errs] = compareGauss(xData, yData, frame,Gauss)
+    %a microscope analysis code, not part of kera
     k = 1;
     fail = zeros(1,length(xData));
 
