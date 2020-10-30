@@ -1,4 +1,3 @@
-
 %A wrapper function to guide through data input from raw intensity values
 %to "emulated FRET", a normalized version of the signal which can be
 %imported to ebFRET, HaMMY, or other programs which assume you will be

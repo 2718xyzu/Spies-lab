@@ -1,6 +1,6 @@
 function [intensity,fileNames] = openRawData(channels)
 
-%called by newChangeToebFRET and convertRawFiles.  Just a UI for
+%called by normalizeTrajectorySet and convertRawFiles.  Just a UI for
 %mass-opening data stored in multiple files (or in the .traces format,
 %which is an obscure filetype that might be unique to the Spies lab)
 

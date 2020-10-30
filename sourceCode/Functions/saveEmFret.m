@@ -1,6 +1,6 @@
 function saveEmFret(emFret,channel, fileNames)
 
-    %called by newChangeToebFRET for the purpose of saving the
+    %called by normalizeTrajectorySet for the purpose of saving the
     %newly-normalized trace data to a format which can be imported to
     %ebFRET, HaMMY, or hFRET.  It will pad the traces to the same length if
     %you save them to hFRET
