@@ -17,7 +17,7 @@ if ~isempty(warnMsg)
     addpath('Functions');
 end
 
-importOldSession = 1; %set this to 1, open up your old saved analysis, and run the code (don't forget to change it back later)
+importOldSession = 0; %set this to 1, open up your old saved analysis, and run the code (don't forget to change it back later)
 
 if ~importOldSession
 clear intensity
@@ -39,11 +39,11 @@ selectionAll = ones(N,1,'logical');
 %trace in all other channels must be selected, must be selected
 %for saving during normalization, along with all corresponding traces in
 %the other channels
-for c = 1:channels
-    low{c} = cell([N 1]);
-    high{c} = cell([N 1]);
-    trim{c} = zeros([N 2]);
-end
+    for c = 1:channels
+        low{c} = cell([N 1]);
+        high{c} = cell([N 1]);
+        trim{c} = zeros([N 2]);
+    end
 end
 %if you imported old data, this is where you can start:
 [low, high, trim, selectionAll] = selectTracesEmFret(channels, intensity, selectionAll, fileNames, low, high, trim);
