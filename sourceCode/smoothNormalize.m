@@ -6,6 +6,17 @@ function [matrix, niceList] = smoothNormalize(varargin)
 %   as the input matrix, which contain the start and end indices of the
 %   baseline for each trace (typically a region of photoblinking, if it is present).
 
+anS = questdlg(['This is a deprecated version of the code; while the assumptions it makes'...
+    ' may allow it to create a well-behaved normalized version of all traces, this is not guaranteed for all '...
+    'data.  If at all possble, select low and high regions in all traces.'],...
+    'Warning','Continue anyway','Quit','Quit');
+
+if strcmp(anS,'Quit')
+    matrix = repmat({-Inf},size(varargin{1}));
+    niceList = ones(size(varargin{1}),'logical');
+    return
+end
+
 input = varargin{1};
 matrix = cell(size(input));
 width = 7; %width of comparison region

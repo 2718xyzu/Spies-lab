@@ -25,11 +25,21 @@ end
 
 
 if any(~lowSpecified) || any(~highSpecified)
-anS = questdlg('Would you like to assume a two-state model for these traces?','Model select', 'Two-state',...
-    'Do not assume two-state', 'Two-state');
-if strcmp(anS(1),'T')
-    twoState = 1;
-end
+    anS = questdlg(['Automatic fitting is an in-progress feature of the code; while the assumptions it makes'...
+    ' may allow it to create a well-behaved normalized version of all traces, this is not guaranteed for all '...
+    'data.  If at all possble, select low and high regions in all traces.'],...
+    'Warning','Continue anyway','Quit','Quit');
+
+    if strcmp(anS,'Quit')
+         matrix = repmat({-Inf},size(input));
+         niceList = ones(size(input),'logical');
+        return
+    end
+    anS = questdlg('Would you like to assume a two-state model for these traces?','Model select', 'Two-state',...
+        'Do not assume two-state', 'Two-state');
+    if strcmp(anS(1),'T')
+        twoState = 1;
+    end
 end
 % v = version('-release');
 

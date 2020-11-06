@@ -21,7 +21,9 @@ importOldSession = 1; %set this to 1, open up your old saved analysis, and run t
 
 if ~importOldSession
 clear intensity
-channels = 2;
+if ~exist('channels','var')
+    channels = str2double(inputdlg('Number of channels (independent signals you would like to normalize)'));
+end
 low = cell([1 channels]);
 high = cell([1 channels]);
 selection = cell([1 channels]);
@@ -29,7 +31,7 @@ trim = cell([1 channels]);
 
 [intensity,fileNames] = openRawData(channels);
 
-N = length(intensity{c});
+N = length(intensity{1}); %all channels must have the same number of trajectories
 selectionAll = ones(N,1,'logical');
 %keeps track of whether a trace set has passed all criteria for
 %being included in the final export:
@@ -65,17 +67,17 @@ emFret = cell([1 channels]);
 saveList = cell([1 channels]);
 % intensityTrimmed = intensity;
 N = length(intensity{1});
-finalTrim = [zeros(N,1) ones(N,1)*1E10];
+finalTrim = [ones(N,1) ones(N,1)*1E10];
 intensityTrimmed = intensity;
 %each set of traces must be trimmed, eventually, to the same indices
 for c = 1:channels
-    for i = 1:N
+    for i = find(selectionAll')
         finalTrim(i,1) = max(trim{c}(i,1),finalTrim(i,1));
         finalTrim(i,2) = min(trim{c}(i,2),finalTrim(i,2));
     end
 end
 for c = 1:channels
-    for i = 1:N
+    for i = find(selectionAll')
         intensityTrimmed{c}{i} = intensity{c}{i}(finalTrim(i,1):finalTrim(i,2));
     end
 end
@@ -85,8 +87,14 @@ for c = 1:channels
     emFret{c} = cell([1 N]);
     if isempty(low{c})
         [emFret{c}(selectionAll),saveList{c}(selectionAll)] = smoothNormalize(intensityTrimmed{c}(selectionAll));
+        if emFret{c}{selectionAll(1)}==-Inf
+            return %quit switch
+        end
     else
         [emFret{c}(selectionAll),saveList{c}(selectionAll)] = normalizeSelection(intensityTrimmed{c}(selectionAll),low{c}(selectionAll,:), high{c}(selectionAll,:)); %normalize selected traces
+        if emFret{c}{selectionAll(1)}==-Inf
+            return %quit switch
+        end
     end
     selectionAll = and(selectionAll,saveList{c});
 end
