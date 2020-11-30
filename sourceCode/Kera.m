@@ -137,7 +137,8 @@ classdef Kera < handle
                 kera.gui.resetError();
                 return
             end
-            [data,names] = findPairs(kera); %currently not sure how to extract raw data from QuB files
+            [data,names] = findPairs(kera);
+            %raw (pre-discretization) data is not extracted from QuB
             if kera.gui.error
                 kera.gui.resetError()
                 return
@@ -153,7 +154,9 @@ classdef Kera < handle
                     timeM = data{i,j};
                     count = 1;
                     for i0 = 1:size(timeM,1) %number of distinct dwells
-                        binM(count:count+timeM(i0,2)-1) = timeM(i0,1);
+                        binM(count:count+timeM(i0,2)-1) = timeM(i0,1)+1;
+                        %QuB makes 0 its default lowest state, but in KERA
+                        %all states must be positive integers, hence the +1
                         count = count + timeM(i0,2);
                     end
                     kera.importedData{i,j,2} = binM(1:end-1);

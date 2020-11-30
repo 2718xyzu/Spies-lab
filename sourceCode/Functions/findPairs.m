@@ -40,6 +40,9 @@ function [data,names] = findPairs(kera)
     %those traces into.
     %the next issue is that there might be a '1 tr12Cy5' and a '2 tr12Cy5',
     %and we need to keep these separate (hence the variable 'column').
+    allsuffixes = cell(1,numel(dir3));
+    fileNum = cell(1,1);
+    nummatches = cell(1,1);
     for i = 1:numel(dir3)
         try
         column = str2double(dir3{i}(1));
@@ -48,50 +51,30 @@ function [data,names] = findPairs(kera)
         end
         match = regexp(strjoin(dir3(i)),'r\d+.+','match');
         suffix = regexp(strjoin(match(1)),'\d[^\d].+','match');
-        suffixes(i) = {lower(suffix{1}(2:end))};
-        matches{i,column} = match{1}(2:end-length(suffix{1})+1);
-        if ~isnan(str2double(matches{i,column}))
-            allmatches{i,column} = str2double(matches{i,column});
+%         suffixes{column}(i) = {lower(suffix{1}(2:end))};
+        allsuffixes(i) = {lower(suffix{1}(2:end))};
+        fileNum{column}{i} = match{1}(2:end-length(suffix{1})+1);
+        if ~isnan(str2double(fileNum{column}{i}))
+            nummatches{column}(i) = str2double(fileNum{column}{i});
         else
             disp(['Error: bad filename "' strjoin(dir2(i)) '"']);
         end
     end
-    u = unique(lower(suffixes));
-
-    %if not all files have all pairs in set -- note, this needs to be fixed
-%     if mod(numel(dir3),kera.channels)
-%     missingPair = questdlg(['There are files without matching pairs.  Would you '...
-%         'like to assume that corresponding files had no events, and remained '...
-%         'constant in the lowest state (state 1), constant in a user-defined state '...
-%         'or to ignore and throw out files without matching pairs?'],'Unpaired File Treatment',...
-%         'Fill with constant state-1 trajectory','Fill with constant trajectory in other state',...
-%         'Ignore non-matching files','Fill with constant state-1 trajectory');
-% 
-%     if contains(missingPair, 'constant trajectory')
-%         constantState = inputdlg(['What state number should the missing trajectories be in?'...
-%             '  Type a number, where 1 is the lowest state']);
-%         constateState = str2double(constantState{1})-1;
-% 
-%     elseif contains(missingPair, 'Ignore')
-%         ignore = 1;
-% 
-%     else
-%         ignore = 0;
-%         constantState = 0;
-%     end
-%     end
-
+    u = unique(lower(allsuffixes));
+    
+    channelAssign = cell(1,length(u));
     if length(u) < 20
         for i = 1:length(u)
-            letters(i) = inputdlg([ 'What color should files ending in ***' ...
+            channelAssign(i) = inputdlg([ 'What color should files ending in ***' ...
                 u{i} ' be assigned to?  Type a number from 1 to ' num2str(kera.channels)]);
         end
     else
         kera.gui.errorMessage('Too many distinct filetypes.  Check naming guidelines and sanitize input');
         return
     end
-
-
+    
+    
+    
     %In a given dataset, there are supposed to be matching traces for each
     %channel (e.g. '1 tr1' goes with '1 tr1Cy5', where the first file would
     %go in channel 1 and the second would go in channel 2, but these are
@@ -99,77 +82,127 @@ function [data,names] = findPairs(kera)
     %In other words, any traces which have the same experiment number and
     %same trace number must somehow be linked.  That's what the mess of
     %code in the next for loop is doing.
-    i0 = 1;
-    for k = 1:size(allmatches,2)
+    unpairedChannels = [];
+    pairs = cell(1,length(nummatches));
+    pairFriends = cell(1,length(nummatches));
+    for k = 1:length(nummatches)
 
-        matches = allmatches(:,k);
-        pairs = zeros(1,kera.channels);
-        pairFriends = zeros(1,kera.channels);
+        fileNum = nummatches{k};
+        pairs{k} = zeros(1,kera.channels);
+        pairFriends{k} = zeros(1,kera.channels);
 
-        for i = 1:numel(matches)
-            if ~isempty(matches{i}) && isnumeric(matches{i})
-                column = letters(strcmp(u,suffixes{i}));
+        for i = 1:numel(fileNum)
+            if ~isempty(fileNum(i)) && isnumeric(fileNum(i))
+                column = channelAssign(strcmp(u,allsuffixes{i}));
+                %column now refers to channel
                 column = str2double(column{1});
                 index = [];
                 for j = 1:kera.channels-1
-                    index = max([find(pairs(:,mod(column+j-1,kera.channels)+1)==matches{i}) index]);
+                    index = max([find(pairs{k}(:,mod(column+j-1,kera.channels)+1)==fileNum(i)) index]);
                 end
                 if ~isempty(index)
-                    pairs(index,column) = matches{i};
-                    pairFriends(index,column) = i;
+                    pairs{k}(index,column) = fileNum(i);
+                    pairFriends{k}(index,column) = i;
                 else
-                    pairs(end+1,column) = matches{i};
-                    pairFriends(end+1,column) = i;
+                    pairs{k}(end+1,column) = fileNum(i);
+                    pairFriends{k}(end+1,column) = i;
                 end
             end
         end
-        data = cell(size(pairFriends));
-        names = cell(size(pairFriends));
+        unpairedRows = logical(any(pairs{k},2).*~all(pairs{k},2));
+        unpaired = any(unpairedRows);
+        if unpaired
+            unpairedChannels = unique([~all(pairs{k}(unpairedRows,:),1) unpairedChannels]);
+        end
+    end
+unpairedChannels = reshape(unpairedChannels,1,[]);
+%     if not all files have all pairs in set -- note, this needs to be fixed
+if ~isempty(unpairedChannels)
+    missingPair = questdlg(['There are files without matching pairs.  Would you '...
+        'like to assume that corresponding files had no events, and remained '...
+        'constant in the lowest state (state 1), constant in a user-defined state '...
+        'or to ignore and throw out files without matching pairs?'],'Unpaired File Treatment',...
+        'Fill with constant state-1 trajectory','Fill with constant trajectory in other state',...
+        'Ignore non-matching files','Fill with constant state-1 trajectory');
+
+    if contains(missingPair, 'constant trajectory')
+        constantState = zeros(1,kera.channels);
+        for j = unpairedChannels
+            constantState = inputdlg(['What state number should the missing trajectories for channel ' ...
+            num2str(j) ' be in?  Type a number, where 1 is the lowest state']);
+            constantState(j) = str2double(constantState{1})-1;
+            %in raw form, QuB data has the lowest state at 0, hence the -1
+        end
+        ignore = 0;
+    elseif contains(missingPair, 'Ignore')
+        ignore = 1;
+    else
+        ignore = 0;
+        constantState = zeros(1,kera.channels);
+    end
+end
+
+    
+    i0 = 1; 
+    for k = 1:size(nummatches,2)
+        data = cell(size(pairFriends{k}));
+        names = cell(size(pairFriends{k}));
         %import them, and record the names of each file
-        for i = 1:size(pairFriends,1)
-            if sum(pairFriends(i,:))>0
-                for j= 1:size(pairFriends,2)
-                    if pairFriends(i,j)>0
-                    name = strjoin(dir3(pairFriends(i,j)));
-                    fileID = fopen([path filesep name]);
-                    tempData = textscan(fileID,'%f %f');
-                    if isempty(tempData{1})
+        for i = 1:size(pairFriends{k},1)
+            if all(pairFriends{k}(i,:))
+                for j= 1:size(pairFriends{k},2)
+                    if pairFriends{k}(i,j)>0
+                        name = strjoin(dir3(pairFriends{k}(i,j)));
                         fileID = fopen([path filesep name]);
-                        [~] = textscan(fileID,'%s',1,'Delimiter','\t');
                         tempData = textscan(fileID,'%f %f');
-                    end
-                    tempData = cat(2,tempData{1}, tempData{2});
-                    fclose(fileID);
-                    data{i0,j} = tempData;
-                    names{i0,j} = name;
+                        if isempty(tempData{1})
+                            fileID = fopen([path filesep name]);
+                            [~] = textscan(fileID,'%s',1,'Delimiter','\t');
+                            %read the header
+                            tempData = textscan(fileID,'%f %f');
+                        end
+                        tempData = cat(2,tempData{1}, tempData{2});
+                        fclose(fileID);
+                        data{i0,j} = tempData;
+                        names{i0,j} = name;
                     end
                 end
                 i0 = i0+1;
-%             elseif sum(pairFriends(i,:))>0
-%                 for j= 1:size(pairFriends,2)
-%                     if pairFriends(i,j)>0
-%                         name = strjoin(dir3(pairFriends(i,j)));
-%                         fileID = fopen([path filesep name]);
-%                         tempData = textscan(fileID,'%s',1,'Delimiter','\t');
-%                         tempData = textscan(fileID,'%f %f');
-%                         tempData = cat(2,tempData{1}, tempData{2});
-%                         fclose(fileID);
-%                         data(1:size(tempData,1),1:size(tempData,2),j,i0) = tempData;
-%                         names(i0,j) = {name};
-%                     else
-%                         data(1,1:2,j,i0) = [constantState .5];
-%                     end
-%                 end
-%                 i0 = i0+1;
+            elseif ~ignore && any(pairFriends{k}(i,:))
+                maxTime = 0;
+                maxTimeNeeded = zeros(1,size(pairFriends{k},2));
+                for j= 1:size(pairFriends{k},2)
+                    if pairFriends{k}(i,j)>0
+                        name = strjoin(dir3(pairFriends{k}(i,j)));
+                        fileID = fopen([path filesep name]);
+                        tempData = textscan(fileID,'%f %f');
+                        if isempty(tempData{1})
+                            fileID = fopen([path filesep name]);
+                            [~] = textscan(fileID,'%s',1,'Delimiter','\t');
+                            %read the header
+                            tempData = textscan(fileID,'%f %f');
+                        end
+                        tempData = cat(2,tempData{1}, tempData{2});
+                        fclose(fileID);
+                        data{i0,j} = tempData;
+                        names{i0,j} = name;
+                        maxTime = max(maxTime,sum(tempData(:,2)));
+                    else
+                        data{i0,j} = [constantState(j) .5];
+                        maxTimeNeeded(j) = 1;
+                    end
+                end
+                for j = find(maxTimeNeeded)
+                    data{i0,j}(1,2) = maxTime;
+                end
+                i0 = i0+1;
             end
         end
     end
     data = data(1:i0-1,:);
     names = names(1:i0-1,:);
     
-%     maxTime = max(max(sum(squeeze(data(:,2,:,:)),1)));
-%     data(data==.5) = maxTime;
-
+    
     for i = 1:size(names,1)
         if isempty(names{i,1})
             for j = 2:size(names,2)
@@ -179,4 +212,6 @@ function [data,names] = findPairs(kera)
             end
         end
     end
+    
+    
 end
