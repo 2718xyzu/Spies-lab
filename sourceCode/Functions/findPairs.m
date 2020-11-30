@@ -112,7 +112,7 @@ function [data,names] = findPairs(kera)
         unpairedRows = logical(any(pairs{k},2).*~all(pairs{k},2));
         unpaired = any(unpairedRows);
         if unpaired
-            unpairedChannels = unique([~all(pairs{k}(unpairedRows,:),1) unpairedChannels]);
+            unpairedChannels = unique([find(~all(pairs{k}(unpairedRows,:),1)) unpairedChannels]);
         end
     end
 unpairedChannels = reshape(unpairedChannels,1,[]);
@@ -128,9 +128,9 @@ if ~isempty(unpairedChannels)
     if contains(missingPair, 'constant trajectory')
         constantState = zeros(1,kera.channels);
         for j = unpairedChannels
-            constantState = inputdlg(['What state number should the missing trajectories for channel ' ...
+            constantStateAns = inputdlg(['What state number should the missing trajectories for channel ' ...
             num2str(j) ' be in?  Type a number, where 1 is the lowest state']);
-            constantState(j) = str2double(constantState{1})-1;
+            constantState(j) = str2double(constantStateAns{1})-1;
             %in raw form, QuB data has the lowest state at 0, hence the -1
         end
         ignore = 0;
