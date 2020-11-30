@@ -19,17 +19,25 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
 
     out = struct();
     %baseState is passed in as a vector with "channels" elements
+    
+    maxStates = zeros([1 size(dataCell,2)]);
+        for j1 = 1:size(dataCell,2)
+            for i1 = 1:size(dataCell,1)
+                maxStates(j1) = max([maxStates(j1); dataCell{i1,j1,2}]);
+            end
+        end
+    
 
     for j = 1:channels %initialize the fields; each row corresponds to a channel
-        out(j).dwellTimes = cell([1,max(dataCell{1,j,2})]);
+        out(j).dwellTimes = cell([1,maxStates(j)]);
         %an exhaustive list of all times spent at a given state, where each
         %column corresponds to a different state (column 1 to state 1 etc.)
-        out(j).meanDwells = zeros([1,max(dataCell{1,j,2})]); 
+        out(j).meanDwells = zeros([1,maxStates(j)]); 
         %the mean of the columns in the previous (excluding zero padding)
-        out(j).dwellTimesWithEdges = cell([1,max(dataCell{1,j,2})]);
+        out(j).dwellTimesWithEdges = cell([1,maxStates(j)]);
         %dwellTimes but allowing those states which were cut off by the
         %edge of the trajectory
-        out(j).meanDwellsWithEdges = zeros([1,max(dataCell{1,j,2})]);
+        out(j).meanDwellsWithEdges = zeros([1,maxStates(j)]);
         %the mean of the previous
         out(j).timeBeforeFirst = []; %the time at ground before the first event
         out(j).timeAfterLast = []; %the time spent at ground after last event
