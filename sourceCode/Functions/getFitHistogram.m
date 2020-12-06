@@ -30,7 +30,7 @@ switch dataType
             data = log(data);
         end
         x = sort(data); %cumulative distribution
-        y = linspace(0,1,length(data));
+        y = linspace(1/length(data),1,length(data));
 end
 
 x = reshape(x,[length(x) 1]);

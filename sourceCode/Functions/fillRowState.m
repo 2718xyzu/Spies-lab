@@ -39,6 +39,8 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
         output(i).meanLength = mean(out.timeLengths);
         output(i).eventList = out.eventList;
         output(i).timeLengths = out.timeLengths; %how long was each event
+        tau = out.timeLengths;
+        output(i).randomnessParameter = (mean(tau.^2)-mean(tau)^2)./mean(tau)^2;
         eventExprList = cellfun(@mat2str, out.eventList,'UniformOutput',false);
 
         if ~isfield(out,'filenames') %if name data does not exist, fill it in with blank

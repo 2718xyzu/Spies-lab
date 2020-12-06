@@ -65,6 +65,7 @@ classdef Kera < handle
                 kera.gui.createSecondaryMenu('Analyze', 'Run/Refresh Analysis', @kera.processDataStates);
                 kera.gui.createSecondaryMenu('Analyze','Custom Search', @kera.customSearch);
                 kera.gui.createSecondaryMenu('Analyze','Regex Search (advanced)', @kera.regexSearchUI);
+                kera.gui.createSecondaryMenu('Analyze','Open in cftool',@kera.opencftool);
 
                 kera.gui.createPrimaryMenu('Settings');
                 kera.gui.createSecondaryMenu('Settings','Set channels and states', @kera.setChannelState);
@@ -80,6 +81,7 @@ classdef Kera < handle
                 kera.gui.disable('Analyze');
                 kera.gui.disable('Set baseline state');
                 kera.gui.disable('Toggle intraevent kinetics');
+                kera.gui.disable('Open in cftool');
                 
                 assignin('base',['kera' num2str(get(gcf,'Number'))],kera);
                 disp(['New kera window opened; figure named ' num2str(get(gcf,'Number')) ' and variable named kera' num2str(get(gcf,'Number'))]);
@@ -537,7 +539,7 @@ classdef Kera < handle
             %interaction code.
             
             kera.histogramRow = 1;
-            
+            kera.gui.enable('Open in cftool');
             kera.gui.createText('Data Type:', [0.60 0.2 0.2 0.1]);
             kera.gui.createDropdown('dataType', {'Histogram', 'Cumulative dist.'}, [0.75 0.2 0.2 0.1], @kera.histogramData);
             kera.dataType = 1;
@@ -628,6 +630,13 @@ classdef Kera < handle
             kera.createTransitionVisual();
         end
         
+        function opencftool(kera,~,~,~)
+            if ~isempty(kera.dataDisplayed)
+                cftool(kera.dataDisplayed(:,1),kera.dataDisplayed(:,2));
+            end
+        end
+        
+        
         function histogramData(kera, hObject, eventData, handles)
             %refreshes the Kera window; a variety of GUI elements can
             %trigger this, which is why it is so messy.  It is the most
@@ -682,12 +691,18 @@ classdef Kera < handle
                 outdata(outdata<=0) = [];
                 outdata = log(outdata);
             end
-            kera.dataDisplayed = outdata;
+%             kera.dataDisplayed = outdata;
             switch kera.dataType
                 case 1
                     kera.Histogram = histogram(kera.h1,outdata);
+                    xData = (kera.Histogram.BinEdges(1:end-1)+kera.Histogram.BinEdges(1:end-1))/2;
+                    yData = kera.Histogram.Values;
+                    kera.dataDisplayed = cat(2,reshape(xData,[],1),reshape(yData,[],1));
                 case 2
-                    kera.Histogram = plot(kera.h1,sort(outdata),linspace(0,1,length(outdata)));
+                    xData = sort(outdata);
+                    yData = linspace(1/length(outdata),1,length(outdata));
+                    kera.Histogram = plot(kera.h1,xData,yData);
+                    kera.dataDisplayed = cat(2,reshape(xData,[],1),reshape(yData,[],1));
             end
             try
                 kera.generateFits();
