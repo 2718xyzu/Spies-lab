@@ -633,6 +633,8 @@ classdef Kera < handle
         function opencftool(kera,~,~,~)
             if ~isempty(kera.dataDisplayed)
                 cftool(kera.dataDisplayed(:,1),kera.dataDisplayed(:,2));
+                assignin('base','cftool_x',kera.dataDisplayed(:,1));
+                assignin('base','cftool_y',kera.dataDisplayed(:,2));
             end
         end
         
@@ -702,6 +704,11 @@ classdef Kera < handle
                     xData = sort(outdata);
                     yData = linspace(1/length(outdata),1,length(outdata));
                     kera.Histogram = plot(kera.h1,xData,yData);
+                    if kera.fitType == 1
+                        yData = linspace(1,1/length(outdata),length(outdata)); 
+                        %it's easier to fit linear CDF when it is flipped
+                        %to the CCDF
+                    end
                     kera.dataDisplayed = cat(2,reshape(xData,[],1),reshape(yData,[],1));
             end
             try
