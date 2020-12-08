@@ -75,9 +75,11 @@ function out = dwellSummary(dataCell,timeInterval,channels,baseState)
         
         for i=1:length(out(j).dwellTimes)
             out(j).meanDwells(i) = mean(out(j).dwellTimes{i});
+            out(j).dwellTimes{i} = out(j).dwellTimes{i}';
         end
         for i=1:length(out(j).dwellTimesWithEdges)
             out(j).meanDwellsWithEdges(i) = mean(out(j).dwellTimesWithEdges{i});
+            out(j).dwellTimesWithEdges{i} = out(j).dwellTimesWithEdges{i}';
         end
         
         
