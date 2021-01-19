@@ -14,8 +14,8 @@ function output = fillRowState(output, i, searchMatrix, condensedStates, timeDat
         
         output(i).searchMatrix = searchMatrix;
         if searchMatrix(1)~=-1 %interpret searchMatrix like a normal search matrix
-            output(i).expr = mat2str(searchMatrix);
-            out = findStateEvents(searchMatrix, condensedStates, timeData, filenames, selection); %function which does the searching
+            output(i).expr = mat2regex(searchMatrix); %convert human-readable matrix to regex form
+            out = regexSearch(output(i).expr, condensedStates, timeData, filenames, selection); %function which does the searching
         else %interpret the string of numbers as characters and do a special "regular expressions"
              %search of the converted-to-text list of states.  See
              %documentation (or the inside of regexSearch) for details

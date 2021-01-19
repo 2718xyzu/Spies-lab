@@ -1,4 +1,4 @@
-function outStr = mat2regex(stateMat)
+function outChar = mat2regex(stateMat)
 c = size(stateMat,2); %number of channels
 outStr = "";
 for i = 1:size(stateMat,1)
@@ -14,4 +14,6 @@ for i = 1:size(stateMat,1)
         end
         outStr = outStr+";";
     end
+end
+outChar = char(outStr);
 end
